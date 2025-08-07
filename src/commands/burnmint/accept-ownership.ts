@@ -2,6 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { AcceptOwnershipArgsSchema } from '../../types/index.js';
 import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
+import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { InstructionBuilder } from '../../programs/burnmint-token-pool/instructions.js';
 import { getProgramConfig } from '../../types/program-registry.js';
@@ -94,12 +95,8 @@ export async function acceptOwnershipCommand(
 
     const transactionBuilder = new TransactionBuilder(transactionOptions);
 
-    // Create instruction builder with IDL and RPC URL
-    const instructionBuilder = new InstructionBuilder(
-      validatedArgs.programId,
-      programConfig.idl!,
-      rpcUrl
-    );
+    // Create instruction builder (no rpcUrl needed for instruction building)
+    const instructionBuilder = new InstructionBuilder(validatedArgs.programId, programConfig.idl!);
 
     // Show what we're about to do
     console.log('🔄 Generating acceptOwnership transaction...');
@@ -125,39 +122,12 @@ export async function acceptOwnershipCommand(
     );
     console.log('   ✅ Transaction simulation completed');
 
-    // Display results
-    console.log('\\n✅ Transaction generated successfully!');
-    console.log('\\n📋 Transaction Details:');
-    console.log(`   Instruction: ${transaction.instruction}`);
-    console.log(`   Base58 length: ${transaction.base58.length} characters`);
-    console.log(
-      `   Compute units: ${transaction.metadata.computeUnits?.toLocaleString() || 'Unknown (simulation failed)'}`
-    );
-    console.log(`   Generated at: ${transaction.metadata.generatedAt}`);
-
-    console.log('\\n🔗 Transaction Data (Base58):');
-    console.log(`\\n${transaction.base58}`);
-
-    console.log('\\n📊 Account Information:');
-    console.log(`   Total accounts: ${transaction.accounts.length}`);
-    transaction.accounts.forEach((account, index) => {
-      console.log(
-        `   ${index + 1}. ${account.pubkey} ${account.isSigner ? '(signer)' : ''} ${account.isWritable ? '(writable)' : '(read-only)'}`
-      );
-    });
-
-    console.log('\\n💡 Usage Instructions:');
-    console.log('   1. Copy the Base58 transaction data above');
-    console.log('   2. Paste it into Squads multisig as a "Custom Transaction"');
-    console.log('   3. Review and approve with your multisig signers');
-    console.log('   4. Execute the transaction on Solana');
-    console.log(
-      '\\n🔍 Note: Transaction was automatically simulated for validation and compute unit estimation'
-    );
+    // Display results using the beautiful utility
+    TransactionDisplay.displayResults(transaction, 'acceptOwnership');
 
     commandLogger.info(
       {
-        transactionSize: transaction.base58.length,
+        transactionSize: `${Math.floor(transaction.hex.length / 2)} bytes`,
         computeUnits: transaction.metadata.computeUnits,
       },
       'acceptOwnership command completed successfully'

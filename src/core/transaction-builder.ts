@@ -68,12 +68,12 @@ export class TransactionBuilder {
           instructions: allInstructions,
         });
 
-        const versionedTransaction = new VersionedTransaction(
-          transactionMessage.compileToV0Message()
-        );
+        // Use legacy message format for compatibility with Squads multisig
+        const legacyMessage = transactionMessage.compileToLegacyMessage();
 
         // Serialize and encode transaction
-        const serializedTransaction = versionedTransaction.serialize();
+        const serializedTransaction = legacyMessage.serialize();
+        const transactionSizeBytes = serializedTransaction.length;
         const base58Encoded = bs58.encode(serializedTransaction);
         const hexEncoded = Buffer.from(serializedTransaction).toString('hex');
 
@@ -85,8 +85,13 @@ export class TransactionBuilder {
           .filter(acc => !acc.isWritable && !acc.isSigner)
           .map(acc => acc.pubkey);
 
+        // Create a versioned transaction for simulation (but use legacy for final output)
+        const versionedTransactionForSim = new VersionedTransaction(
+          transactionMessage.compileToV0Message()
+        );
+
         // Simulate transaction to get compute units
-        const simulationResult = await this.simulateTransaction(versionedTransaction);
+        const simulationResult = await this.simulateTransaction(versionedTransactionForSim);
         const computeUnits = simulationResult.unitsConsumed || 0;
 
         const result: GeneratedTransaction = {
@@ -122,8 +127,9 @@ export class TransactionBuilder {
         logger.info(
           {
             instructionName,
-            base58Length: base58Encoded.length,
-            hexLength: hexEncoded.length,
+            transactionSize: `${transactionSizeBytes} bytes`,
+            base58Length: `${base58Encoded.length} characters`,
+            hexLength: `${hexEncoded.length} characters`,
             accountCount: accounts.length,
             signerCount: signers.length,
             computeUnits: Math.floor(computeUnits),

@@ -41,5 +41,5 @@ export const CLI_CONFIG = {
  * Burnmint Token Pool specific constants
  */
 export const BURNMINT_TOKEN_POOL = {
-  STATE_SEED: 'state',
+  STATE_SEED: 'ccip_tokenpool_config',
 } as const;

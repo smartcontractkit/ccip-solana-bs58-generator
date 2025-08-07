@@ -1,7 +1,7 @@
-import { PublicKey, TransactionInstruction, Connection } from '@solana/web3.js';
-import { Program } from '@coral-xyz/anchor';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { BurnmintTokenPoolAccounts } from './accounts.js';
 import { logger } from '../../utils/logger.js';
+import { AnchorUtils } from '../../utils/anchor.js';
 import type { Idl } from '../../types/index.js';
 
 /**
@@ -10,12 +10,10 @@ import type { Idl } from '../../types/index.js';
 export class InstructionBuilder {
   private programId: PublicKey;
   private idl: Idl;
-  private rpcUrl: string;
 
-  constructor(programId: PublicKey, idl: Idl, rpcUrl: string) {
+  constructor(programId: PublicKey, idl: Idl) {
     this.programId = programId;
     this.idl = idl;
-    this.rpcUrl = rpcUrl;
   }
 
   /**
@@ -34,11 +32,8 @@ export class InstructionBuilder {
       'Building acceptOwnership instruction with Anchor'
     );
 
-    // Create connection for instruction building (no execution)
-    const connection = new Connection(this.rpcUrl);
-
-    // Create program instance without wallet - perfect for instruction building
-    const program = new Program(this.idl, { connection });
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'acceptOwnership');
 
     // Derive accounts using our existing logic
     const accounts = BurnmintTokenPoolAccounts.acceptOwnership(
@@ -47,30 +42,19 @@ export class InstructionBuilder {
       authority
     ).build();
 
-    const [stateAccount, mintAccount, authorityAccount] = accounts;
+    logger.debug(
+      {
+        stateAccount: accounts[0]?.pubkey?.toString(),
+        mintAccount: accounts[1]?.pubkey?.toString(),
+        authorityAccount: accounts[2]?.pubkey?.toString(),
+        accountsLength: accounts.length,
+      },
+      'Account details before instruction building'
+    );
 
-    // Ensure all accounts are defined
-    if (!stateAccount || !mintAccount || !authorityAccount) {
-      throw new Error('One or more required accounts are undefined');
-    }
-
-    // Build instruction using Anchor (real discriminators!)
-    if (!program.methods) {
-      throw new Error('Program methods are not available');
-    }
-
-    if (!program.methods.acceptOwnership) {
-      throw new Error('acceptOwnership method not found in program');
-    }
-
-    const instruction = await program.methods
-      .acceptOwnership()
-      .accounts({
-        state: stateAccount.pubkey,
-        mint: mintAccount.pubkey,
-        authority: authorityAccount.pubkey,
-      })
-      .instruction();
+    // Build instruction using the reusable utility
+    // Use snake_case as that's what Anchor expects internally
+    const instruction = AnchorUtils.buildInstruction('accept_ownership', this.programId, accounts);
 
     logger.debug(
       {
