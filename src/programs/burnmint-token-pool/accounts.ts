@@ -3,7 +3,7 @@ import { BURNMINT_TOKEN_POOL } from '../../utils/constants.js';
 import { AccountBuilder } from '../../utils/accounts.js';
 
 /**
- * Account derivation utilities for burnmint_token_pool acceptOwnership instruction
+ * Account derivation utilities for burnmint_token_pool instructions
  */
 export class AccountDerivation {
   /**
@@ -18,10 +18,32 @@ export class AccountDerivation {
       programId
     );
   }
+
+  /**
+   * Derive the chain config PDA for a given mint and remote chain selector
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Chain config PDA and bump seed
+   */
+  static deriveChainConfigPda(
+    programId: PublicKey,
+    mint: PublicKey,
+    remoteChainSelector: bigint
+  ): [PublicKey, number] {
+    // Convert bigint to 8-byte buffer (little-endian)
+    const chainSelectorBuffer = Buffer.alloc(8);
+    chainSelectorBuffer.writeBigUInt64LE(remoteChainSelector);
+
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from(BURNMINT_TOKEN_POOL.CHAIN_CONFIG_SEED), chainSelectorBuffer, mint.toBuffer()],
+      programId
+    );
+  }
 }
 
 /**
- * Account builder for acceptOwnership instruction
+ * Account builder for burnmint token pool instructions
  */
 export class BurnmintTokenPoolAccounts {
   /**
@@ -42,5 +64,32 @@ export class BurnmintTokenPoolAccounts {
       .addWritable(statePda) // state account (writable)
       .addReadOnly(mint) // mint account (read-only)
       .addSigner(authority); // authority account (signer)
+  }
+
+  /**
+   * Build accounts for setChainRateLimit instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Account builder with required accounts
+   */
+  static setChainRateLimit(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [chainConfigPda] = AccountDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+
+    return new AccountBuilder()
+      .addReadOnly(statePda) // state account (read-only)
+      .addWritable(chainConfigPda) // chain config account (writable)
+      .addSigner(authority, true); // authority account (writable, signer)
   }
 }

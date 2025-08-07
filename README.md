@@ -120,6 +120,73 @@ The command generates:
 
 - Base58-encoded transaction data for multisig execution
 - Account information with access permissions
+
+##### set-chain-rate-limit
+
+Configure rate limiting for token transfers to/from a specific remote chain.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit [options]
+```
+
+**Options:**
+
+| Option                               | Type      | Required | Description                                     |
+| ------------------------------------ | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>`             | PublicKey | Yes      | Burnmint token pool program ID                  |
+| `--mint <address>`                   | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`              | PublicKey | Yes      | Authority public key (pool owner or rate admin) |
+| `--remote-chain-selector <selector>` | u64       | Yes      | Remote chain selector identifier                |
+| `--inbound-enabled <enabled>`        | boolean   | Yes      | Enable inbound rate limiting (true/false)       |
+| `--inbound-capacity <capacity>`      | u64       | Yes      | Inbound rate limit capacity (token amount)      |
+| `--inbound-rate <rate>`              | u64       | Yes      | Inbound refill rate (tokens per second)         |
+| `--outbound-enabled <enabled>`       | boolean   | Yes      | Enable outbound rate limiting (true/false)      |
+| `--outbound-capacity <capacity>`     | u64       | Yes      | Outbound rate limit capacity (token amount)     |
+| `--outbound-rate <rate>`             | u64       | Yes      | Outbound refill rate (tokens per second)        |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction set-chain-rate-limit \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remote-chain-selector "16015286601757825753" \
+  --inbound-enabled "true" \
+  --inbound-capacity "100000000000" \
+  --inbound-rate "1000000000" \
+  --outbound-enabled "true" \
+  --outbound-capacity "100000000000" \
+  --outbound-rate "1000000000"
+```
+
+**Accounts:**
+
+| Index | Account     | Type             | Description                          |
+| ----- | ----------- | ---------------- | ------------------------------------ |
+| 0     | State       | Read-only        | Token pool state account (PDA)       |
+| 1     | ChainConfig | Writable         | Chain configuration account (PDA)    |
+| 2     | Authority   | Signer, Writable | Authority account (pool owner/admin) |
+
+**Rate Limit Configuration:**
+
+- **Capacity**: Maximum tokens in the bucket (with token decimals)
+- **Rate**: Refill rate in tokens per second (with token decimals)
+- **Example**: For a token with 9 decimals:
+  - Capacity `100000000000` = 100 tokens maximum
+  - Rate `1000000000` = 1 token per second refill rate
+
+**Transaction Output:**
+
+The command generates:
+
+- Base58-encoded transaction data for multisig execution
+- Account information with access permissions
+- Detailed rate limit configuration summary
 - Transaction metadata including size and compute units
 - Usage instructions for multisig platforms
 

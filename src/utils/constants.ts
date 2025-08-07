@@ -41,4 +41,5 @@ export const CLI_CONFIG = {
  */
 export const BURNMINT_TOKEN_POOL = {
   STATE_SEED: 'ccip_tokenpool_config',
+  CHAIN_CONFIG_SEED: 'ccip_tokenpool_chainconfig',
 } as const;

@@ -23,6 +23,61 @@ export const AcceptOwnershipArgsSchema = z.object({
     .optional(),
 });
 
+export const SetChainRateLimitArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  remoteChainSelector: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Remote chain selector must be non-negative');
+    return num;
+  }),
+  inboundEnabled: z.string().transform(val => {
+    if (val.toLowerCase() === 'true') return true;
+    if (val.toLowerCase() === 'false') return false;
+    throw new Error('inboundEnabled must be "true" or "false"');
+  }),
+  inboundCapacity: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Inbound capacity must be non-negative');
+    return num;
+  }),
+  inboundRate: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Inbound rate must be non-negative');
+    return num;
+  }),
+  outboundEnabled: z.string().transform(val => {
+    if (val.toLowerCase() === 'true') return true;
+    if (val.toLowerCase() === 'false') return false;
+    throw new Error('outboundEnabled must be "true" or "false"');
+  }),
+  outboundCapacity: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Outbound capacity must be non-negative');
+    return num;
+  }),
+  outboundRate: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Outbound rate must be non-negative');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 // Simple options for transaction building and simulation (no execution)
 export interface TransactionOptions {
   rpcUrl: string;
