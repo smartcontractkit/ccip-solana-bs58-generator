@@ -31,20 +31,20 @@ export function createBurnmintCommands(): Command {
       `
 Examples:
   # Accept ownership using environment (recommended)
-  $ ccip-gen --env devnet burnmint-token-pool accept-ownership \\
+  $ pnpm bs58 --env devnet burnmint-token-pool accept-ownership \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
     --authority "NewAuthorityPublicKey123456789..."
 
   # Using custom RPC URL (advanced)
-  $ ccip-gen --rpc-url "https://custom-rpc.com" \\
+  $ pnpm bs58 --rpc-url "https://custom-rpc.com" \\
     burnmint-token-pool accept-ownership \\
     --program-id "Your_Program_ID" \\
     --mint "Your_Token_Mint" \\
     --authority "Your_Authority"
 
   # With verbose logging for debugging
-  $ ccip-gen --verbose --env testnet \\
+  $ pnpm bs58 --verbose --env testnet \\
     burnmint-token-pool accept-ownership \\
     --program-id "..." --mint "..." --authority "..."
 

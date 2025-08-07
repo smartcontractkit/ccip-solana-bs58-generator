@@ -1,13 +1,13 @@
 {
   "name": "ccip-solana-bs58-generator",
   "version": "1.0.0",
-  "description": "Professional CLI tool for generating BS58 transaction data from Solana burnmint_token_pool IDL",
+  "description": "CLI tool for generating BS58 transaction data from Solana burnmint_token_pool IDL",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "dev": "tsx src/index.ts",
+    "bs58": "tsx src/index.ts",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",

@@ -31,9 +31,8 @@ export const DEFAULT_TRANSACTION_CONFIG = {
  * CLI configuration constants
  */
 export const CLI_CONFIG = {
-  NAME: 'ccip-gen',
-  DESCRIPTION:
-    'Professional CLI for generating BS58 transaction data from Solana burnmint_token_pool IDL',
+  NAME: 'ccip-bs58',
+  DESCRIPTION: 'CLI for generating BS58 transaction data from Solana burnmint_token_pool IDL',
   VERSION: '1.0.0',
 } as const;
 

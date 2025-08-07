@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Command } from 'commander';
 import { registerCommands } from './commands/index.js';
 
@@ -57,8 +55,8 @@ async function main(): Promise<void> {
           );
           console.error('');
           console.error('Usage examples:');
-          console.error('   $ ccip-gen accept-ownership --env devnet ...');
-          console.error('   $ ccip-gen accept-ownership --rpc-url "https://custom-rpc.com" ...');
+          console.error('   $ pnpm bs58 accept-ownership --env devnet ...');
+          console.error('   $ pnpm bs58 accept-ownership --rpc-url "https://custom-rpc.com" ...');
           process.exit(1);
         }
 
@@ -72,8 +70,8 @@ async function main(): Promise<void> {
           console.error('   • Use --rpc-url for custom endpoints');
           console.error('');
           console.error('Examples:');
-          console.error('   $ ccip-gen accept-ownership --env devnet ...');
-          console.error('   $ ccip-gen accept-ownership --rpc-url "https://custom-rpc.com" ...');
+          console.error('   $ pnpm bs58 accept-ownership --env devnet ...');
+          console.error('   $ pnpm bs58 accept-ownership --rpc-url "https://custom-rpc.com" ...');
           process.exit(1);
         }
 
@@ -138,9 +136,9 @@ async function main(): Promise<void> {
 
           console.log('💡 Usage Examples:');
           console.log(
-            '    ccip-gen --rpc-url "https://api.devnet.solana.com" burnmint accept-ownership --help'
+            '    pnpm bs58 --rpc-url "https://api.devnet.solana.com" burnmint accept-ownership --help'
           );
-          console.log('    ccip-gen list-instructions --program burnmint-token-pool');
+          console.log('    pnpm bs58 list-instructions --program burnmint-token-pool');
         }
       } catch (error) {
         logger.error(
@@ -188,8 +186,8 @@ async function main(): Promise<void> {
         );
         console.error('');
         console.error('Usage examples:');
-        console.error('   $ ccip-gen accept-ownership --env devnet ...');
-        console.error('   $ ccip-gen accept-ownership --rpc-url "https://custom-rpc.com" ...');
+        console.error('   $ pnpm bs58 accept-ownership --env devnet ...');
+        console.error('   $ pnpm bs58 accept-ownership --rpc-url "https://custom-rpc.com" ...');
         process.exit(1);
       }
 
@@ -203,8 +201,8 @@ async function main(): Promise<void> {
         console.error('   • Use --rpc-url for custom endpoints');
         console.error('');
         console.error('Examples:');
-        console.error('   $ ccip-gen accept-ownership --env devnet ...');
-        console.error('   $ ccip-gen accept-ownership --rpc-url "https://custom-rpc.com" ...');
+        console.error('   $ pnpm bs58 accept-ownership --env devnet ...');
+        console.error('   $ pnpm bs58 accept-ownership --rpc-url "https://custom-rpc.com" ...');
         process.exit(1);
       }
 
@@ -227,7 +225,7 @@ async function main(): Promise<void> {
       `
 Examples:
   # Accept ownership using environment (recommended)
-  $ ccip-gen accept-ownership \\
+  $ pnpm bs58 accept-ownership \\
     --program burnmint-token-pool \\
     --env devnet \\
     --program-id "BurnMintProgramID123456789..." \\
@@ -235,7 +233,7 @@ Examples:
     --authority "NewAuthorityPublicKey123456789..."
 
   # Using custom RPC URL (advanced)
-  $ ccip-gen accept-ownership \\
+  $ pnpm bs58 accept-ownership \\
     --program burnmint-token-pool \\
     --rpc-url "https://custom-rpc-endpoint.com" \\
     --program-id "Your_Program_ID" \\
@@ -243,7 +241,7 @@ Examples:
     --authority "Your_Authority"
 
   # Alternative order (same result)
-  $ ccip-gen --env mainnet accept-ownership \\
+  $ pnpm bs58 --env mainnet accept-ownership \\
     --program burnmint-token-pool \\
     --program-id "Production_Program_ID" \\
     --mint "Production_Token_Mint" \\
@@ -276,10 +274,10 @@ Examples:
     console.log('');
     console.log('🚀 Getting Started:');
     console.log('  1. List available commands:');
-    console.log('     $ ccip-gen list-instructions');
+    console.log('     $ pnpm bs58 list-instructions');
     console.log('');
     console.log('  2. Generate a transaction (Devnet example):');
-    console.log('     $ ccip-gen --rpc-url "https://api.devnet.solana.com" \\');
+    console.log('     $ pnpm bs58 --rpc-url "https://api.devnet.solana.com" \\');
     console.log('       burnmint accept-ownership \\');
     console.log('       --program-id "Your_Program_ID" \\');
     console.log('       --mint "Token_Mint_Address" \\');
