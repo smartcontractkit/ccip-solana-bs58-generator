@@ -26,18 +26,29 @@ pnpm install
 ### Basic Syntax
 
 ```bash
-pnpm bs58 [global-options] <program> --instruction <instruction-name> [instruction-options]
+pnpm bs58 <program> [options] --instruction <instruction-name> [instruction-options]
+```
+
+### Flexible Argument Ordering
+
+For better user experience, all options can be placed after the program name in any order:
+
+```bash
+# All of these are equivalent and valid:
+pnpm bs58 burnmint-token-pool --env devnet --instruction accept-ownership --program-id "..."
+pnpm bs58 burnmint-token-pool --instruction accept-ownership --env devnet --program-id "..."
+pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction accept-ownership
 ```
 
 ### Global Options
 
-| Option | Alias | Type | Description |
-|--------|-------|------|-------------|
-| `--env <environment>` | `--environment` | string | Solana environment (mainnet, devnet, testnet, localhost) |
-| `--rpc-url <url>` | | string | Custom Solana RPC endpoint URL |
-| `--verbose` | | boolean | Enable debug-level logging |
-| `--version` | `-v` | | Display version information |
-| `--help` | `-h` | | Display help information |
+| Option                | Alias           | Type    | Description                                              |
+| --------------------- | --------------- | ------- | -------------------------------------------------------- |
+| `--env <environment>` | `--environment` | string  | Solana environment (mainnet, devnet, testnet, localhost) |
+| `--rpc-url <url>`     |                 | string  | Custom Solana RPC endpoint URL                           |
+| `--verbose`           |                 | boolean | Enable debug-level logging                               |
+| `--version`           | `-v`            |         | Display version information                              |
+| `--help`              | `-h`            |         | Display help information                                 |
 
 #### Environment and RPC Configuration
 
@@ -49,12 +60,12 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 
 **Supported Environments:**
 
-| Environment | RPC Endpoint |
-|-------------|--------------|
-| `mainnet` | https://api.mainnet-beta.solana.com |
-| `devnet` | https://api.devnet.solana.com |
-| `testnet` | https://api.testnet.solana.com |
-| `localhost` | http://localhost:8899 |
+| Environment | RPC Endpoint                        |
+| ----------- | ----------------------------------- |
+| `mainnet`   | https://api.mainnet-beta.solana.com |
+| `devnet`    | https://api.devnet.solana.com       |
+| `testnet`   | https://api.testnet.solana.com      |
+| `localhost` | http://localhost:8899               |
 
 ## Programs
 
@@ -71,21 +82,24 @@ Token pool program for burning tokens on source chain and minting on destination
 Transfers ownership of a token pool to a new authority.
 
 **Syntax:**
+
 ```bash
-pnpm bs58 [global-options] burnmint-token-pool --instruction accept-ownership [options]
+pnpm bs58 burnmint-token-pool --instruction accept-ownership [options]
 ```
 
 **Options:**
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `--program-id <address>` | PublicKey | Yes | Burnmint token pool program ID |
-| `--mint <address>` | PublicKey | Yes | Token mint address |
-| `--authority <address>` | PublicKey | Yes | New authority public key |
+| Option                   | Type      | Required | Description                    |
+| ------------------------ | --------- | -------- | ------------------------------ |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address             |
+| `--authority <address>`  | PublicKey | Yes      | New authority public key       |
 
 **Example:**
+
 ```bash
-pnpm bs58 --env devnet burnmint-token-pool \
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
   --instruction accept-ownership \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
@@ -94,15 +108,16 @@ pnpm bs58 --env devnet burnmint-token-pool \
 
 **Accounts:**
 
-| Index | Account | Type | Description |
-|-------|---------|------|-------------|
-| 0 | State | Writable | Token pool state account (PDA) |
-| 1 | Mint | Read-only | Token mint account |
-| 2 | Authority | Signer | New authority account |
+| Index | Account   | Type      | Description                    |
+| ----- | --------- | --------- | ------------------------------ |
+| 0     | State     | Writable  | Token pool state account (PDA) |
+| 1     | Mint      | Read-only | Token mint account             |
+| 2     | Authority | Signer    | New authority account          |
 
 **Transaction Output:**
 
 The command generates:
+
 - Base58-encoded transaction data for multisig execution
 - Account information with access permissions
 - Transaction metadata including size and compute units
@@ -116,7 +131,7 @@ The command generates:
 # General help
 pnpm bs58 --help
 
-# Program-specific help  
+# Program-specific help
 pnpm bs58 burnmint-token-pool --help
 
 # Instruction-specific help
@@ -126,22 +141,24 @@ pnpm bs58 burnmint-token-pool --instruction accept-ownership --help
 ### Common Patterns
 
 #### Development Workflow
+
 ```bash
 # 1. Test on devnet first
-pnpm bs58 --env devnet burnmint-token-pool --instruction <instruction> [options]
+pnpm bs58 burnmint-token-pool --env devnet --instruction <instruction> [options]
 
 # 2. Validate transaction in multisig
 # 3. Execute on mainnet
-pnpm bs58 --env mainnet burnmint-token-pool --instruction <instruction> [options]
+pnpm bs58 burnmint-token-pool --env mainnet --instruction <instruction> [options]
 ```
 
 #### Debug and Troubleshooting
+
 ```bash
 # Enable verbose logging
-pnpm bs58 --verbose --env devnet burnmint-token-pool --instruction <instruction> [options]
+pnpm bs58 burnmint-token-pool --verbose --env devnet --instruction <instruction> [options]
 
 # Use custom RPC for testing
-pnpm bs58 --rpc-url "https://custom-endpoint.com" burnmint-token-pool --instruction <instruction> [options]
+pnpm bs58 burnmint-token-pool --rpc-url "https://custom-endpoint.com" --instruction <instruction> [options]
 ```
 
 ## Output Format
@@ -191,18 +208,19 @@ The CLI outputs structured transaction information:
 
 ### Log Levels
 
-| Level | Condition | Description |
-|-------|-----------|-------------|
-| `INFO` | Always | Transaction progress and results |
-| `DEBUG` | `--verbose` | Detailed execution information |
-| `WARN` | Simulation failures | Non-fatal issues |
-| `ERROR` | Fatal errors | Command failures |
+| Level   | Condition           | Description                      |
+| ------- | ------------------- | -------------------------------- |
+| `INFO`  | Always              | Transaction progress and results |
+| `DEBUG` | `--verbose`         | Detailed execution information   |
+| `WARN`  | Simulation failures | Non-fatal issues                 |
+| `ERROR` | Fatal errors        | Command failures                 |
 
 ## Error Handling
 
 ### Common Errors
 
 #### Invalid Public Key Format
+
 ```
 ❌ Error: Invalid public key format
 💡 Suggestions:
@@ -211,23 +229,27 @@ The CLI outputs structured transaction information:
 ```
 
 #### Missing Required Options
+
 ```
 ❌ accept-ownership instruction requires: --program-id, --mint, and --authority
 
 Example:
-  $ pnpm bs58 burnmint-token-pool --instruction accept-ownership \
+  $ pnpm bs58 burnmint-token-pool \
+    --instruction accept-ownership \
     --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
     --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
 ```
 
 #### Environment Configuration
+
 ```
 ❌ Either --env or --rpc-url is required for transaction commands
 💡 Use --env devnet or --rpc-url "https://custom-endpoint.com"
 ```
 
 #### Mutual Exclusivity
+
 ```
 ❌ Cannot use both --env and --rpc-url simultaneously
 💡 Choose one:
@@ -256,6 +278,7 @@ src/
 To add support for a new program:
 
 1. **Create program directory:**
+
    ```
    src/commands/<program-name>/
    ├── index.ts           # Command registration
@@ -263,6 +286,7 @@ To add support for a new program:
    ```
 
 2. **Add program IDL:**
+
    ```
    src/programs/<program-name>/
    ├── idl.json          # Program IDL
@@ -270,10 +294,11 @@ To add support for a new program:
    ```
 
 3. **Register commands:**
+
    ```typescript
    // src/commands/index.ts
    import { create<ProgramName>Commands } from './<program-name>/index.js';
-   
+
    export function registerCommands(program: Command): void {
      program.addCommand(create<ProgramName>Commands());
    }
@@ -282,12 +307,14 @@ To add support for a new program:
 ### Adding New Instructions
 
 1. **Implement instruction logic:**
+
    ```typescript
    // src/commands/<program>/index.ts
    .requiredOption('--instruction <instruction>', 'Instruction to execute (accept-ownership|new-instruction)')
    ```
 
 2. **Add instruction handler:**
+
    ```typescript
    .action((options, command) => {
      if (options.instruction === 'new-instruction') {
