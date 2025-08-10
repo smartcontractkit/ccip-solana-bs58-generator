@@ -64,11 +64,13 @@ export async function ownerProposeAdministratorCommand(
       tokenAdminRegistryAdmin
     );
 
+    console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
       authority!,
       'router.owner_propose_administrator'
     );
+    console.log('   ✅ Transaction simulation completed');
 
     TransactionDisplay.displayResults(tx, 'router.owner_propose_administrator');
   } catch (error) {

@@ -555,6 +555,18 @@ pnpm bs58 router --instruction owner-override-pending-administrator [options]
 | `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority             |
 | `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to set as pending                 |
 
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction owner-override-pending-administrator \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --token-admin-registry-admin "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB"
+```
+
 ##### accept-admin-role
 
 Accept the admin role of the token admin registry (by pending admin).
@@ -572,6 +584,17 @@ pnpm bs58 router --instruction accept-admin-role [options]
 | `--program-id <address>` | PublicKey | Yes      | Router program ID     |
 | `--mint <address>`       | PublicKey | Yes      | Token mint address    |
 | `--authority <address>`  | PublicKey | Yes      | Pending admin address |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction accept-admin-role \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "Fy8m7wKXdnz1pLkM8S1Y3e2r9oLJH3ZkQp4b6c7d8e9f"
+```
 
 ##### transfer-admin-role
 
@@ -591,6 +614,18 @@ pnpm bs58 router --instruction transfer-admin-role [options]
 | `--mint <address>`       | PublicKey | Yes      | Token mint address          |
 | `--authority <address>`  | PublicKey | Yes      | Current registry admin      |
 | `--new-admin <address>`  | PublicKey | Yes      | New pending admin address   |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction transfer-admin-role \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --new-admin "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
+```
 
 ##### set-pool
 
@@ -615,6 +650,19 @@ pnpm bs58 router --instruction set-pool [options]
 **Notes:**
 - PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
 - The writable indexes bitmap is validated on-chain against the registry’s configuration.
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction set-pool \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
+  --writable-indexes "0x80"
+```
 
 ##### remove-from-allow-list
 

@@ -57,11 +57,13 @@ export async function acceptAdminRoleCommand(
     console.log('🔄 Generating accept_admin_role_token_admin_registry transaction...');
     const instruction = await instructionBuilder.acceptAdminRoleTokenAdminRegistry(mint, authority);
 
+    console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
       authority!,
       'router.accept_admin_role_token_admin_registry'
     );
+    console.log('   ✅ Transaction simulation completed');
 
     TransactionDisplay.displayResults(tx, 'router.accept_admin_role_token_admin_registry');
   } catch (error) {

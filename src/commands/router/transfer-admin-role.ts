@@ -63,11 +63,13 @@ export async function transferAdminRoleCommand(
       newAdmin
     );
 
+    console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
       authority!,
       'router.transfer_admin_role_token_admin_registry'
     );
+    console.log('   ✅ Transaction simulation completed');
 
     TransactionDisplay.displayResults(tx, 'router.transfer_admin_role_token_admin_registry');
   } catch (error) {

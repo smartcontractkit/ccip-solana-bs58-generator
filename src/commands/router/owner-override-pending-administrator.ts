@@ -65,11 +65,13 @@ export async function ownerOverridePendingAdministratorCommand(
       tokenAdminRegistryAdmin
     );
 
+    console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
       authority!,
       'router.owner_override_pending_administrator'
     );
+    console.log('   ✅ Transaction simulation completed');
 
     TransactionDisplay.displayResults(tx, 'router.owner_override_pending_administrator');
   } catch (error) {

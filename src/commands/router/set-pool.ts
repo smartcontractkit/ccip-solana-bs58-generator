@@ -70,11 +70,13 @@ export async function setPoolCommand(
       writableIndexesBitmap
     );
 
+    console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
       authority!,
       'router.set_pool'
     );
+    console.log('   ✅ Transaction simulation completed');
 
     TransactionDisplay.displayResults(tx, 'router.set_pool');
   } catch (error) {
