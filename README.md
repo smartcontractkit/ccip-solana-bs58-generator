@@ -724,7 +724,7 @@ Notes:
 
 ##### set-pool
 
-Set the pool lookup table for a token and writable indexes bitmap (by registry admin). This enables or updates the CCIP pool configuration for that token.
+Set the pool lookup table for a token and the list of ALT indexes to mark writable (by registry admin). This enables or updates the CCIP pool configuration for that token.
 
 **Syntax:**
 
@@ -740,12 +740,12 @@ pnpm bs58 router --instruction set-pool [options]
 | `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
 | `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
 | `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
-| `--writable-indexes <hex>`   | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`) |
+| `--writable-indexes <json>`  | JSON array | Yes      | JSON array of ALT indexes to mark writable (e.g., `[3,4,7]`)        |
 
 **Notes:**
 
 - PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
-- The writable indexes bitmap is validated on-chain against the registry’s configuration.
+- Writable indexes are passed as Vec<u8>; conversion to on-chain bitmaps happens inside the program.
 
 **Example:**
 
@@ -757,7 +757,7 @@ pnpm bs58 router \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
   --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
-  --writable-indexes "0x80"
+  --writable-indexes "[3,4,7]"
 ```
 
 ## Command Reference

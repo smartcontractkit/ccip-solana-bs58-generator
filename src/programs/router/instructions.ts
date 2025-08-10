@@ -182,7 +182,7 @@ export class InstructionBuilder {
     mint: PublicKey,
     poolLookupTable: PublicKey,
     authority: PublicKey,
-    writableIndexesBitmap: Buffer
+    writableIndexes: number[]
   ): Promise<TransactionInstruction> {
     logger.debug(
       {
@@ -190,7 +190,8 @@ export class InstructionBuilder {
         mint: mint.toString(),
         poolLookupTable: poolLookupTable.toString(),
         authority: authority.toString(),
-        writableIndexesBytes: writableIndexesBitmap.length,
+        writableIndexesCount: writableIndexes.length,
+        writableIndexes,
       },
       'Building set_pool instruction with Anchor'
     );
@@ -203,8 +204,11 @@ export class InstructionBuilder {
       authority
     ).build();
 
-    // Args: writable_indexes (bytes)
-    const data = writableIndexesBitmap;
+    // Args: writable_indexes (Vec<u8>) -> borsh: u32 LE length + bytes
+    const indicesArray = Uint8Array.from(writableIndexes);
+    const len = Buffer.alloc(4);
+    len.writeUInt32LE(indicesArray.length, 0);
+    const data = Buffer.concat([len, Buffer.from(indicesArray)]);
 
     const instruction = AnchorUtils.buildInstruction('set_pool', this.programId, accounts, data);
     logger.debug(

@@ -6,7 +6,7 @@ import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { InstructionBuilder } from '../../programs/router/instructions.js';
 import { getProgramConfig } from '../../types/program-registry.js';
-import { hexToBytes, normalizeHexString } from '../../utils/addresses.js';
+// no extra address utils needed for writable indexes
 
 export async function setPoolCommand(
   options: {
@@ -14,7 +14,7 @@ export async function setPoolCommand(
     mint: string;
     authority: string;
     poolLookupTable: string;
-    writableIndexes: string; // hex
+    writableIndexes: string; // json array of numbers
   },
   command: {
     parent?: {
@@ -59,21 +59,24 @@ export async function setPoolCommand(
     const transactionBuilder = new TransactionBuilder(transactionOptions);
     const instructionBuilder = new InstructionBuilder(programId, programConfig.idl);
 
-    const norm = normalizeHexString(writableIndexes);
-    const writableIndexesBitmap = hexToBytes(norm);
+    // Validate and log indices, then pass as Vec<u8>
+    if (writableIndexes.some(i => i < 0 || i > 255 || !Number.isInteger(i))) {
+      throw new Error('Writable indexes must be integers between 0 and 255');
+    }
+    cmdLogger.debug({ indices: writableIndexes }, 'Writable indexes to set (Vec<u8>)');
 
     console.log('🔄 Generating set_pool transaction...');
     const instruction = await instructionBuilder.setPool(
       mint,
       poolLookupTable,
       authority,
-      writableIndexesBitmap
+      writableIndexes
     );
 
     console.log('🔄 Building and simulating transaction...');
     const tx = await transactionBuilder.buildSingleInstructionTransaction(
       instruction,
-      authority!,
+      authority,
       'router.set_pool'
     );
     console.log('   ✅ Transaction simulation completed');

@@ -353,10 +353,24 @@ export const RouterSetPoolArgsSchema = z.object({
   mint: z.string().transform(val => new PublicKey(val)),
   authority: z.string().transform(val => new PublicKey(val)),
   poolLookupTable: z.string().transform(val => new PublicKey(val)),
-  writableIndexes: z
-    .string()
-    .refine(v => /^(0x)?[0-9a-fA-F]+$/.test(v), 'Writable indexes must be hex')
-    .transform(v => (v.startsWith('0x') ? v.slice(2) : v)),
+  writableIndexes: z.string().transform(val => {
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed)) throw new Error('Writable indexes must be a JSON array');
+      const nums = parsed.map((n: unknown) => {
+        const num = Number(n);
+        if (!Number.isInteger(num) || num < 0 || num > 255) {
+          throw new Error('Each writable index must be an integer between 0 and 255');
+        }
+        return num;
+      });
+      return nums as number[];
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for writable indexes: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }),
   rpcUrl: z
     .string()
     .refine(
