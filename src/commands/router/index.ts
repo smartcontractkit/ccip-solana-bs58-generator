@@ -25,6 +25,10 @@ export function createRouterCommands(): Command {
       'Fee Quoter program ID (required for create-lookup-table)'
     )
     .option('--pool-program-id <pubkey>', 'Pool program ID (required for create-lookup-table)')
+    .option(
+      '--additional-addresses <json>',
+      'JSON array of Base58 pubkeys to append (optional, only for create-lookup-table)'
+    )
     // owner/ccip-admin propose/override use the same param name
     .option(
       '--token-admin-registry-admin <pubkey>',

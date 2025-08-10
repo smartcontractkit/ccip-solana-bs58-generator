@@ -31,8 +31,8 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Owner Override Pending Administrator](#owner-override-pending-administrator)
       - [Accept Admin Role](#accept-admin-role)
       - [Transfer Admin Role](#transfer-admin-role)
-      - [Set Pool](#set-pool)
       - [Create Lookup Table](#create-lookup-table)
+      - [Set Pool](#set-pool)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -668,44 +668,6 @@ pnpm bs58 router \
   --new-admin "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
 ```
 
-##### set-pool
-
-Set the pool lookup table for a token and writable indexes bitmap (by registry admin). This enables or updates the CCIP pool configuration for that token.
-
-**Syntax:**
-
-```bash
-pnpm bs58 router --instruction set-pool [options]
-```
-
-**Options:**
-
-| Option                       | Type       | Required | Description                                                         |
-| ---------------------------- | ---------- | -------- | ------------------------------------------------------------------- |
-| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                                   |
-| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
-| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
-| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
-| `--writable-indexes <hex>`   | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`) |
-
-**Notes:**
-
-- PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
-- The writable indexes bitmap is validated on-chain against the registry’s configuration.
-
-**Example:**
-
-```bash
-pnpm bs58 router \
-  --env devnet \
-  --instruction set-pool \
-  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
-  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
-  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
-  --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
-  --writable-indexes "0x80"
-```
-
 ##### create-lookup-table
 
 Create and extend an Address Lookup Table (ALT) for a mint’s Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
@@ -759,6 +721,44 @@ pnpm bs58 router \
 Notes:
 - Token program is automatically detected by reading the mint’s owner.
 - The ALT is created and extended in one transaction and printed before the Base58 payload.
+
+##### set-pool
+
+Set the pool lookup table for a token and writable indexes bitmap (by registry admin). This enables or updates the CCIP pool configuration for that token.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction set-pool [options]
+```
+
+**Options:**
+
+| Option                       | Type       | Required | Description                                                         |
+| ---------------------------- | ---------- | -------- | ------------------------------------------------------------------- |
+| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                                   |
+| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
+| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
+| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
+| `--writable-indexes <hex>`   | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`) |
+
+**Notes:**
+
+- PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
+- The writable indexes bitmap is validated on-chain against the registry’s configuration.
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction set-pool \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
+  --writable-indexes "0x80"
+```
 
 ## Command Reference
 
