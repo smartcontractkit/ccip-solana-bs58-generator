@@ -16,6 +16,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
 - [Programs](#programs)
   - [Burnmint Token Pool](#burnmint-token-pool)
     - [Instructions](#instructions)
+      - [Initialize Pool](#initialize-pool)
       - [Transfer Ownership](#transfer-ownership)
       - [Accept Ownership](#accept-ownership)
       - [Set Chain Rate Limit](#set-chain-rate-limit)
@@ -129,6 +130,47 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 Token pool program for burning tokens on source chain and minting on destination chain.
 
 #### Instructions
+
+##### initialize-pool
+
+Initialize the burn-mint pool state for a given SPL mint. This creates the pool State PDA and wires program-global config (router, RMN) into the pool. The caller becomes the pool owner.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction initialize-pool [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                           |
+| ------------------------ | --------- | -------- | ------------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID        |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                    |
+| `--authority <address>`  | PublicKey | Yes      | Future pool owner (signer)            |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction initialize-pool \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
+```
+
+**Accounts:**
+
+| Index | Account        | Type              | Description                                   |
+| ----- | -------------- | ----------------- | --------------------------------------------- |
+| 0     | State          | Writable          | Pool state PDA (`ccip_tokenpool_config`, mint) |
+| 1     | Mint           | Read-only         | Token mint                                    |
+| 2     | Authority      | Signer, Writable  | Pool owner (signer)                           |
+| 3     | SystemProgram  | Read-only         | System program                                |
+| 4     | Program        | Read-only         | Burn-mint program ID                          |
+| 5     | ProgramData    | Read-only         | Program Data PDA (upgradeable loader)         |
+| 6     | Global Config  | Read-only         | Global config PDA (`config`)                  |
 
 ##### transfer-ownership
 

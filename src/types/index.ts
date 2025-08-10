@@ -23,6 +23,27 @@ export const AcceptOwnershipArgsSchema = z.object({
     .optional(),
 });
 
+// Burnmint initialize pool
+export const BurnmintInitializePoolArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 export const TransferOwnershipArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),

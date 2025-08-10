@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { acceptOwnershipCommand } from './accept-ownership.js';
+import { initializePoolCommand } from './initialize-pool.js';
 import { setChainRateLimitCommand } from './set-chain-rate-limit.js';
 import { transferOwnershipCommand } from './transfer-ownership.js';
 import { initChainRemoteConfigCommand } from './init-chain-remote-config.js';
@@ -18,7 +19,7 @@ export function createBurnmintCommands(): Command {
     .alias('bm')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit)'
+      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit)'
     )
     .option(
       '--program-id <programId>',
@@ -400,7 +401,9 @@ Available Instructions:
     )
     .action((options, command) => {
       // Route to the appropriate instruction handler
-      if (options.instruction === 'accept-ownership') {
+      if (options.instruction === 'initialize-pool') {
+        initializePoolCommand(options, command);
+      } else if (options.instruction === 'accept-ownership') {
         acceptOwnershipCommand(options, command);
       } else if (options.instruction === 'transfer-ownership') {
         transferOwnershipCommand(options, command);
@@ -421,7 +424,7 @@ Available Instructions:
       } else {
         console.error(`❌ Unknown instruction: ${options.instruction}`);
         console.error(
-          'Available instructions: accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
+          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
         );
         process.exit(1);
       }

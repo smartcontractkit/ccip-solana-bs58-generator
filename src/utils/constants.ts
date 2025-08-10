@@ -1,3 +1,4 @@
+import { PublicKey } from '@solana/web3.js';
 /**
  * Solana environments and their RPC endpoints
  */
@@ -59,4 +60,11 @@ export const ROUTER_SEEDS = {
  */
 export const FEE_QUOTER_SEEDS = {
   FEE_BILLING_TOKEN_CONFIG: 'fee_billing_token_config',
+} as const;
+
+/**
+ * Well-known program IDs
+ */
+export const PROGRAM_IDS = {
+  BPF_LOADER_UPGRADEABLE_PROGRAM_ID: new PublicKey('BPFLoaderUpgradeab1e11111111111111111111111'),
 } as const;
