@@ -18,6 +18,37 @@ export class InstructionBuilder {
   }
 
   /**
+   * Initialize the pool state for a given mint
+   */
+  async initialize(mint: PublicKey, authority: PublicKey): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+      },
+      'Building initialize (pool state) instruction with Anchor'
+    );
+
+    AnchorUtils.validateInstructionExists(this.idl, 'initialize');
+
+    const accounts = BurnmintTokenPoolAccounts.initialize(this.programId, mint, authority).build();
+
+    const instruction = AnchorUtils.buildInstruction('initialize', this.programId, accounts);
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+        accountsLength: accounts.length,
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
    * Create acceptOwnership instruction using Anchor
    * @param mint The mint public key
    * @param authority The new authority public key

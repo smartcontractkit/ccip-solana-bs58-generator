@@ -16,6 +16,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
 - [Programs](#programs)
   - [Burnmint Token Pool](#burnmint-token-pool)
     - [Instructions](#instructions)
+      - [Initialize Pool](#initialize-pool)
       - [Transfer Ownership](#transfer-ownership)
       - [Accept Ownership](#accept-ownership)
       - [Set Chain Rate Limit](#set-chain-rate-limit)
@@ -25,6 +26,14 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Delete Chain Config](#delete-chain-config)
       - [Configure Allow List](#configure-allow-list)
       - [Remove From Allow List](#remove-from-allow-list)
+  - [Router](#router)
+    - [Instructions](#router-instructions)
+      - [Owner Propose Administrator](#owner-propose-administrator)
+      - [Owner Override Pending Administrator](#owner-override-pending-administrator)
+      - [Accept Admin Role](#accept-admin-role)
+      - [Transfer Admin Role](#transfer-admin-role)
+      - [Create Lookup Table](#create-lookup-table)
+      - [Set Pool](#set-pool)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -121,6 +130,47 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 Token pool program for burning tokens on source chain and minting on destination chain.
 
 #### Instructions
+
+##### initialize-pool
+
+Initialize the burn-mint pool state for a given SPL mint. This creates the pool State PDA and wires program-global config (router, RMN) into the pool. The caller becomes the pool owner.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction initialize-pool [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                           |
+| ------------------------ | --------- | -------- | ------------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID        |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                    |
+| `--authority <address>`  | PublicKey | Yes      | Future pool owner (signer)            |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction initialize-pool \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
+```
+
+**Accounts:**
+
+| Index | Account        | Type              | Description                                   |
+| ----- | -------------- | ----------------- | --------------------------------------------- |
+| 0     | State          | Writable          | Pool state PDA (`ccip_tokenpool_config`, mint) |
+| 1     | Mint           | Read-only         | Token mint                                    |
+| 2     | Authority      | Signer, Writable  | Pool owner (signer)                           |
+| 3     | SystemProgram  | Read-only         | System program                                |
+| 4     | Program        | Read-only         | Burn-mint program ID                          |
+| 5     | ProgramData    | Read-only         | Program Data PDA (upgradeable loader)         |
+| 6     | Global Config  | Read-only         | Global config PDA (`config`)                  |
 
 ##### transfer-ownership
 
@@ -529,6 +579,228 @@ pnpm bs58 burnmint-token-pool \
 | 1     | Mint          | Read-only        | Token mint account             |
 | 2     | Authority     | Signer, Writable | Authority account              |
 | 3     | SystemProgram | Read-only        | System program                 |
+
+### Router
+
+**Command:** `router` (alias: `r`)
+
+CCIP Router for cross-chain messaging, including token admin registry management and pool configuration. PDAs such as `config` and `token_admin_registry` are auto-derived; users do not need to pass them.
+
+#### Router Instructions
+
+##### owner-propose-administrator
+
+Propose an initial/updated administrator for a token’s admin registry (by token owner).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction owner-propose-administrator [options]
+```
+
+**Options:**
+
+| Option                                | Type      | Required | Description                                     |
+| ------------------------------------- | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                               |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority             |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to propose for the token registry |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction owner-propose-administrator \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --token-admin-registry-admin "Fy8m7wKXdnz1pLkM8S1Y3e2r9oLJH3ZkQp4b6c7d8e9f"
+```
+
+##### owner-override-pending-administrator
+
+Override the pending admin for a token’s registry (by token owner).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction owner-override-pending-administrator [options]
+```
+
+**Options:** (same as propose)
+
+| Option                                | Type      | Required | Description                         |
+| ------------------------------------- | --------- | -------- | ----------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                   |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                  |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to set as pending     |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction owner-override-pending-administrator \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --token-admin-registry-admin "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB"
+```
+
+##### accept-admin-role
+
+Accept the admin role of the token admin registry (by pending admin).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction accept-admin-role [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description           |
+| ------------------------ | --------- | -------- | --------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Router program ID     |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address    |
+| `--authority <address>`  | PublicKey | Yes      | Pending admin address |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction accept-admin-role \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "Fy8m7wKXdnz1pLkM8S1Y3e2r9oLJH3ZkQp4b6c7d8e9f"
+```
+
+##### transfer-admin-role
+
+Initiate a two-step admin transfer by setting a new pending admin (by current admin).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction transfer-admin-role [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description               |
+| ------------------------ | --------- | -------- | ------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Router program ID         |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address        |
+| `--authority <address>`  | PublicKey | Yes      | Current registry admin    |
+| `--new-admin <address>`  | PublicKey | Yes      | New pending admin address |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction transfer-admin-role \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --new-admin "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
+```
+
+##### create-lookup-table
+
+Create and extend an Address Lookup Table (ALT) for a mint’s Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction create-lookup-table [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                                                        |
+| ------------------------------- | --------- | -------- | ------------------------------------------------------------------ |
+| `--program-id <address>`        | PublicKey | Yes      | Router program ID                                                  |
+| `--fee-quoter-program-id <id>`  | PublicKey | Yes      | Fee Quoter program ID                                              |
+| `--pool-program-id <id>`        | PublicKey | Yes      | Burn-mint pool program ID                                          |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address                                                 |
+| `--authority <address>`         | PublicKey | Yes      | ALT authority and payer                                            |
+| `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append after base entries          |
+
+Address order inside the ALT:
+
+1. ALT address (self)
+2. Token Admin Registry PDA (router)
+3. Pool program ID
+4. Pool config PDA (burn-mint pool state)
+5. Pool token ATA (mint, owner = pool signer PDA, token-program aware)
+6. Pool signer PDA (burn-mint)
+7. Token program ID (SPL v1 or Token-2022, auto-detected from the mint)
+8. Token mint
+9. Fee token config PDA (fee quoter)
+10. CCIP router pool signer PDA (router, seed external_token_pools_signer + poolProgramId)
+
+Any `--additional-addresses` are appended after index 10. Max total addresses: 256.
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction create-lookup-table \
+  --program-id "<ROUTER_PID>" \
+  --fee-quoter-program-id "<FEE_QUOTER_PID>" \
+  --pool-program-id "<BURNMINT_POOL_PID>" \
+  --mint "<MINT_PUBKEY>" \
+  --authority "<AUTHORITY_PUBKEY>" \
+  --additional-addresses '["<EXTRA1>","<EXTRA2>"]'
+```
+
+Notes:
+- Token program is automatically detected by reading the mint’s owner.
+- The ALT is created and extended in one transaction and printed before the Base58 payload.
+
+##### set-pool
+
+Set the pool lookup table for a token and the list of ALT indexes to mark writable (by registry admin). This enables or updates the CCIP pool configuration for that token.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction set-pool [options]
+```
+
+**Options:**
+
+| Option                       | Type       | Required | Description                                                         |
+| ---------------------------- | ---------- | -------- | ------------------------------------------------------------------- |
+| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                                   |
+| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
+| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
+| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
+| `--writable-indexes <json>`  | JSON array | Yes      | JSON array of ALT indexes to mark writable (e.g., `[3,4,7]`)        |
+
+**Notes:**
+
+- PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
+- Writable indexes are passed as Vec<u8>; conversion to on-chain bitmaps happens inside the program.
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction set-pool \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
+  --writable-indexes "[3,4,7]"
+```
 
 ## Command Reference
 

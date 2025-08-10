@@ -1,5 +1,5 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { BURNMINT_TOKEN_POOL } from '../../utils/constants.js';
+import { BURNMINT_TOKEN_POOL, PROGRAM_IDS } from '../../utils/constants.js';
 import { AccountBuilder } from '../../utils/accounts.js';
 
 /**
@@ -40,12 +40,61 @@ export class AccountDerivation {
       programId
     );
   }
+
+  /**
+   * Derive the pool signer PDA for a given mint
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @returns Pool signer PDA and bump seed
+   */
+  static derivePoolSignerPda(programId: PublicKey, mint: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from(BURNMINT_TOKEN_POOL.POOL_SIGNER_SEED), mint.toBuffer()],
+      programId
+    );
+  }
+
+  /**
+   * Derive the global config PDA for the burnmint token pool program
+   * seeds = [b"config"]
+   */
+  static deriveGlobalConfigPda(programId: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from('config')], programId);
+  }
+
+  /**
+   * Derive the Program Data PDA for an upgradeable program
+   * seeds = [programId]
+   */
+  static deriveProgramDataPda(programId: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [programId.toBuffer()],
+      PROGRAM_IDS.BPF_LOADER_UPGRADEABLE_PROGRAM_ID
+    );
+  }
 }
 
 /**
  * Account builder for burnmint token pool instructions
  */
 export class BurnmintTokenPoolAccounts {
+  /**
+   * Build accounts for initialize (pool state) instruction
+   */
+  static initialize(programId: PublicKey, mint: PublicKey, authority: PublicKey): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [programDataPda] = AccountDerivation.deriveProgramDataPda(programId);
+    const [globalConfigPda] = AccountDerivation.deriveGlobalConfigPda(programId);
+
+    return new AccountBuilder()
+      .addWritable(statePda)
+      .addReadOnly(mint)
+      .addSigner(authority, true)
+      .addReadOnly(SystemProgram.programId)
+      .addReadOnly(programId)
+      .addReadOnly(programDataPda)
+      .addReadOnly(globalConfigPda);
+  }
   /**
    * Build accounts for acceptOwnership instruction
    * @param programId The burnmint_token_pool program ID

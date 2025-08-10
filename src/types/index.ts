@@ -23,6 +23,27 @@ export const AcceptOwnershipArgsSchema = z.object({
     .optional(),
 });
 
+// Burnmint initialize pool
+export const BurnmintInitializePoolArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 export const TransferOwnershipArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
@@ -266,6 +287,149 @@ export const RemoveFromAllowListArgsSchema = z.object({
       );
     }
   }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+// Router CLI argument schemas
+export const RouterOwnerProposeAdministratorArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  tokenAdminRegistryAdmin: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterOwnerOverridePendingAdministratorArgsSchema =
+  RouterOwnerProposeAdministratorArgsSchema;
+
+export const RouterAcceptAdminRoleArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterTransferAdminRoleArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  newAdmin: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterSetPoolArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  poolLookupTable: z.string().transform(val => new PublicKey(val)),
+  writableIndexes: z.string().transform(val => {
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed)) throw new Error('Writable indexes must be a JSON array');
+      const nums = parsed.map((n: unknown) => {
+        const num = Number(n);
+        if (!Number.isInteger(num) || num < 0 || num > 255) {
+          throw new Error('Each writable index must be an integer between 0 and 255');
+        }
+        return num;
+      });
+      return nums as number[];
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for writable indexes: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+// Router ALT creation
+export const RouterCreateLookupTableArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)), // router program id
+  feeQuoterProgramId: z.string().transform(val => new PublicKey(val)),
+  poolProgramId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  additionalAddresses: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val) return [] as PublicKey[];
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+        return parsed.map((a: unknown) => new PublicKey(String(a)));
+      } catch (e) {
+        throw new Error(
+          `Invalid JSON for additional addresses: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }),
   rpcUrl: z
     .string()
     .refine(
