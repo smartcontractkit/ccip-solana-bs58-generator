@@ -497,6 +497,46 @@ pnpm bs58 burnmint-token-pool \
 | 2     | Authority     | Signer, Writable | Authority account              |
 | 3     | SystemProgram | Read-only        | System program                 |
 
+##### remove-from-allow-list
+
+Remove addresses from the allow list.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction remove-from-allow-list [options]
+```
+
+**Options:**
+
+| Option                   | Type                         | Required | Description                         |
+| ------------------------ | ---------------------------- | -------- | ----------------------------------- |
+| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID      |
+| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                  |
+| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                |
+| `--remove <json>`        | JSON array of Base58 pubkeys | Yes      | Addresses to remove from allow list |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction remove-from-allow-list \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remove '["Fht7wA4F9QjKz1nP2sV7Yh8L3bN5cX2Rv9d6QwTpLmNo"]'
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                    |
+| ----- | ------------- | ---------------- | ------------------------------ |
+| 0     | State         | Writable         | Token pool state account (PDA) |
+| 1     | Mint          | Read-only        | Token mint account             |
+| 2     | Authority     | Signer, Writable | Authority account              |
+| 3     | SystemProgram | Read-only        | System program                 |
+
 ### Router
 
 **Command:** `router` (alias: `r`)
@@ -517,12 +557,12 @@ pnpm bs58 router --instruction owner-propose-administrator [options]
 
 **Options:**
 
-| Option                                | Type      | Required | Description                                       |
-| ------------------------------------- | --------- | -------- | ------------------------------------------------- |
-| `--program-id <address>`              | PublicKey | Yes      | Router program ID                                 |
-| `--mint <address>`                    | PublicKey | Yes      | Token mint address                                |
-| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority               |
-| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to propose for the token registry   |
+| Option                                | Type      | Required | Description                                     |
+| ------------------------------------- | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                               |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority             |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to propose for the token registry |
 
 **Example:**
 
@@ -548,12 +588,12 @@ pnpm bs58 router --instruction owner-override-pending-administrator [options]
 
 **Options:** (same as propose)
 
-| Option                                | Type      | Required | Description                                     |
-| ------------------------------------- | --------- | -------- | ----------------------------------------------- |
-| `--program-id <address>`              | PublicKey | Yes      | Router program ID                               |
-| `--mint <address>`                    | PublicKey | Yes      | Token mint address                              |
-| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority             |
-| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to set as pending                 |
+| Option                                | Type      | Required | Description                         |
+| ------------------------------------- | --------- | -------- | ----------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                   |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                  |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to set as pending     |
 
 **Example:**
 
@@ -608,12 +648,12 @@ pnpm bs58 router --instruction transfer-admin-role [options]
 
 **Options:**
 
-| Option                   | Type      | Required | Description                 |
-| ------------------------ | --------- | -------- | --------------------------- |
-| `--program-id <address>` | PublicKey | Yes      | Router program ID           |
-| `--mint <address>`       | PublicKey | Yes      | Token mint address          |
-| `--authority <address>`  | PublicKey | Yes      | Current registry admin      |
-| `--new-admin <address>`  | PublicKey | Yes      | New pending admin address   |
+| Option                   | Type      | Required | Description               |
+| ------------------------ | --------- | -------- | ------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Router program ID         |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address        |
+| `--authority <address>`  | PublicKey | Yes      | Current registry admin    |
+| `--new-admin <address>`  | PublicKey | Yes      | New pending admin address |
 
 **Example:**
 
@@ -639,15 +679,16 @@ pnpm bs58 router --instruction set-pool [options]
 
 **Options:**
 
-| Option                      | Type       | Required | Description                                                                 |
-| --------------------------- | ---------- | -------- | --------------------------------------------------------------------------- |
-| `--program-id <address>`    | PublicKey  | Yes      | Router program ID                                                           |
-| `--mint <address>`          | PublicKey  | Yes      | Token mint address                                                          |
-| `--authority <address>`     | PublicKey  | Yes      | Registry admin                                                              |
-| `--pool-lookup-table <addr>`| PublicKey  | Yes      | Address Lookup Table containing pool and related accounts                   |
-| `--writable-indexes <hex>`  | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`)         |
+| Option                       | Type       | Required | Description                                                         |
+| ---------------------------- | ---------- | -------- | ------------------------------------------------------------------- |
+| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                                   |
+| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
+| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
+| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
+| `--writable-indexes <hex>`   | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`) |
 
 **Notes:**
+
 - PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
 - The writable indexes bitmap is validated on-chain against the registry’s configuration.
 
@@ -663,46 +704,6 @@ pnpm bs58 router \
   --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
   --writable-indexes "0x80"
 ```
-
-##### remove-from-allow-list
-
-Remove addresses from the allow list.
-
-**Syntax:**
-
-```bash
-pnpm bs58 burnmint-token-pool --instruction remove-from-allow-list [options]
-```
-
-**Options:**
-
-| Option                   | Type                         | Required | Description                         |
-| ------------------------ | ---------------------------- | -------- | ----------------------------------- |
-| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID      |
-| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                  |
-| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                |
-| `--remove <json>`        | JSON array of Base58 pubkeys | Yes      | Addresses to remove from allow list |
-
-**Example:**
-
-```bash
-pnpm bs58 burnmint-token-pool \
-  --env devnet \
-  --instruction remove-from-allow-list \
-  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
-  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
-  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remove '["Fht7wA4F9QjKz1nP2sV7Yh8L3bN5cX2Rv9d6QwTpLmNo"]'
-```
-
-**Accounts:**
-
-| Index | Account       | Type             | Description                    |
-| ----- | ------------- | ---------------- | ------------------------------ |
-| 0     | State         | Writable         | Token pool state account (PDA) |
-| 1     | Mint          | Read-only        | Token mint account             |
-| 2     | Authority     | Signer, Writable | Authority account              |
-| 3     | SystemProgram | Read-only        | System program                 |
 
 ## Command Reference
 
