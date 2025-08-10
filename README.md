@@ -477,7 +477,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --add '["11111111111111111111111111111112", "22222222222222222222222222222223"]' \
+  --add '["EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB", "Fht7wA4F9QjKz1nP2sV7Yh8L3bN5cX2Rv9d6QwTpLmNo"]' \
   --enabled "true"
 ```
 
@@ -518,7 +518,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remove '["11111111111111111111111111111112", "33333333333333333333333333333334"]'
+  --remove '["Fht7wA4F9QjKz1nP2sV7Yh8L3bN5cX2Rv9d6QwTpLmNo"]'
 ```
 
 **Accounts:**
@@ -642,6 +642,7 @@ The CLI outputs structured transaction information:
 
 Example:
   $ pnpm bs58 burnmint-token-pool \
+    --env devnet \
     --instruction accept-ownership \
     --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
