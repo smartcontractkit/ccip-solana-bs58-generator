@@ -34,7 +34,7 @@ export function createBurnmintCommands(): Command {
     // initChainRemoteConfig / editChainRemoteConfig specific options
     .option(
       '--pool-addresses <json>',
-      'JSON array of pool addresses (optional for init, required for edit-chain-remote-config)',
+      'JSON array of pool addresses (optional; init must be empty; if omitted on edit, existing addresses will be cleared)',
       '[]'
     )
     .option(

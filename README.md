@@ -134,12 +134,12 @@ pnpm bs58 burnmint-token-pool --instruction transfer-ownership [options]
 
 **Options:**
 
-| Option                   | Type      | Required | Description                               |
-| ------------------------ | --------- | -------- | ----------------------------------------- |
-| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID            |
-| `--mint <address>`       | PublicKey | Yes      | Token mint address                        |
-| `--authority <address>`  | PublicKey | Yes      | Current owner or authorized authority     |
-| `--proposed-owner <addr>`| PublicKey | Yes      | Proposed new owner public key             |
+| Option                    | Type      | Required | Description                           |
+| ------------------------- | --------- | -------- | ------------------------------------- |
+| `--program-id <address>`  | PublicKey | Yes      | Burnmint token pool program ID        |
+| `--mint <address>`        | PublicKey | Yes      | Token mint address                    |
+| `--authority <address>`   | PublicKey | Yes      | Current owner or authorized authority |
+| `--proposed-owner <addr>` | PublicKey | Yes      | Proposed new owner public key         |
 
 **Example:**
 
@@ -255,6 +255,7 @@ pnpm bs58 burnmint-token-pool \
 | 0     | State       | Read-only        | Token pool state account (PDA)       |
 | 1     | ChainConfig | Writable         | Chain configuration account (PDA)    |
 | 2     | Authority   | Signer, Writable | Authority account (pool owner/admin) |
+
 **Rate Limit Configuration:**
 
 - **Capacity**: Maximum tokens in the bucket (with token decimals)
@@ -276,6 +277,7 @@ The command generates:
 ##### init-chain-remote-config
 
 Initialize remote chain configuration for a given chain selector.
+Pool addresses must be empty at init; append addresses after initialization.
 
 **Syntax:**
 
@@ -285,15 +287,15 @@ pnpm bs58 burnmint-token-pool --instruction init-chain-remote-config [options]
 
 **Options:**
 
-| Option                               | Type                | Required | Description                          |
-| ------------------------------------ | ------------------- | -------- | ------------------------------------ |
-| `--program-id <address>`             | PublicKey           | Yes      | Burnmint token pool program ID       |
-| `--mint <address>`                   | PublicKey           | Yes      | Token mint address                   |
-| `--authority <address>`              | PublicKey           | Yes      | Authority public key                 |
-| `--remote-chain-selector <selector>` | u64                 | Yes      | Remote chain selector                |
-| `--pool-addresses <json>`            | JSON array of hex   | Yes      | Remote pool addresses                |
-| `--token-address <address>`          | Hex string          | Yes      | Remote token address                 |
-| `--decimals <decimals>`              | 0-255               | Yes      | Token decimals                       |
+| Option                               | Type              | Required | Description                                   |
+| ------------------------------------ | ----------------- | -------- | --------------------------------------------- |
+| `--program-id <address>`             | PublicKey         | Yes      | Burnmint token pool program ID                |
+| `--mint <address>`                   | PublicKey         | Yes      | Token mint address                            |
+| `--authority <address>`              | PublicKey         | Yes      | Authority public key                          |
+| `--remote-chain-selector <selector>` | u64               | Yes      | Remote chain selector                         |
+| `--pool-addresses <json>`            | JSON array of hex | Optional | Remote pool addresses (must be empty at init) |
+| `--token-address <address>`          | Hex string        | Yes      | Remote token address                          |
+| `--decimals <decimals>`              | 0-255             | Yes      | Token decimals                                |
 
 **Example:**
 
@@ -315,12 +317,13 @@ pnpm bs58 burnmint-token-pool \
 | ----- | ------------- | ---------------- | --------------------------------- |
 | 0     | State         | Read-only        | Token pool state account (PDA)    |
 | 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
-| 2     | Authority     | Signer, Writable | Authority account                  |
-| 3     | SystemProgram | Read-only        | System program                     |
+| 2     | Authority     | Signer, Writable | Authority account                 |
+| 3     | SystemProgram | Read-only        | System program                    |
 
 ##### edit-chain-remote-config
 
 Edit an existing remote chain configuration.
+If `--pool-addresses` is omitted, the on-chain list will be cleared (empty vector).
 
 **Syntax:**
 
@@ -330,15 +333,15 @@ pnpm bs58 burnmint-token-pool --instruction edit-chain-remote-config [options]
 
 **Options:** (same as init)
 
-| Option                               | Type                | Required | Description                          |
-| ------------------------------------ | ------------------- | -------- | ------------------------------------ |
-| `--program-id <address>`             | PublicKey           | Yes      | Burnmint token pool program ID       |
-| `--mint <address>`                   | PublicKey           | Yes      | Token mint address                   |
-| `--authority <address>`              | PublicKey           | Yes      | Authority public key                 |
-| `--remote-chain-selector <selector>` | u64                 | Yes      | Remote chain selector                |
-| `--pool-addresses <json>`            | JSON array of hex   | Yes      | Remote pool addresses                |
-| `--token-address <address>`          | Hex string          | Yes      | Remote token address                 |
-| `--decimals <decimals>`              | 0-255               | Yes      | Token decimals                       |
+| Option                               | Type              | Required | Description                           |
+| ------------------------------------ | ----------------- | -------- | ------------------------------------- |
+| `--program-id <address>`             | PublicKey         | Yes      | Burnmint token pool program ID        |
+| `--mint <address>`                   | PublicKey         | Yes      | Token mint address                    |
+| `--authority <address>`              | PublicKey         | Yes      | Authority public key                  |
+| `--remote-chain-selector <selector>` | u64               | Yes      | Remote chain selector                 |
+| `--pool-addresses <json>`            | JSON array of hex | Optional | Remote pool addresses (omit to clear) |
+| `--token-address <address>`          | Hex string        | Yes      | Remote token address                  |
+| `--decimals <decimals>`              | 0-255             | Yes      | Token decimals                        |
 
 **Example:**
 
@@ -350,6 +353,7 @@ pnpm bs58 burnmint-token-pool \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
   --remote-chain-selector "16015286601757825753" \
+  --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \
   --token-address "0x9876dcba..." \
   --decimals "18"
 ```
@@ -360,8 +364,8 @@ pnpm bs58 burnmint-token-pool \
 | ----- | ------------- | ---------------- | --------------------------------- |
 | 0     | State         | Read-only        | Token pool state account (PDA)    |
 | 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
-| 2     | Authority     | Signer, Writable | Authority account                  |
-| 3     | SystemProgram | Read-only        | System program                     |
+| 2     | Authority     | Signer, Writable | Authority account                 |
+| 3     | SystemProgram | Read-only        | System program                    |
 
 ##### append-remote-pool-addresses
 
@@ -375,13 +379,13 @@ pnpm bs58 burnmint-token-pool --instruction append-remote-pool-addresses [option
 
 **Options:**
 
-| Option                               | Type              | Required | Description                        |
-| ------------------------------------ | ----------------- | -------- | ---------------------------------- |
-| `--program-id <address>`             | PublicKey         | Yes      | Burnmint token pool program ID     |
-| `--mint <address>`                   | PublicKey         | Yes      | Token mint address                 |
-| `--authority <address>`              | PublicKey         | Yes      | Authority public key               |
-| `--remote-chain-selector <selector>` | u64               | Yes      | Remote chain selector              |
-| `--addresses <json>`                 | JSON array of hex | Yes      | Addresses to append                |
+| Option                               | Type              | Required | Description                    |
+| ------------------------------------ | ----------------- | -------- | ------------------------------ |
+| `--program-id <address>`             | PublicKey         | Yes      | Burnmint token pool program ID |
+| `--mint <address>`                   | PublicKey         | Yes      | Token mint address             |
+| `--authority <address>`              | PublicKey         | Yes      | Authority public key           |
+| `--remote-chain-selector <selector>` | u64               | Yes      | Remote chain selector          |
+| `--addresses <json>`                 | JSON array of hex | Yes      | Addresses to append            |
 
 **Example:**
 
@@ -402,8 +406,8 @@ pnpm bs58 burnmint-token-pool \
 | ----- | ------------- | ---------------- | --------------------------------- |
 | 0     | State         | Read-only        | Token pool state account (PDA)    |
 | 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
-| 2     | Authority     | Signer, Writable | Authority account                  |
-| 3     | SystemProgram | Read-only        | System program                     |
+| 2     | Authority     | Signer, Writable | Authority account                 |
+| 3     | SystemProgram | Read-only        | System program                    |
 
 ##### delete-chain-config
 
@@ -417,12 +421,12 @@ pnpm bs58 burnmint-token-pool --instruction delete-chain-config [options]
 
 **Options:**
 
-| Option                               | Type      | Required | Description                      |
-| ------------------------------------ | --------- | -------- | -------------------------------- |
-| `--program-id <address>`             | PublicKey | Yes      | Burnmint token pool program ID   |
-| `--mint <address>`                   | PublicKey | Yes      | Token mint address               |
-| `--authority <address>`              | PublicKey | Yes      | Authority public key             |
-| `--remote-chain-selector <selector>` | u64       | Yes      | Remote chain selector            |
+| Option                               | Type      | Required | Description                    |
+| ------------------------------------ | --------- | -------- | ------------------------------ |
+| `--program-id <address>`             | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`                   | PublicKey | Yes      | Token mint address             |
+| `--authority <address>`              | PublicKey | Yes      | Authority public key           |
+| `--remote-chain-selector <selector>` | u64       | Yes      | Remote chain selector          |
 
 **Example:**
 
@@ -442,7 +446,7 @@ pnpm bs58 burnmint-token-pool \
 | ----- | ----------- | ---------------- | --------------------------------- |
 | 0     | State       | Read-only        | Token pool state account (PDA)    |
 | 1     | ChainConfig | Writable         | Chain configuration account (PDA) |
-| 2     | Authority   | Signer, Writable | Authority account                  |
+| 2     | Authority   | Signer, Writable | Authority account                 |
 
 ##### configure-allow-list
 
@@ -456,13 +460,13 @@ pnpm bs58 burnmint-token-pool --instruction configure-allow-list [options]
 
 **Options:**
 
-| Option                   | Type                         | Required | Description                          |
-| ------------------------ | ---------------------------- | -------- | ------------------------------------ |
-| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID       |
-| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                   |
-| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                 |
-| `--add <json>`           | JSON array of Base58 pubkeys | Yes      | Addresses to add to the allow list   |
-| `--enabled <boolean>`    | boolean                      | Yes      | Enable or disable the allow list     |
+| Option                   | Type                         | Required | Description                        |
+| ------------------------ | ---------------------------- | -------- | ---------------------------------- |
+| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID     |
+| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                 |
+| `--authority <address>`  | PublicKey                    | Yes      | Authority public key               |
+| `--add <json>`           | JSON array of Base58 pubkeys | Yes      | Addresses to add to the allow list |
+| `--enabled <boolean>`    | boolean                      | Yes      | Enable or disable the allow list   |
 
 **Example:**
 
@@ -498,12 +502,12 @@ pnpm bs58 burnmint-token-pool --instruction remove-from-allow-list [options]
 
 **Options:**
 
-| Option                   | Type                         | Required | Description                          |
-| ------------------------ | ---------------------------- | -------- | ------------------------------------ |
-| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID       |
-| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                   |
-| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                 |
-| `--remove <json>`        | JSON array of Base58 pubkeys | Yes      | Addresses to remove from allow list  |
+| Option                   | Type                         | Required | Description                         |
+| ------------------------ | ---------------------------- | -------- | ----------------------------------- |
+| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID      |
+| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                  |
+| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                |
+| `--remove <json>`        | JSON array of Base58 pubkeys | Yes      | Addresses to remove from allow list |
 
 **Example:**
 
