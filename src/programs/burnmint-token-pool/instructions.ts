@@ -501,7 +501,7 @@ export class InstructionBuilder {
     buffers.push(addressesLenBuffer);
 
     for (const addr of addresses) {
-      const addrBytes = Buffer.from(addr, 'hex');
+      const addrBytes = hexToBytes(addr);
       const lenBuffer = Buffer.alloc(4);
       lenBuffer.writeUInt32LE(addrBytes.length);
       buffers.push(lenBuffer);
