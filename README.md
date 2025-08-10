@@ -25,6 +25,13 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Delete Chain Config](#delete-chain-config)
       - [Configure Allow List](#configure-allow-list)
       - [Remove From Allow List](#remove-from-allow-list)
+  - [Router](#router)
+    - [Instructions](#router-instructions)
+      - [Owner Propose Administrator](#owner-propose-administrator)
+      - [Owner Override Pending Administrator](#owner-override-pending-administrator)
+      - [Accept Admin Role](#accept-admin-role)
+      - [Transfer Admin Role](#transfer-admin-role)
+      - [Set Pool](#set-pool)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -489,6 +496,125 @@ pnpm bs58 burnmint-token-pool \
 | 1     | Mint          | Read-only        | Token mint account             |
 | 2     | Authority     | Signer, Writable | Authority account              |
 | 3     | SystemProgram | Read-only        | System program                 |
+
+### Router
+
+**Command:** `router` (alias: `r`)
+
+CCIP Router for cross-chain messaging, including token admin registry management and pool configuration. PDAs such as `config` and `token_admin_registry` are auto-derived; users do not need to pass them.
+
+#### Router Instructions
+
+##### owner-propose-administrator
+
+Propose an initial/updated administrator for a token’s admin registry (by token owner).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction owner-propose-administrator [options]
+```
+
+**Options:**
+
+| Option                                | Type      | Required | Description                                       |
+| ------------------------------------- | --------- | -------- | ------------------------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                                 |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                                |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority               |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to propose for the token registry   |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction owner-propose-administrator \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --token-admin-registry-admin "Fy8m7wKXdnz1pLkM8S1Y3e2r9oLJH3ZkQp4b6c7d8e9f"
+```
+
+##### owner-override-pending-administrator
+
+Override the pending admin for a token’s registry (by token owner).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction owner-override-pending-administrator [options]
+```
+
+**Options:** (same as propose)
+
+| Option                                | Type      | Required | Description                                     |
+| ------------------------------------- | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>`              | PublicKey | Yes      | Router program ID                               |
+| `--mint <address>`                    | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`               | PublicKey | Yes      | Token owner or authorized authority             |
+| `--token-admin-registry-admin <addr>` | PublicKey | Yes      | Administrator to set as pending                 |
+
+##### accept-admin-role
+
+Accept the admin role of the token admin registry (by pending admin).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction accept-admin-role [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description           |
+| ------------------------ | --------- | -------- | --------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Router program ID     |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address    |
+| `--authority <address>`  | PublicKey | Yes      | Pending admin address |
+
+##### transfer-admin-role
+
+Initiate a two-step admin transfer by setting a new pending admin (by current admin).
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction transfer-admin-role [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                 |
+| ------------------------ | --------- | -------- | --------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Router program ID           |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address          |
+| `--authority <address>`  | PublicKey | Yes      | Current registry admin      |
+| `--new-admin <address>`  | PublicKey | Yes      | New pending admin address   |
+
+##### set-pool
+
+Set the pool lookup table for a token and writable indexes bitmap (by registry admin). This enables or updates the CCIP pool configuration for that token.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction set-pool [options]
+```
+
+**Options:**
+
+| Option                      | Type       | Required | Description                                                                 |
+| --------------------------- | ---------- | -------- | --------------------------------------------------------------------------- |
+| `--program-id <address>`    | PublicKey  | Yes      | Router program ID                                                           |
+| `--mint <address>`          | PublicKey  | Yes      | Token mint address                                                          |
+| `--authority <address>`     | PublicKey  | Yes      | Registry admin                                                              |
+| `--pool-lookup-table <addr>`| PublicKey  | Yes      | Address Lookup Table containing pool and related accounts                   |
+| `--writable-indexes <hex>`  | Hex string | Yes      | Bitmap of writable LUT indexes (bytes, hex-encoded; e.g. `0x80...`)         |
+
+**Notes:**
+- PDAs like `config` and `token_admin_registry` are automatically derived by the CLI/SDK.
+- The writable indexes bitmap is validated on-chain against the registry’s configuration.
 
 ##### remove-from-allow-list
 

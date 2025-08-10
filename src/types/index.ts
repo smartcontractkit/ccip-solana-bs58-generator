@@ -282,6 +282,97 @@ export const RemoveFromAllowListArgsSchema = z.object({
     .optional(),
 });
 
+// Router CLI argument schemas
+export const RouterOwnerProposeAdministratorArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  tokenAdminRegistryAdmin: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterOwnerOverridePendingAdministratorArgsSchema =
+  RouterOwnerProposeAdministratorArgsSchema;
+
+export const RouterAcceptAdminRoleArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterTransferAdminRoleArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  newAdmin: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RouterSetPoolArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  poolLookupTable: z.string().transform(val => new PublicKey(val)),
+  writableIndexes: z
+    .string()
+    .refine(v => /^(0x)?[0-9a-fA-F]+$/.test(v), 'Writable indexes must be hex')
+    .transform(v => (v.startsWith('0x') ? v.slice(2) : v)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 // Simple options for transaction building and simulation (no execution)
 export interface TransactionOptions {
   rpcUrl: string;

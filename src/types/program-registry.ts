@@ -1,5 +1,6 @@
 import type { Idl } from './index.js';
 import burnmintIdl from '../programs/burnmint-token-pool/idl.json' assert { type: 'json' };
+import routerIdl from '../programs/router/idl.json' assert { type: 'json' };
 
 /**
  * Program configuration interface
@@ -23,7 +24,31 @@ export const PROGRAM_REGISTRY = {
     description: 'CCIP Burnmint Token Pool Program',
     hasIdl: true,
     idl: burnmintIdl as unknown as Idl,
-    supportedInstructions: ['acceptOwnership'],
+    supportedInstructions: [
+      'acceptOwnership',
+      'transferOwnership',
+      'setChainRateLimit',
+      'initChainRemoteConfig',
+      'editChainRemoteConfig',
+      'appendRemotePoolAddresses',
+      'deleteChainConfig',
+      'configureAllowList',
+      'removeFromAllowList',
+    ],
+  },
+  router: {
+    name: 'router',
+    displayName: 'CCIP Router',
+    description: 'CCIP Router Program',
+    hasIdl: true,
+    idl: routerIdl as unknown as Idl,
+    supportedInstructions: [
+      'owner_propose_administrator',
+      'owner_override_pending_administrator',
+      'accept_admin_role_token_admin_registry',
+      'transfer_admin_role_token_admin_registry',
+      'set_pool',
+    ],
   },
 } as const satisfies Record<string, ProgramConfig>;
 
