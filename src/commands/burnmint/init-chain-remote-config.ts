@@ -127,6 +127,11 @@ export async function initChainRemoteConfigCommand(
     console.log(`   Mint: ${validatedArgs.mint.toString()}`);
     console.log(`   Authority: ${validatedArgs.authority.toString()}`);
     console.log(`   Remote Chain Selector: ${validatedArgs.remoteChainSelector}`);
+    if (validatedArgs.poolAddresses.length > 0) {
+      console.warn(
+        '⚠️  For init-chain-remote-config, poolAddresses should generally be empty. Use append-remote-pool-addresses afterwards.'
+      );
+    }
     console.log(`   Pool Addresses: ${validatedArgs.poolAddresses.length} addresses`);
     console.log(`   Token Address: ${validatedArgs.tokenAddress}`);
     console.log(`   Decimals: ${validatedArgs.decimals}`);

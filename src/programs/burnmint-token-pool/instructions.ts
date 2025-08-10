@@ -3,6 +3,7 @@ import { BurnmintTokenPoolAccounts } from './accounts.js';
 import { logger } from '../../utils/logger.js';
 import { AnchorUtils } from '../../utils/anchor.js';
 import type { Idl } from '../../types/index.js';
+import { hexToBytes, hexToPadded32Bytes } from '../../utils/addresses.js';
 
 /**
  * Instruction builder for burnmint_token_pool program using Anchor
@@ -312,15 +313,15 @@ export class InstructionBuilder {
     buffers.push(poolAddressesLenBuffer);
 
     for (const addr of poolAddresses) {
-      const addrBytes = Buffer.from(addr, 'hex');
+      const addrBytes = hexToBytes(addr);
       const lenBuffer = Buffer.alloc(4);
       lenBuffer.writeUInt32LE(addrBytes.length);
       buffers.push(lenBuffer);
       buffers.push(addrBytes);
     }
 
-    // Token address as RemoteAddress
-    const tokenAddrBytes = Buffer.from(tokenAddress, 'hex');
+    // Token address as RemoteAddress (left-pad to 32 bytes)
+    const tokenAddrBytes = hexToPadded32Bytes(tokenAddress);
     const tokenLenBuffer = Buffer.alloc(4);
     tokenLenBuffer.writeUInt32LE(tokenAddrBytes.length);
     buffers.push(tokenLenBuffer);
@@ -409,15 +410,15 @@ export class InstructionBuilder {
     buffers.push(poolAddressesLenBuffer);
 
     for (const addr of poolAddresses) {
-      const addrBytes = Buffer.from(addr, 'hex');
+      const addrBytes = hexToBytes(addr);
       const lenBuffer = Buffer.alloc(4);
       lenBuffer.writeUInt32LE(addrBytes.length);
       buffers.push(lenBuffer);
       buffers.push(addrBytes);
     }
 
-    // Token address as RemoteAddress
-    const tokenAddrBytes = Buffer.from(tokenAddress, 'hex');
+    // Token address as RemoteAddress (left-pad to 32 bytes)
+    const tokenAddrBytes = hexToPadded32Bytes(tokenAddress);
     const tokenLenBuffer = Buffer.alloc(4);
     tokenLenBuffer.writeUInt32LE(tokenAddrBytes.length);
     buffers.push(tokenLenBuffer);

@@ -34,15 +34,16 @@ export function createBurnmintCommands(): Command {
     // initChainRemoteConfig / editChainRemoteConfig specific options
     .option(
       '--pool-addresses <json>',
-      'JSON array of pool addresses (required for init/edit-chain-remote-config)'
+      'JSON array of pool addresses (optional for init, required for edit-chain-remote-config)',
+      '[]'
     )
     .option(
       '--token-address <address>',
-      'Remote token address as hex string (required for init/edit-chain-remote-config)'
+      'Remote token address (destination chain) as hex string (required for init/edit-chain-remote-config)'
     )
     .option(
       '--decimals <decimals>',
-      'Token decimals 0-255 (required for init/edit-chain-remote-config)'
+      'Remote token decimals 0-255 (destination chain, required for init/edit-chain-remote-config)'
     )
     // appendRemotePoolAddresses specific options
     .option(
@@ -304,7 +305,6 @@ Examples:
     --mint "TokenMintAddress123456789..." \\
     --authority "AuthorityPublicKey123456789..." \\
     --remote-chain-selector "1234567890" \\
-    --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \\
     --token-address "0x9876dcba..." \\
     --decimals "18"
 

@@ -112,14 +112,24 @@ export const InitChainRemoteConfigArgsSchema = z.object({
     try {
       const addresses = JSON.parse(val);
       if (!Array.isArray(addresses)) throw new Error('Pool addresses must be an array');
-      return addresses;
+      // Normalize: accept 0x-prefixed or hex; ensure strings
+      return addresses.map((a: unknown) => {
+        if (typeof a !== 'string') throw new Error('Pool address must be a string');
+        return a;
+      });
     } catch (e) {
       throw new Error(
         `Invalid JSON for pool addresses: ${e instanceof Error ? e.message : String(e)}`
       );
     }
   }),
-  tokenAddress: z.string(),
+  tokenAddress: z
+    .string()
+    .refine(
+      v => /^(0x)?[0-9a-fA-F]+$/.test(v),
+      'Token address must be hex (optionally 0x-prefixed)'
+    )
+    .transform(v => (v.startsWith('0x') ? v.slice(2) : v)),
   decimals: z.string().transform(val => {
     const num = parseInt(val, 10);
     if (isNaN(num) || num < 0 || num > 255) throw new Error('Decimals must be between 0 and 255');
@@ -156,7 +166,10 @@ export const AppendRemotePoolAddressesArgsSchema = z.object({
     try {
       const addresses = JSON.parse(val);
       if (!Array.isArray(addresses)) throw new Error('Addresses must be an array');
-      return addresses;
+      return addresses.map((a: unknown) => {
+        if (typeof a !== 'string') throw new Error('Address must be a string');
+        return a;
+      });
     } catch (e) {
       throw new Error(`Invalid JSON for addresses: ${e instanceof Error ? e.message : String(e)}`);
     }

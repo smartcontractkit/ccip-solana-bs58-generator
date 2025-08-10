@@ -304,8 +304,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remote-chain-selector "1234567890" \
-  --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \
+  --remote-chain-selector "16015286601757825753" \
   --token-address "0x9876dcba..." \
   --decimals "18"
 ```
@@ -350,8 +349,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remote-chain-selector "1234567890" \
-  --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \
+  --remote-chain-selector "16015286601757825753" \
   --token-address "0x9876dcba..." \
   --decimals "18"
 ```
@@ -394,7 +392,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remote-chain-selector "1234567890" \
+  --remote-chain-selector "16015286601757825753" \
   --addresses '["0xnew1234...", "0xnew5678..."]'
 ```
 
@@ -435,7 +433,7 @@ pnpm bs58 burnmint-token-pool \
   --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --remote-chain-selector "1234567890"
+  --remote-chain-selector "16015286601757825753"
 ```
 
 **Accounts:**
