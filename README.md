@@ -2,6 +2,51 @@
 
 A command-line interface for generating Base58 transaction data from Solana program IDLs for multisig execution.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Development Setup](#development-setup)
+- [Usage](#usage)
+  - [Basic Syntax](#basic-syntax)
+  - [Flexible Argument Ordering](#flexible-argument-ordering)
+  - [Global Options](#global-options)
+  - [Environment and RPC Configuration](#environment-and-rpc-configuration)
+- [Programs](#programs)
+  - [Burnmint Token Pool](#burnmint-token-pool)
+    - [Instructions](#instructions)
+      - [Transfer Ownership](#transfer-ownership)
+      - [Accept Ownership](#accept-ownership)
+      - [Set Chain Rate Limit](#set-chain-rate-limit)
+      - [Init Chain Remote Config](#init-chain-remote-config)
+      - [Edit Chain Remote Config](#edit-chain-remote-config)
+      - [Append Remote Pool Addresses](#append-remote-pool-addresses)
+      - [Delete Chain Config](#delete-chain-config)
+      - [Configure Allow List](#configure-allow-list)
+      - [Remove From Allow List](#remove-from-allow-list)
+- [Command Reference](#command-reference)
+  - [Help Commands](#help-commands)
+  - [Common Patterns](#common-patterns)
+    - [Development Workflow](#development-workflow)
+    - [Debug and Troubleshooting](#debug-and-troubleshooting)
+- [Output Format](#output-format)
+  - [Transaction Data](#transaction-data)
+  - [Log Levels](#log-levels)
+- [Error Handling](#error-handling)
+  - [Common Errors](#common-errors)
+    - [Invalid Public Key Format](#invalid-public-key-format)
+    - [Missing Required Options](#missing-required-options)
+    - [Environment Configuration](#environment-configuration)
+    - [Mutual Exclusivity](#mutual-exclusivity)
+- [Development](#development)
+  - [Architecture](#architecture)
+  - [Adding New Programs](#adding-new-programs)
+  - [Adding New Instructions](#adding-new-instructions)
+- [License](#license)
+- [Contributing](#contributing)
+- [Support](#support)
+
 ## Overview
 
 This CLI tool generates serialized Solana transactions in Base58 format, specifically designed for execution through multisig interfaces like Squads. It supports multiple Chainlink CCIP programs and provides a type-safe, validated interface for transaction construction.
@@ -35,9 +80,9 @@ For better user experience, all options can be placed after the program name in 
 
 ```bash
 # All of these are equivalent and valid:
-pnpm bs58 burnmint-token-pool --env devnet --instruction accept-ownership --program-id "..."
-pnpm bs58 burnmint-token-pool --instruction accept-ownership --env devnet --program-id "..."
-pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction accept-ownership
+pnpm bs58 burnmint-token-pool --env devnet --instruction transfer-ownership --program-id "..."
+pnpm bs58 burnmint-token-pool --instruction transfer-ownership --env devnet --program-id "..."
+pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction transfer-ownership
 ```
 
 ### Global Options
@@ -77,9 +122,48 @@ Token pool program for burning tokens on source chain and minting on destination
 
 #### Instructions
 
+##### transfer-ownership
+
+Transfer ownership of the pool to a proposed new owner.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction transfer-ownership [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                               |
+| ------------------------ | --------- | -------- | ----------------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID            |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                        |
+| `--authority <address>`  | PublicKey | Yes      | Current owner or authorized authority     |
+| `--proposed-owner <addr>`| PublicKey | Yes      | Proposed new owner public key             |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction transfer-ownership \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --proposed-owner "NewOwnerPublicKey123456789..."
+```
+
+**Accounts:**
+
+| Index | Account   | Type      | Description                    |
+| ----- | --------- | --------- | ------------------------------ |
+| 0     | State     | Writable  | Token pool state account (PDA) |
+| 1     | Mint      | Read-only | Token mint account             |
+| 2     | Authority | Signer    | Current authority account      |
+
 ##### accept-ownership
 
-Transfers ownership of a token pool to a new authority.
+Accept ownership of a token pool previously proposed via transfer-ownership.
 
 **Syntax:**
 
@@ -171,7 +255,6 @@ pnpm bs58 burnmint-token-pool \
 | 0     | State       | Read-only        | Token pool state account (PDA)       |
 | 1     | ChainConfig | Writable         | Chain configuration account (PDA)    |
 | 2     | Authority   | Signer, Writable | Authority account (pool owner/admin) |
-
 **Rate Limit Configuration:**
 
 - **Capacity**: Maximum tokens in the bucket (with token decimals)
@@ -189,6 +272,261 @@ The command generates:
 - Detailed rate limit configuration summary
 - Transaction metadata including size and compute units
 - Usage instructions for multisig platforms
+
+##### init-chain-remote-config
+
+Initialize remote chain configuration for a given chain selector.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction init-chain-remote-config [options]
+```
+
+**Options:**
+
+| Option                               | Type                | Required | Description                          |
+| ------------------------------------ | ------------------- | -------- | ------------------------------------ |
+| `--program-id <address>`             | PublicKey           | Yes      | Burnmint token pool program ID       |
+| `--mint <address>`                   | PublicKey           | Yes      | Token mint address                   |
+| `--authority <address>`              | PublicKey           | Yes      | Authority public key                 |
+| `--remote-chain-selector <selector>` | u64                 | Yes      | Remote chain selector                |
+| `--pool-addresses <json>`            | JSON array of hex   | Yes      | Remote pool addresses                |
+| `--token-address <address>`          | Hex string          | Yes      | Remote token address                 |
+| `--decimals <decimals>`              | 0-255               | Yes      | Token decimals                       |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction init-chain-remote-config \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remote-chain-selector "1234567890" \
+  --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \
+  --token-address "0x9876dcba..." \
+  --decimals "18"
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                       |
+| ----- | ------------- | ---------------- | --------------------------------- |
+| 0     | State         | Read-only        | Token pool state account (PDA)    |
+| 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
+| 2     | Authority     | Signer, Writable | Authority account                  |
+| 3     | SystemProgram | Read-only        | System program                     |
+
+##### edit-chain-remote-config
+
+Edit an existing remote chain configuration.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction edit-chain-remote-config [options]
+```
+
+**Options:** (same as init)
+
+| Option                               | Type                | Required | Description                          |
+| ------------------------------------ | ------------------- | -------- | ------------------------------------ |
+| `--program-id <address>`             | PublicKey           | Yes      | Burnmint token pool program ID       |
+| `--mint <address>`                   | PublicKey           | Yes      | Token mint address                   |
+| `--authority <address>`              | PublicKey           | Yes      | Authority public key                 |
+| `--remote-chain-selector <selector>` | u64                 | Yes      | Remote chain selector                |
+| `--pool-addresses <json>`            | JSON array of hex   | Yes      | Remote pool addresses                |
+| `--token-address <address>`          | Hex string          | Yes      | Remote token address                 |
+| `--decimals <decimals>`              | 0-255               | Yes      | Token decimals                       |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction edit-chain-remote-config \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remote-chain-selector "1234567890" \
+  --pool-addresses '["0x1234abcd...", "0x5678efgh..."]' \
+  --token-address "0x9876dcba..." \
+  --decimals "18"
+```
+
+**Accounts:** (same as init)
+
+| Index | Account       | Type             | Description                       |
+| ----- | ------------- | ---------------- | --------------------------------- |
+| 0     | State         | Read-only        | Token pool state account (PDA)    |
+| 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
+| 2     | Authority     | Signer, Writable | Authority account                  |
+| 3     | SystemProgram | Read-only        | System program                     |
+
+##### append-remote-pool-addresses
+
+Append additional remote pool addresses to a chain configuration.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction append-remote-pool-addresses [options]
+```
+
+**Options:**
+
+| Option                               | Type              | Required | Description                        |
+| ------------------------------------ | ----------------- | -------- | ---------------------------------- |
+| `--program-id <address>`             | PublicKey         | Yes      | Burnmint token pool program ID     |
+| `--mint <address>`                   | PublicKey         | Yes      | Token mint address                 |
+| `--authority <address>`              | PublicKey         | Yes      | Authority public key               |
+| `--remote-chain-selector <selector>` | u64               | Yes      | Remote chain selector              |
+| `--addresses <json>`                 | JSON array of hex | Yes      | Addresses to append                |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction append-remote-pool-addresses \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remote-chain-selector "1234567890" \
+  --addresses '["0xnew1234...", "0xnew5678..."]'
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                       |
+| ----- | ------------- | ---------------- | --------------------------------- |
+| 0     | State         | Read-only        | Token pool state account (PDA)    |
+| 1     | ChainConfig   | Writable         | Chain configuration account (PDA) |
+| 2     | Authority     | Signer, Writable | Authority account                  |
+| 3     | SystemProgram | Read-only        | System program                     |
+
+##### delete-chain-config
+
+Delete a chain configuration for a given chain selector.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction delete-chain-config [options]
+```
+
+**Options:**
+
+| Option                               | Type      | Required | Description                      |
+| ------------------------------------ | --------- | -------- | -------------------------------- |
+| `--program-id <address>`             | PublicKey | Yes      | Burnmint token pool program ID   |
+| `--mint <address>`                   | PublicKey | Yes      | Token mint address               |
+| `--authority <address>`              | PublicKey | Yes      | Authority public key             |
+| `--remote-chain-selector <selector>` | u64       | Yes      | Remote chain selector            |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction delete-chain-config \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remote-chain-selector "1234567890"
+```
+
+**Accounts:**
+
+| Index | Account     | Type             | Description                       |
+| ----- | ----------- | ---------------- | --------------------------------- |
+| 0     | State       | Read-only        | Token pool state account (PDA)    |
+| 1     | ChainConfig | Writable         | Chain configuration account (PDA) |
+| 2     | Authority   | Signer, Writable | Authority account                  |
+
+##### configure-allow-list
+
+Configure allowed addresses and enable/disable the allow list.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction configure-allow-list [options]
+```
+
+**Options:**
+
+| Option                   | Type                         | Required | Description                          |
+| ------------------------ | ---------------------------- | -------- | ------------------------------------ |
+| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID       |
+| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                   |
+| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                 |
+| `--add <json>`           | JSON array of Base58 pubkeys | Yes      | Addresses to add to the allow list   |
+| `--enabled <boolean>`    | boolean                      | Yes      | Enable or disable the allow list     |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction configure-allow-list \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --add '["11111111111111111111111111111112", "22222222222222222222222222222223"]' \
+  --enabled "true"
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                    |
+| ----- | ------------- | ---------------- | ------------------------------ |
+| 0     | State         | Writable         | Token pool state account (PDA) |
+| 1     | Mint          | Read-only        | Token mint account             |
+| 2     | Authority     | Signer, Writable | Authority account              |
+| 3     | SystemProgram | Read-only        | System program                 |
+
+##### remove-from-allow-list
+
+Remove addresses from the allow list.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction remove-from-allow-list [options]
+```
+
+**Options:**
+
+| Option                   | Type                         | Required | Description                          |
+| ------------------------ | ---------------------------- | -------- | ------------------------------------ |
+| `--program-id <address>` | PublicKey                    | Yes      | Burnmint token pool program ID       |
+| `--mint <address>`       | PublicKey                    | Yes      | Token mint address                   |
+| `--authority <address>`  | PublicKey                    | Yes      | Authority public key                 |
+| `--remove <json>`        | JSON array of Base58 pubkeys | Yes      | Addresses to remove from allow list  |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction remove-from-allow-list \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --remove '["11111111111111111111111111111112", "33333333333333333333333333333334"]'
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                    |
+| ----- | ------------- | ---------------- | ------------------------------ |
+| 0     | State         | Writable         | Token pool state account (PDA) |
+| 1     | Mint          | Read-only        | Token mint account             |
+| 2     | Authority     | Signer, Writable | Authority account              |
+| 3     | SystemProgram | Read-only        | System program                 |
 
 ## Command Reference
 

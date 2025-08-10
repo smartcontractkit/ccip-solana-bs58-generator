@@ -23,6 +23,27 @@ export const AcceptOwnershipArgsSchema = z.object({
     .optional(),
 });
 
+export const TransferOwnershipArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  proposedOwner: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 export const SetChainRateLimitArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
@@ -61,6 +82,176 @@ export const SetChainRateLimitArgsSchema = z.object({
     const num = BigInt(val);
     if (num < 0) throw new Error('Outbound rate must be non-negative');
     return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const InitChainRemoteConfigArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  remoteChainSelector: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Remote chain selector must be non-negative');
+    return num;
+  }),
+  poolAddresses: z.string().transform(val => {
+    try {
+      const addresses = JSON.parse(val);
+      if (!Array.isArray(addresses)) throw new Error('Pool addresses must be an array');
+      return addresses;
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for pool addresses: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }),
+  tokenAddress: z.string(),
+  decimals: z.string().transform(val => {
+    const num = parseInt(val, 10);
+    if (isNaN(num) || num < 0 || num > 255) throw new Error('Decimals must be between 0 and 255');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const EditChainRemoteConfigArgsSchema = InitChainRemoteConfigArgsSchema;
+
+export const AppendRemotePoolAddressesArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  remoteChainSelector: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Remote chain selector must be non-negative');
+    return num;
+  }),
+  addresses: z.string().transform(val => {
+    try {
+      const addresses = JSON.parse(val);
+      if (!Array.isArray(addresses)) throw new Error('Addresses must be an array');
+      return addresses;
+    } catch (e) {
+      throw new Error(`Invalid JSON for addresses: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const DeleteChainConfigArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  remoteChainSelector: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Remote chain selector must be non-negative');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const ConfigureAllowListArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  add: z.string().transform(val => {
+    try {
+      const addresses = JSON.parse(val);
+      if (!Array.isArray(addresses)) throw new Error('Add must be an array');
+      return addresses.map(addr => new PublicKey(addr));
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for add addresses: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }),
+  enabled: z.string().transform(val => {
+    if (val.toLowerCase() === 'true') return true;
+    if (val.toLowerCase() === 'false') return false;
+    throw new Error('enabled must be "true" or "false"');
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const RemoveFromAllowListArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  remove: z.string().transform(val => {
+    try {
+      const addresses = JSON.parse(val);
+      if (!Array.isArray(addresses)) throw new Error('Remove must be an array');
+      return addresses.map(addr => new PublicKey(addr));
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for remove addresses: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
   }),
   rpcUrl: z
     .string()

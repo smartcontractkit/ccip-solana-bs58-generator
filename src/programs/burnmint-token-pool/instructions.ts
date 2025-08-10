@@ -174,4 +174,558 @@ export class InstructionBuilder {
 
     return instruction;
   }
+
+  /**
+   * Create transferOwnership instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The current authority public key
+   * @param proposedOwner The new proposed owner public key
+   * @returns Transaction instruction
+   */
+  async transferOwnership(
+    mint: PublicKey,
+    authority: PublicKey,
+    proposedOwner: PublicKey
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        proposedOwner: proposedOwner.toString(),
+        programId: this.programId.toString(),
+      },
+      'Building transferOwnership instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'transferOwnership');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.transferOwnership(
+      this.programId,
+      mint,
+      authority
+    ).build();
+
+    logger.debug(
+      {
+        stateAccount: accounts[0]?.pubkey?.toString(),
+        mintAccount: accounts[1]?.pubkey?.toString(),
+        authorityAccount: accounts[2]?.pubkey?.toString(),
+        accountsLength: accounts.length,
+      },
+      'Account details before instruction building'
+    );
+
+    // Serialize instruction data - just the proposed owner (32 bytes)
+    const instructionDataBuffer = Buffer.alloc(32);
+    proposedOwner.toBuffer().copy(instructionDataBuffer, 0);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'transfer_ownership',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create initChainRemoteConfig instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @param poolAddresses Array of remote pool addresses
+   * @param tokenAddress Remote token address
+   * @param decimals Token decimals
+   * @returns Transaction instruction
+   */
+  async initChainRemoteConfig(
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint,
+    poolAddresses: string[],
+    tokenAddress: string,
+    decimals: number
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        remoteChainSelector: remoteChainSelector.toString(),
+        poolAddresses,
+        tokenAddress,
+        decimals,
+      },
+      'Building initChainRemoteConfig instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'initChainRemoteConfig');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.initChainRemoteConfig(
+      this.programId,
+      mint,
+      authority,
+      remoteChainSelector
+    ).build();
+
+    logger.debug(
+      {
+        stateAccount: accounts[0]?.pubkey?.toString(),
+        chainConfigAccount: accounts[1]?.pubkey?.toString(),
+        authorityAccount: accounts[2]?.pubkey?.toString(),
+        systemProgram: accounts[3]?.pubkey?.toString(),
+        accountsLength: accounts.length,
+      },
+      'Account details before instruction building'
+    );
+
+    // Serialize instruction data
+    // Structure: chainSelector (8) + mint (32) + RemoteConfig
+    // RemoteConfig: poolAddresses (vec) + tokenAddress + decimals
+    const buffers: Buffer[] = [];
+
+    // Chain selector (u64)
+    const chainSelectorBuffer = Buffer.alloc(8);
+    chainSelectorBuffer.writeBigUInt64LE(remoteChainSelector);
+    buffers.push(chainSelectorBuffer);
+
+    // Mint (32 bytes)
+    buffers.push(mint.toBuffer());
+
+    // Pool addresses as vec of RemoteAddress
+    const poolAddressesLenBuffer = Buffer.alloc(4);
+    poolAddressesLenBuffer.writeUInt32LE(poolAddresses.length);
+    buffers.push(poolAddressesLenBuffer);
+
+    for (const addr of poolAddresses) {
+      const addrBytes = Buffer.from(addr, 'hex');
+      const lenBuffer = Buffer.alloc(4);
+      lenBuffer.writeUInt32LE(addrBytes.length);
+      buffers.push(lenBuffer);
+      buffers.push(addrBytes);
+    }
+
+    // Token address as RemoteAddress
+    const tokenAddrBytes = Buffer.from(tokenAddress, 'hex');
+    const tokenLenBuffer = Buffer.alloc(4);
+    tokenLenBuffer.writeUInt32LE(tokenAddrBytes.length);
+    buffers.push(tokenLenBuffer);
+    buffers.push(tokenAddrBytes);
+
+    // Decimals (u8)
+    buffers.push(Buffer.from([decimals]));
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'init_chain_remote_config',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create editChainRemoteConfig instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @param poolAddresses Array of remote pool addresses
+   * @param tokenAddress Remote token address
+   * @param decimals Token decimals
+   * @returns Transaction instruction
+   */
+  async editChainRemoteConfig(
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint,
+    poolAddresses: string[],
+    tokenAddress: string,
+    decimals: number
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        remoteChainSelector: remoteChainSelector.toString(),
+        poolAddresses,
+        tokenAddress,
+        decimals,
+      },
+      'Building editChainRemoteConfig instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'editChainRemoteConfig');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.editChainRemoteConfig(
+      this.programId,
+      mint,
+      authority,
+      remoteChainSelector
+    ).build();
+
+    // Same data serialization as initChainRemoteConfig
+    const buffers: Buffer[] = [];
+
+    // Chain selector (u64)
+    const chainSelectorBuffer = Buffer.alloc(8);
+    chainSelectorBuffer.writeBigUInt64LE(remoteChainSelector);
+    buffers.push(chainSelectorBuffer);
+
+    // Mint (32 bytes)
+    buffers.push(mint.toBuffer());
+
+    // Pool addresses as vec of RemoteAddress
+    const poolAddressesLenBuffer = Buffer.alloc(4);
+    poolAddressesLenBuffer.writeUInt32LE(poolAddresses.length);
+    buffers.push(poolAddressesLenBuffer);
+
+    for (const addr of poolAddresses) {
+      const addrBytes = Buffer.from(addr, 'hex');
+      const lenBuffer = Buffer.alloc(4);
+      lenBuffer.writeUInt32LE(addrBytes.length);
+      buffers.push(lenBuffer);
+      buffers.push(addrBytes);
+    }
+
+    // Token address as RemoteAddress
+    const tokenAddrBytes = Buffer.from(tokenAddress, 'hex');
+    const tokenLenBuffer = Buffer.alloc(4);
+    tokenLenBuffer.writeUInt32LE(tokenAddrBytes.length);
+    buffers.push(tokenLenBuffer);
+    buffers.push(tokenAddrBytes);
+
+    // Decimals (u8)
+    buffers.push(Buffer.from([decimals]));
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'edit_chain_remote_config',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create appendRemotePoolAddresses instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @param addresses Array of remote addresses to append
+   * @returns Transaction instruction
+   */
+  async appendRemotePoolAddresses(
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint,
+    addresses: string[]
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        remoteChainSelector: remoteChainSelector.toString(),
+        addresses,
+      },
+      'Building appendRemotePoolAddresses instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'appendRemotePoolAddresses');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.appendRemotePoolAddresses(
+      this.programId,
+      mint,
+      authority,
+      remoteChainSelector
+    ).build();
+
+    // Serialize instruction data
+    const buffers: Buffer[] = [];
+
+    // Chain selector (u64)
+    const chainSelectorBuffer = Buffer.alloc(8);
+    chainSelectorBuffer.writeBigUInt64LE(remoteChainSelector);
+    buffers.push(chainSelectorBuffer);
+
+    // Mint (32 bytes)
+    buffers.push(mint.toBuffer());
+
+    // Addresses as vec of RemoteAddress
+    const addressesLenBuffer = Buffer.alloc(4);
+    addressesLenBuffer.writeUInt32LE(addresses.length);
+    buffers.push(addressesLenBuffer);
+
+    for (const addr of addresses) {
+      const addrBytes = Buffer.from(addr, 'hex');
+      const lenBuffer = Buffer.alloc(4);
+      lenBuffer.writeUInt32LE(addrBytes.length);
+      buffers.push(lenBuffer);
+      buffers.push(addrBytes);
+    }
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'append_remote_pool_addresses',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create deleteChainConfig instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Transaction instruction
+   */
+  async deleteChainConfig(
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        remoteChainSelector: remoteChainSelector.toString(),
+      },
+      'Building deleteChainConfig instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'deleteChainConfig');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.deleteChainConfig(
+      this.programId,
+      mint,
+      authority,
+      remoteChainSelector
+    ).build();
+
+    // Serialize instruction data
+    const buffers: Buffer[] = [];
+
+    // Chain selector (u64)
+    const chainSelectorBuffer = Buffer.alloc(8);
+    chainSelectorBuffer.writeBigUInt64LE(remoteChainSelector);
+    buffers.push(chainSelectorBuffer);
+
+    // Mint (32 bytes)
+    buffers.push(mint.toBuffer());
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'delete_chain_config',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create configureAllowList instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param add Array of addresses to add to allow list
+   * @param enabled Whether the allow list is enabled
+   * @returns Transaction instruction
+   */
+  async configureAllowList(
+    mint: PublicKey,
+    authority: PublicKey,
+    add: PublicKey[],
+    enabled: boolean
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        add: add.map(a => a.toString()),
+        enabled,
+      },
+      'Building configureAllowList instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'configureAllowList');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.configureAllowList(
+      this.programId,
+      mint,
+      authority
+    ).build();
+
+    // Serialize instruction data
+    const buffers: Buffer[] = [];
+
+    // Add addresses as vec of PublicKey
+    const addLenBuffer = Buffer.alloc(4);
+    addLenBuffer.writeUInt32LE(add.length);
+    buffers.push(addLenBuffer);
+
+    for (const addr of add) {
+      buffers.push(addr.toBuffer());
+    }
+
+    // Enabled (bool)
+    buffers.push(Buffer.from([enabled ? 1 : 0]));
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'configure_allow_list',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
+   * Create removeFromAllowList instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remove Array of addresses to remove from allow list
+   * @returns Transaction instruction
+   */
+  async removeFromAllowList(
+    mint: PublicKey,
+    authority: PublicKey,
+    remove: PublicKey[]
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        programId: this.programId.toString(),
+        remove: remove.map(r => r.toString()),
+      },
+      'Building removeFromAllowList instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'removeFromAllowList');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.removeFromAllowList(
+      this.programId,
+      mint,
+      authority
+    ).build();
+
+    // Serialize instruction data
+    const buffers: Buffer[] = [];
+
+    // Remove addresses as vec of PublicKey
+    const removeLenBuffer = Buffer.alloc(4);
+    removeLenBuffer.writeUInt32LE(remove.length);
+    buffers.push(removeLenBuffer);
+
+    for (const addr of remove) {
+      buffers.push(addr.toBuffer());
+    }
+
+    const instructionDataBuffer = Buffer.concat(buffers);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'remove_from_allow_list',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
 }

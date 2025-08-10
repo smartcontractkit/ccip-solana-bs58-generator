@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { BURNMINT_TOKEN_POOL } from '../../utils/constants.js';
 import { AccountBuilder } from '../../utils/accounts.js';
 
@@ -67,6 +67,26 @@ export class BurnmintTokenPoolAccounts {
   }
 
   /**
+   * Build accounts for transferOwnership instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The current authority public key
+   * @returns Account builder with required accounts
+   */
+  static transferOwnership(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+
+    return new AccountBuilder()
+      .addWritable(statePda) // state account (writable)
+      .addReadOnly(mint) // mint account (read-only)
+      .addSigner(authority); // authority account (signer)
+  }
+
+  /**
    * Build accounts for setChainRateLimit instruction
    * @param programId The burnmint_token_pool program ID
    * @param mint The mint public key
@@ -91,5 +111,158 @@ export class BurnmintTokenPoolAccounts {
       .addReadOnly(statePda) // state account (read-only)
       .addWritable(chainConfigPda) // chain config account (writable)
       .addSigner(authority, true); // authority account (writable, signer)
+  }
+
+  /**
+   * Build accounts for initChainRemoteConfig instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Account builder with required accounts
+   */
+  static initChainRemoteConfig(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [chainConfigPda] = AccountDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+
+    return new AccountBuilder()
+      .addReadOnly(statePda) // state account (read-only)
+      .addWritable(chainConfigPda) // chain config account (writable)
+      .addSigner(authority, true) // authority account (writable, signer)
+      .addReadOnly(SystemProgram.programId); // system program
+  }
+
+  /**
+   * Build accounts for editChainRemoteConfig instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Account builder with required accounts
+   */
+  static editChainRemoteConfig(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [chainConfigPda] = AccountDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+
+    return new AccountBuilder()
+      .addReadOnly(statePda) // state account (read-only)
+      .addWritable(chainConfigPda) // chain config account (writable)
+      .addSigner(authority, true) // authority account (writable, signer)
+      .addReadOnly(SystemProgram.programId); // system program
+  }
+
+  /**
+   * Build accounts for appendRemotePoolAddresses instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Account builder with required accounts
+   */
+  static appendRemotePoolAddresses(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [chainConfigPda] = AccountDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+
+    return new AccountBuilder()
+      .addReadOnly(statePda) // state account (read-only)
+      .addWritable(chainConfigPda) // chain config account (writable)
+      .addSigner(authority, true) // authority account (writable, signer)
+      .addReadOnly(SystemProgram.programId); // system program
+  }
+
+  /**
+   * Build accounts for deleteChainConfig instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @param remoteChainSelector The remote chain selector
+   * @returns Account builder with required accounts
+   */
+  static deleteChainConfig(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey,
+    remoteChainSelector: bigint
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+    const [chainConfigPda] = AccountDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+
+    return new AccountBuilder()
+      .addReadOnly(statePda) // state account (read-only)
+      .addWritable(chainConfigPda) // chain config account (writable)
+      .addSigner(authority, true); // authority account (writable, signer)
+  }
+
+  /**
+   * Build accounts for configureAllowList instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @returns Account builder with required accounts
+   */
+  static configureAllowList(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+
+    return new AccountBuilder()
+      .addWritable(statePda) // state account (writable)
+      .addReadOnly(mint) // mint account (read-only)
+      .addSigner(authority, true) // authority account (writable, signer)
+      .addReadOnly(SystemProgram.programId); // system program
+  }
+
+  /**
+   * Build accounts for removeFromAllowList instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The authority public key
+   * @returns Account builder with required accounts
+   */
+  static removeFromAllowList(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+
+    return new AccountBuilder()
+      .addWritable(statePda) // state account (writable)
+      .addReadOnly(mint) // mint account (read-only)
+      .addSigner(authority, true) // authority account (writable, signer)
+      .addReadOnly(SystemProgram.programId); // system program
   }
 }
