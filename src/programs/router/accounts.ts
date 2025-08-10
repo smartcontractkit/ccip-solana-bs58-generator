@@ -1,4 +1,5 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { ROUTER_SEEDS } from '../../utils/constants.js';
 import { AccountBuilder } from '../../utils/accounts.js';
 
 /**
@@ -11,7 +12,7 @@ export class AccountDerivation {
    * seeds = [b"config"]
    */
   static deriveConfigPda(programId: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync([Buffer.from('config')], programId);
+    return PublicKey.findProgramAddressSync([Buffer.from(ROUTER_SEEDS.CONFIG)], programId);
   }
 
   /**
@@ -20,7 +21,21 @@ export class AccountDerivation {
    */
   static deriveTokenAdminRegistryPda(programId: PublicKey, mint: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [Buffer.from('token_admin_registry'), mint.toBuffer()],
+      [Buffer.from(ROUTER_SEEDS.TOKEN_ADMIN_REGISTRY), mint.toBuffer()],
+      programId
+    );
+  }
+
+  /**
+   * Derive the router external token pools signer PDA
+   * seeds = [b"external_token_pools_signer", poolProgramId]
+   */
+  static deriveExternalTokenPoolsSignerPda(
+    programId: PublicKey,
+    poolProgramId: PublicKey
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from(ROUTER_SEEDS.EXTERNAL_TOKEN_POOLS_SIGNER), poolProgramId.toBuffer()],
       programId
     );
   }

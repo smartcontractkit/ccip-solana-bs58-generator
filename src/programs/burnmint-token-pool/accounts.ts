@@ -40,6 +40,19 @@ export class AccountDerivation {
       programId
     );
   }
+
+  /**
+   * Derive the pool signer PDA for a given mint
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @returns Pool signer PDA and bump seed
+   */
+  static derivePoolSignerPda(programId: PublicKey, mint: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from(BURNMINT_TOKEN_POOL.POOL_SIGNER_SEED), mint.toBuffer()],
+      programId
+    );
+  }
 }
 
 /**

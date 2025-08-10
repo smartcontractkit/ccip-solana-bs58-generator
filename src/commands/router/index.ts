@@ -4,6 +4,7 @@ import { ownerOverridePendingAdministratorCommand } from './owner-override-pendi
 import { acceptAdminRoleCommand } from './accept-admin-role.js';
 import { transferAdminRoleCommand } from './transfer-admin-role.js';
 import { setPoolCommand } from './set-pool.js';
+import { createLookupTableCommand } from './create-lookup-table.js';
 
 /**
  * CCIP Router commands
@@ -14,11 +15,16 @@ export function createRouterCommands(): Command {
     .alias('r')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool)'
+      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table)'
     )
     .option('--program-id <programId>', 'Router program ID (required for all instructions)')
     .option('--mint <mint>', 'Token mint address (required for registry instructions)')
     .option('--authority <authority>', 'Authority public key (required for all instructions)')
+    .option(
+      '--fee-quoter-program-id <pubkey>',
+      'Fee Quoter program ID (required for create-lookup-table)'
+    )
+    .option('--pool-program-id <pubkey>', 'Pool program ID (required for create-lookup-table)')
     // owner/ccip-admin propose/override use the same param name
     .option(
       '--token-admin-registry-admin <pubkey>',
@@ -74,6 +80,13 @@ export function createRouterCommands(): Command {
           );
           process.exit(1);
         }
+      } else if (instr === 'create-lookup-table') {
+        if (!options.mint || !options.poolProgramId || !options.feeQuoterProgramId) {
+          console.error(
+            '❌ create-lookup-table requires: --mint, --pool-program-id, and --fee-quoter-program-id'
+          );
+          process.exit(1);
+        }
       } else {
         console.error(`❌ Unknown instruction: ${instr}`);
         process.exit(1);
@@ -91,6 +104,8 @@ export function createRouterCommands(): Command {
         transferAdminRoleCommand(options, command);
       } else if (i === 'set-pool') {
         setPoolCommand(options, command);
+      } else if (i === 'create-lookup-table') {
+        createLookupTableCommand(options, command);
       }
     });
 

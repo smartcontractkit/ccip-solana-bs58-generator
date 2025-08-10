@@ -42,4 +42,21 @@ export const CLI_CONFIG = {
 export const BURNMINT_TOKEN_POOL = {
   STATE_SEED: 'ccip_tokenpool_config',
   CHAIN_CONFIG_SEED: 'ccip_tokenpool_chainconfig',
+  POOL_SIGNER_SEED: 'ccip_tokenpool_signer',
+} as const;
+
+/**
+ * CCIP Router specific seeds
+ */
+export const ROUTER_SEEDS = {
+  CONFIG: 'config',
+  TOKEN_ADMIN_REGISTRY: 'token_admin_registry',
+  EXTERNAL_TOKEN_POOLS_SIGNER: 'external_token_pools_signer',
+} as const;
+
+/**
+ * Fee Quoter specific seeds
+ */
+export const FEE_QUOTER_SEEDS = {
+  FEE_BILLING_TOKEN_CONFIG: 'fee_billing_token_config',
 } as const;

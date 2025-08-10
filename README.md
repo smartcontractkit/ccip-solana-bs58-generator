@@ -32,6 +32,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Accept Admin Role](#accept-admin-role)
       - [Transfer Admin Role](#transfer-admin-role)
       - [Set Pool](#set-pool)
+      - [Create Lookup Table](#create-lookup-table)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -704,6 +705,60 @@ pnpm bs58 router \
   --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
   --writable-indexes "0x80"
 ```
+
+##### create-lookup-table
+
+Create and extend an Address Lookup Table (ALT) for a mint’s Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction create-lookup-table [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                                                        |
+| ------------------------------- | --------- | -------- | ------------------------------------------------------------------ |
+| `--program-id <address>`        | PublicKey | Yes      | Router program ID                                                  |
+| `--fee-quoter-program-id <id>`  | PublicKey | Yes      | Fee Quoter program ID                                              |
+| `--pool-program-id <id>`        | PublicKey | Yes      | Burn-mint pool program ID                                          |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address                                                 |
+| `--authority <address>`         | PublicKey | Yes      | ALT authority and payer                                            |
+| `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append after base entries          |
+
+Address order inside the ALT:
+
+1. ALT address (self)
+2. Token Admin Registry PDA (router)
+3. Pool program ID
+4. Pool config PDA (burn-mint pool state)
+5. Pool token ATA (mint, owner = pool signer PDA, token-program aware)
+6. Pool signer PDA (burn-mint)
+7. Token program ID (SPL v1 or Token-2022, auto-detected from the mint)
+8. Token mint
+9. Fee token config PDA (fee quoter)
+10. CCIP router pool signer PDA (router, seed external_token_pools_signer + poolProgramId)
+
+Any `--additional-addresses` are appended after index 10. Max total addresses: 256.
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction create-lookup-table \
+  --program-id "<ROUTER_PID>" \
+  --fee-quoter-program-id "<FEE_QUOTER_PID>" \
+  --pool-program-id "<BURNMINT_POOL_PID>" \
+  --mint "<MINT_PUBKEY>" \
+  --authority "<AUTHORITY_PUBKEY>" \
+  --additional-addresses '["<EXTRA1>","<EXTRA2>"]'
+```
+
+Notes:
+- Token program is automatically detected by reading the mint’s owner.
+- The ALT is created and extended in one transaction and printed before the Base58 payload.
 
 ## Command Reference
 
