@@ -898,7 +898,7 @@ pnpm bs58 spl-token \
 
 - **Initial Supply**: The `--initial-supply` parameter expects the raw amount in smallest units. For a token with 9 decimals, to mint 1000 tokens, pass `--initial-supply "1000000000000"` (1000 × 10^9).
 
-- Generates a random mint keypair (address will be shown in logs)
+- Generates a deterministic mint address using `createAccountWithSeed` (multisig compatible)
 - If `--with-metaplex=true`, all metadata fields (name, symbol, uri) are required
 
 - Recipient ATA is automatically created if it doesn't exist
