@@ -7,8 +7,10 @@ import { MetaplexUpdateAuthorityArgsSchema } from '../../types/index.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { InstructionBuilder as MplInstructionBuilder } from '../../programs/metaplex/instructions.js';
 import { logger } from '../../utils/logger.js';
-import { publicKey as umiPk } from '@metaplex-foundation/umi';
+import { publicKey as umiPk, signerIdentity, createNoopSigner } from '@metaplex-foundation/umi';
 import { findMetadataPda, fetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
+import { detectTokenProgramId } from '../../utils/token.js';
+import { Connection } from '@solana/web3.js';
 
 export async function updateMetadataAuthorityCommand(
   options: Record<string, string>,
@@ -31,10 +33,12 @@ export async function updateMetadataAuthorityCommand(
     process.exit(1);
   }
 
-  const umi = createUmi(rpcUrl);
+  const umi = createUmi(rpcUrl).use(
+    signerIdentity(createNoopSigner(umiPk(parsed.data.authority.toBase58())))
+  );
 
   // Validate Metaplex metadata existence and current authority
-  await validateMetaplexMetadata(umi, parsed.data.mint, parsed.data.authority);
+  await validateMetaplexMetadata(umi, parsed.data.mint, parsed.data.authority, rpcUrl);
 
   const mpl = new MplInstructionBuilder(umi);
   const ix = mpl.updateAuthority(parsed.data.mint.toBase58(), parsed.data.newAuthority.toBase58());
@@ -57,10 +61,17 @@ export async function updateMetadataAuthorityCommand(
 async function validateMetaplexMetadata(
   umi: ReturnType<typeof createUmi>,
   mint: PublicKey,
-  providedAuthority: PublicKey
+  providedAuthority: PublicKey,
+  rpcUrl: string
 ): Promise<void> {
   try {
     logger.info('🔍 Validating Metaplex metadata...');
+
+    // Detect and log token program for user friendliness
+    const connection = new Connection(rpcUrl);
+    const tokenProgramId = await detectTokenProgramId(connection, mint);
+    logger.info(`📋 Mint: ${mint.toBase58()}`);
+    logger.info(`📋 Token Program: ${tokenProgramId.toBase58()}`);
 
     // Find the metadata PDA for this mint
     const metadataPda = findMetadataPda(umi, { mint: umiPk(mint.toBase58()) });
@@ -75,6 +86,7 @@ async function validateMetaplexMetadata(
       console.error(
         '💡 For Token-2022 metadata extension, use: spl-token --instruction update-metadata-authority'
       );
+      console.error(`💡 This mint uses token program: ${tokenProgramId.toBase58()}`);
       process.exit(1);
     }
     logger.info('✅ Metaplex metadata account exists');
