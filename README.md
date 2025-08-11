@@ -34,6 +34,15 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Transfer Admin Role](#transfer-admin-role)
       - [Create Lookup Table](#create-lookup-table)
       - [Set Pool](#set-pool)
+  - [SPL Token](#spl-token)
+    - [Instructions](#spl-token-instructions)
+      - [Mint](#mint)
+      - [Create Multisig](#create-multisig)
+      - [Transfer Mint Authority](#transfer-mint-authority)
+      - [Update Metadata Authority](#update-metadata-authority)
+  - [Metaplex Token Metadata](#metaplex-token-metadata)
+    - [Instructions](#metaplex-instructions)
+      - [Update Authority](#update-authority)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -143,11 +152,11 @@ pnpm bs58 burnmint-token-pool --instruction initialize-pool [options]
 
 **Options:**
 
-| Option                   | Type      | Required | Description                           |
-| ------------------------ | --------- | -------- | ------------------------------------- |
-| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID        |
-| `--mint <address>`       | PublicKey | Yes      | Token mint address                    |
-| `--authority <address>`  | PublicKey | Yes      | Future pool owner (signer)            |
+| Option                   | Type      | Required | Description                    |
+| ------------------------ | --------- | -------- | ------------------------------ |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address             |
+| `--authority <address>`  | PublicKey | Yes      | Future pool owner (signer)     |
 
 **Example:**
 
@@ -162,15 +171,15 @@ pnpm bs58 burnmint-token-pool \
 
 **Accounts:**
 
-| Index | Account        | Type              | Description                                   |
-| ----- | -------------- | ----------------- | --------------------------------------------- |
-| 0     | State          | Writable          | Pool state PDA (`ccip_tokenpool_config`, mint) |
-| 1     | Mint           | Read-only         | Token mint                                    |
-| 2     | Authority      | Signer, Writable  | Pool owner (signer)                           |
-| 3     | SystemProgram  | Read-only         | System program                                |
-| 4     | Program        | Read-only         | Burn-mint program ID                          |
-| 5     | ProgramData    | Read-only         | Program Data PDA (upgradeable loader)         |
-| 6     | Global Config  | Read-only         | Global config PDA (`config`)                  |
+| Index | Account       | Type             | Description                                    |
+| ----- | ------------- | ---------------- | ---------------------------------------------- |
+| 0     | State         | Writable         | Pool state PDA (`ccip_tokenpool_config`, mint) |
+| 1     | Mint          | Read-only        | Token mint                                     |
+| 2     | Authority     | Signer, Writable | Pool owner (signer)                            |
+| 3     | SystemProgram | Read-only        | System program                                 |
+| 4     | Program       | Read-only        | Burn-mint program ID                           |
+| 5     | ProgramData   | Read-only        | Program Data PDA (upgradeable loader)          |
+| 6     | Global Config | Read-only        | Global config PDA (`config`)                   |
 
 ##### transfer-ownership
 
@@ -722,14 +731,14 @@ pnpm bs58 router --instruction create-lookup-table [options]
 
 **Options:**
 
-| Option                          | Type      | Required | Description                                                        |
-| ------------------------------- | --------- | -------- | ------------------------------------------------------------------ |
-| `--program-id <address>`        | PublicKey | Yes      | Router program ID                                                  |
-| `--fee-quoter-program-id <id>`  | PublicKey | Yes      | Fee Quoter program ID                                              |
-| `--pool-program-id <id>`        | PublicKey | Yes      | Burn-mint pool program ID                                          |
-| `--mint <address>`              | PublicKey | Yes      | Token mint address                                                 |
-| `--authority <address>`         | PublicKey | Yes      | ALT authority and payer                                            |
-| `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append after base entries          |
+| Option                          | Type      | Required | Description                                               |
+| ------------------------------- | --------- | -------- | --------------------------------------------------------- |
+| `--program-id <address>`        | PublicKey | Yes      | Router program ID                                         |
+| `--fee-quoter-program-id <id>`  | PublicKey | Yes      | Fee Quoter program ID                                     |
+| `--pool-program-id <id>`        | PublicKey | Yes      | Burn-mint pool program ID                                 |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address                                        |
+| `--authority <address>`         | PublicKey | Yes      | ALT authority and payer                                   |
+| `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append after base entries |
 
 Address order inside the ALT:
 
@@ -761,6 +770,7 @@ pnpm bs58 router \
 ```
 
 Notes:
+
 - Token program is automatically detected by reading the mint’s owner.
 - The ALT is created and extended in one transaction and printed before the Base58 payload.
 
@@ -776,13 +786,13 @@ pnpm bs58 router --instruction set-pool [options]
 
 **Options:**
 
-| Option                       | Type       | Required | Description                                                         |
-| ---------------------------- | ---------- | -------- | ------------------------------------------------------------------- |
-| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                                   |
-| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                                  |
-| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                                      |
-| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts           |
-| `--writable-indexes <json>`  | JSON array | Yes      | JSON array of ALT indexes to mark writable (e.g., `[3,4,7]`)        |
+| Option                       | Type       | Required | Description                                                  |
+| ---------------------------- | ---------- | -------- | ------------------------------------------------------------ |
+| `--program-id <address>`     | PublicKey  | Yes      | Router program ID                                            |
+| `--mint <address>`           | PublicKey  | Yes      | Token mint address                                           |
+| `--authority <address>`      | PublicKey  | Yes      | Registry admin                                               |
+| `--pool-lookup-table <addr>` | PublicKey  | Yes      | Address Lookup Table containing pool and related accounts    |
+| `--writable-indexes <json>`  | JSON array | Yes      | JSON array of ALT indexes to mark writable (e.g., `[3,4,7]`) |
 
 **Notes:**
 
@@ -801,6 +811,218 @@ pnpm bs58 router \
   --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
   --writable-indexes "[3,4,7]"
 ```
+
+### SPL Token
+
+**Command:** `spl-token` (alias: `spl`)
+
+SPL token utilities for building raw transactions for multisig execution. The CLI automatically detects whether a mint belongs to SPL Token v1 or Token-2022 by reading the mint account owner on-chain.
+
+#### SPL Token Instructions
+
+##### mint
+
+Mint tokens to a recipient’s associated token account (ATA). This command builds a single `mintTo` instruction. It does not create the ATA on-chain. If the recipient’s ATA is missing, the CLI prints a warning and the mint will fail when executed unless the ATA exists.
+
+Notes:
+
+- Token program id is detected automatically from the mint.
+- The recipient owner address is used to derive the recipient ATA.
+- For Token-2022 mints, the associated token program is resolved accordingly.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction mint [options]
+```
+
+**Options:**
+
+| Option                      | Type      | Required | Description                                                                              |
+| --------------------------- | --------- | -------- | ---------------------------------------------------------------------------------------- |
+| `--authority <address>`     | PublicKey | Yes      | Mint authority or payer (signer)                                                         |
+| `--mint <address>`          | PublicKey | Yes      | Token mint address                                                                       |
+| `--recipient <address>`     | PublicKey | Yes      | Recipient owner address (ATA is derived from this)                                       |
+| `--amount <u64>`            | u64       | Yes      | Amount in the smallest unit (according to mint decimals)                                 |
+| `--multisig <address>`      | PublicKey | No       | SPL token multisig authority address (if mint authority is MS)                           |
+| `--multisig-signers <json>` | JSON      | No       | JSON array of signer pubkeys for multisig authority (required when `--multisig` is used) |
+
+**Example:**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction mint \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --recipient "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --amount "1000000"
+```
+
+If using an SPL token multisig as mint authority:
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction mint \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --recipient "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
+  --amount "1000000" \
+  --multisig "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
+  --multisig-signers '["A1...","B2...","C3..."]'
+```
+
+Notes on multisig signers:
+
+- Provide the subset of signer pubkeys that will actually sign this transaction (at least the threshold number). You do not need to include all members if the threshold is lower.
+- The order of pubkeys does not matter.
+- If `--multisig` is provided, `--multisig-signers` must be a non-empty JSON array.
+
+##### create-multisig
+
+Create and initialize an SPL token multisig account using a deterministic address (base + seed). The CLI requires a `--mint` and automatically detects whether to use SPL Token v1 or Token-2022 from the mint’s owner.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction create-multisig [options]
+```
+
+**Options:**
+
+| Option                  | Type                         | Required | Description                                                |
+| ----------------------- | ---------------------------- | -------- | ---------------------------------------------------------- |
+| `--authority <address>` | PublicKey                    | Yes      | Payer authority (signer)                                   |
+| `--seed <string>`       | string                       | Yes      | Seed string for `createAccountWithSeed` (base = authority) |
+| `--mint <address>`      | PublicKey                    | Yes      | Mint used to auto-detect the token program (v1/2022)       |
+| `--signers <json>`      | JSON array of Base58 pubkeys | Yes      | Multisig signer set                                        |
+| `--threshold <m>`       | integer                      | Yes      | Multisig threshold                                         |
+
+The CLI will derive the multisig address with `createAccountWithSeed` and generate both the system account creation and the `initializeMultisig` instruction.
+
+**Example:**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction create-multisig \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --seed "my-multisig-001" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --signers '["A1...","B2...","C3..."]' \
+  --threshold "2"
+
+Note: The derived multisig address uses `createAccountWithSeed(authority, seed, tokenProgramId)`. Using authority as base keeps the flow single-signer and predictable.
+```
+
+##### transfer-mint-authority
+
+Transfer the mint authority of a token to a new authority. If the current mint authority is an SPL token multisig, provide the multisig address and the signer pubkeys that will sign.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction transfer-mint-authority [options]
+```
+
+**Options:**
+
+| Option                        | Type      | Required | Description                                                             |
+| ----------------------------- | --------- | -------- | ----------------------------------------------------------------------- |
+| `--authority <address>`       | PublicKey | Yes      | Current mint authority (signer, or multisig address if using multisig)  |
+| `--mint <address>`            | PublicKey | Yes      | Token mint address                                                      |
+| `--new-mint-authority <addr>` | PublicKey | Yes      | New mint authority address                                              |
+| `--multisig <address>`        | PublicKey | No       | SPL token multisig authority address (if current authority is multisig) |
+| `--multisig-signers <json>`   | JSON      | No       | JSON array of signer pubkeys (required when `--multisig` is used)       |
+
+**Example (single authority):**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction transfer-mint-authority \
+  --authority "59eNrR..." \
+  --mint "EL4xtG..." \
+  --new-mint-authority "Fht7wA..."
+```
+
+**Example (multisig authority):**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction transfer-mint-authority \
+  --authority "59eNrR..." \
+  --mint "EL4xtG..." \
+  --new-mint-authority "Fht7wA..." \
+  --multisig "7fYy8h..." \
+  --multisig-signers '["A1...","B2..."]'
+```
+
+
+
+##### update-metadata-authority
+
+Update the metadata authority for Token-2022 mints. This uses the Token-2022 Metadata Pointer extension. If your mint uses a separate metadata account, pass it via `--metadata-account`; otherwise, the mint address is used by default. Set `--new-mint-authority` to omit or pass `--new-authority`? No—this instruction specifically updates the metadata authority; pass `--new-authority` if changing, or omit to leave as-is; set to null is not supported via CLI for safety.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction update-metadata-authority [options]
+```
+
+**Options:**
+
+| Option                         | Type      | Required | Description                                                     |
+| ------------------------------ | --------- | -------- | --------------------------------------------------------------- |
+| `--authority <address>`        | PublicKey | Yes      | Current metadata authority                                      |
+| `--mint <address>`             | PublicKey | Yes      | Token-2022 mint address                                         |
+| `--metadata-account <address>` | PublicKey | No       | Explicit metadata account (if using Metadata Pointer)           |
+| `--new-authority <address>`    | PublicKey | No       | New metadata authority (omit to keep current; null not exposed) |
+
+### Metaplex Token Metadata
+
+**Command:** `metaplex` (alias: `mpl`)
+
+Metaplex Token Metadata program operations (mpl-token-metadata). This is distinct from Token-2022’s metadata extension; use this when your mint’s metadata is managed by Metaplex.
+
+#### Metaplex Instructions
+
+##### update-authority
+
+Update the update authority of a Metaplex metadata account for a given mint. This creates a single Metaplex `updateV1` instruction via UMI and converts it to a web3 instruction for BS58 output.
+
+**Syntax:**
+
+```bash
+pnpm bs58 metaplex --instruction update-authority [options]
+```
+
+**Options:**
+
+| Option                      | Type      | Required | Description                           |
+| --------------------------- | --------- | -------- | ------------------------------------- |
+| `--authority <address>`     | PublicKey | Yes      | Current update authority (signer)     |
+| `--mint <address>`          | PublicKey | Yes      | Token mint address                    |
+| `--new-authority <address>` | PublicKey | Yes      | New update authority address          |
+
+**Example:**
+
+```bash
+pnpm bs58 metaplex \
+  --env devnet \
+  --instruction update-authority \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --new-authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB"
+```
+
+Notes:
+- This targets Metaplex mpl-token-metadata and uses UMI under the hood.
+- If your token uses Token-2022’s metadata extension instead, use `spl-token --instruction update-metadata-authority`.
+
+
 
 ## Command Reference
 
@@ -945,12 +1167,17 @@ The CLI follows a modular architecture:
 
 ```
 src/
-├── commands/           # Program-specific command implementations
-│   └── burnmint/      # Burnmint token pool commands
-├── core/              # Core transaction building logic
-├── programs/          # Program IDLs and instruction builders
-├── types/             # TypeScript type definitions
-└── utils/             # Shared utilities
+├── commands/             # Program-specific command implementations
+│   ├── burnmint/         # Burnmint token pool commands
+│   ├── router/           # Router commands
+│   └── spl-token/        # SPL Token commands (CLI surface)
+├── core/                 # Core transaction building logic
+├── programs/             # Program IDLs and instruction builders
+│   ├── burnmint-token-pool/
+│   ├── router/
+│   └── spl-token/        # SPL Token instruction builders
+├── types/                # TypeScript type definitions and Zod schemas
+└── utils/                # Shared utilities (validation, logging, program id detection, etc.)
 ```
 
 ### Adding New Programs
