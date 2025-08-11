@@ -7,6 +7,8 @@ import { MetaplexUpdateAuthorityArgsSchema } from '../../types/index.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { InstructionBuilder as MplInstructionBuilder } from '../../programs/metaplex/instructions.js';
 import { logger } from '../../utils/logger.js';
+import { publicKey as umiPk } from '@metaplex-foundation/umi';
+import { findMetadataPda, fetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
 
 export async function updateMetadataAuthorityCommand(
   options: Record<string, string>,
@@ -30,6 +32,10 @@ export async function updateMetadataAuthorityCommand(
   }
 
   const umi = createUmi(rpcUrl);
+
+  // Validate Metaplex metadata existence and current authority
+  await validateMetaplexMetadata(umi, parsed.data.mint, parsed.data.authority);
+
   const mpl = new MplInstructionBuilder(umi);
   const ix = mpl.updateAuthority(parsed.data.mint.toBase58(), parsed.data.newAuthority.toBase58());
 
@@ -43,4 +49,66 @@ export async function updateMetadataAuthorityCommand(
   );
   logger.info('✅ Transaction simulation completed');
   TransactionDisplay.displayResults(tx, 'metaplex.update_authority');
+}
+
+/**
+ * Validate that Metaplex metadata exists and verify current update authority
+ */
+async function validateMetaplexMetadata(
+  umi: ReturnType<typeof createUmi>,
+  mint: PublicKey,
+  providedAuthority: PublicKey
+): Promise<void> {
+  try {
+    logger.info('🔍 Validating Metaplex metadata...');
+
+    // Find the metadata PDA for this mint
+    const metadataPda = findMetadataPda(umi, { mint: umiPk(mint.toBase58()) });
+    logger.info(`📋 Metadata PDA: ${metadataPda[0]}`);
+
+    // Check if metadata account exists
+    const metadataAccount = await umi.rpc.getAccount(metadataPda[0]);
+    if (!metadataAccount.exists) {
+      logger.error(`❌ No Metaplex metadata found for mint: ${mint.toBase58()}`);
+      console.error('❌ This mint does not have Metaplex metadata.');
+      console.error('💡 Ensure you are using a mint with Metaplex Token Metadata.');
+      console.error(
+        '💡 For Token-2022 metadata extension, use: spl-token --instruction update-metadata-authority'
+      );
+      process.exit(1);
+    }
+    logger.info('✅ Metaplex metadata account exists');
+
+    // Fetch metadata to get current update authority
+    const metadata = await fetchMetadata(umi, metadataPda[0]);
+    const currentAuthority = metadata.updateAuthority;
+
+    logger.info(`📋 Current update authority: ${currentAuthority}`);
+    logger.info(`📋 Provided authority: ${providedAuthority.toBase58()}`);
+
+    // Verify that provided authority matches current update authority
+    if (currentAuthority.toString() !== providedAuthority.toBase58()) {
+      logger.warn('⚠️  WARNING: Authority mismatch detected!');
+      console.warn(
+        '⚠️  WARNING: The provided authority does not match the current update authority.'
+      );
+      console.warn(`   Current update authority: ${currentAuthority}`);
+      console.warn(`   Provided authority: ${providedAuthority.toBase58()}`);
+      console.warn('');
+      console.warn('🚨 This transaction will likely FAIL when executed.');
+      console.warn('💡 Ensure you are using the correct current update authority.');
+      console.warn('💡 Double-check the metadata account details before proceeding.');
+    } else {
+      logger.info('✅ Authority verification passed');
+    }
+
+    logger.info('✅ Metaplex metadata validation completed');
+  } catch (error) {
+    logger.error('❌ Failed to validate Metaplex metadata');
+    logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('❌ Failed to validate Metaplex metadata for this mint.');
+    console.error('💡 Ensure the mint has valid Metaplex Token Metadata.');
+    console.error('💡 Check your RPC connection and try again.');
+    process.exit(1);
+  }
 }
