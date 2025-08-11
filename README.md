@@ -939,7 +939,7 @@ pnpm bs58 spl-token \
   --env devnet \
   --instruction mint \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --mint "ERmJQ8YdAfttHAM9baxjB1B5s8QJ2mQh4iHMrVq1dzPw" \
   --recipient "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
   --amount "1000000"
 ```
