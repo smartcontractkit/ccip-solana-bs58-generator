@@ -214,6 +214,9 @@ export class TransactionBuilder {
         },
         'Transaction simulation error'
       );
+      if (error instanceof Error && error.stack) {
+        logger.error({ stack: error.stack }, 'Stack trace');
+      }
 
       return {
         success: false,

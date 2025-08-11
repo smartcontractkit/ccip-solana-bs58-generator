@@ -77,6 +77,9 @@ export async function logTiming<T>(
       },
       `Failed ${operation}`
     );
+    if (error instanceof Error && error.stack) {
+      logger.error({ stack: error.stack }, 'Stack trace');
+    }
     throw error;
   }
 }

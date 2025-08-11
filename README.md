@@ -36,6 +36,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Set Pool](#set-pool)
   - [SPL Token](#spl-token)
     - [Instructions](#spl-token-instructions)
+      - [Create Mint](#create-mint)
       - [Mint](#mint)
       - [Create Multisig](#create-multisig)
       - [Transfer Mint Authority](#transfer-mint-authority)
@@ -819,6 +820,90 @@ pnpm bs58 router \
 SPL token utilities for building raw transactions for multisig execution. The CLI automatically detects whether a mint belongs to SPL Token v1 or Token-2022 by reading the mint account owner on-chain.
 
 #### SPL Token Instructions
+
+##### create-mint
+
+Create a new SPL token mint with optional Metaplex metadata and initial supply. This command supports both SPL Token v1 and Token-2022 programs and can optionally create Metaplex metadata for cross-platform compatibility.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction create-mint [options]
+```
+
+**Options:**
+
+| Option                        | Type      | Required | Description                                                |
+| ----------------------------- | --------- | -------- | ---------------------------------------------------------- |
+| `--authority <address>`       | PublicKey | Yes      | Mint authority and payer (signer)                         |
+| `--decimals <number>`         | u8        | Yes      | Token decimals (0-255)                                     |
+| `--token-program <program>`   | string    | No       | Token program: spl-token or token-2022 (default: spl-token) |
+| `--with-metaplex <boolean>`   | boolean   | No       | Create with Metaplex metadata (default: false)            |
+| `--name <string>`             | string    | *        | Token name (required if with-metaplex=true, max 32 chars) |
+| `--symbol <string>`           | string    | *        | Token symbol (required if with-metaplex=true, max 10 chars) |
+| `--uri <string>`              | string    | *        | Metadata URI (required if with-metaplex=true)             |
+| `--initial-supply <number>`   | number    | No       | Initial supply in smallest units (optional)               |
+| `--recipient <address>`       | PublicKey | *        | Recipient for initial supply (required if initial-supply > 0) |
+
+**Example (Plain mint):**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction create-mint \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --decimals "9"
+```
+
+**Example (Token-2022 with Metaplex metadata):**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction create-mint \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --decimals "9" \
+  --token-program "token-2022" \
+  --with-metaplex "true" \
+  --name "MyToken" \
+  --symbol "MTK" \
+  --uri "https://example.com/metadata.json"
+```
+
+**Example (With initial supply):**
+
+```bash
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction create-mint \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --decimals "9" \
+  --with-metaplex "true" \
+  --name "MyToken" \
+  --symbol "MTK" \
+  --uri "https://example.com/metadata.json" \
+  --initial-supply "1000000000000" \
+  --recipient "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB"
+```
+
+**Features:**
+
+- **Token Program Selection**: Choose between SPL Token v1 and Token-2022
+- **Metaplex Integration**: Optional Metaplex metadata for cross-platform compatibility
+- **Initial Supply**: Automatically creates recipient ATA and mints initial supply
+- **Validation**: Comprehensive parameter validation and helpful error messages
+- **Logging**: Detailed progress logging for transparency
+
+**Notes:**
+
+- **Initial Supply**: The `--initial-supply` parameter expects the raw amount in smallest units. For a token with 9 decimals, to mint 1000 tokens, pass `--initial-supply "1000000000000"` (1000 × 10^9).
+
+- Generates a deterministic mint address using `createAccountWithSeed` (multisig compatible)
+- If `--with-metaplex=true`, all metadata fields (name, symbol, uri) are required
+
+- Recipient ATA is automatically created if it doesn't exist
+- Metaplex metadata supports both SPL Token v1 and Token-2022
+- sellerFeeBasisPoints is always set to 0 (no creator fees)
 
 ##### mint
 
