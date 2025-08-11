@@ -671,3 +671,24 @@ export const SplUpdateMetadataAuthorityArgsSchema = z.object({
     )
     .optional(),
 });
+
+// Metaplex (mpl-token-metadata) update authority
+export const MetaplexUpdateAuthorityArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  newAuthority: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});

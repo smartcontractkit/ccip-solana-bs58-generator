@@ -39,9 +39,10 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Mint](#mint)
       - [Create Multisig](#create-multisig)
       - [Transfer Mint Authority](#transfer-mint-authority)
-      
       - [Update Metadata Authority](#update-metadata-authority)
-      - [Transfer Mint Authority](#transfer-mint-authority)
+  - [Metaplex Token Metadata](#metaplex-token-metadata)
+    - [Instructions](#metaplex-instructions)
+      - [Update Authority](#update-authority)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -917,29 +918,6 @@ Note: The derived multisig address uses `createAccountWithSeed(authority, seed, 
 
 ##### transfer-mint-authority
 
- 
-
-##### update-metadata-authority
-
-Update the metadata authority for Token-2022 mints. This uses the Token-2022 Metadata Pointer extension. If your mint uses a separate metadata account, pass it via `--metadata-account`; otherwise, the mint address is used by default. Set `--new-mint-authority` to omit or pass `--new-authority`? No—this instruction specifically updates the metadata authority; pass `--new-authority` if changing, or omit to leave as-is; set to null is not supported via CLI for safety.
-
-**Syntax:**
-
-```bash
-pnpm bs58 spl-token --instruction update-metadata-authority [options]
-```
-
-**Options:**
-
-| Option                         | Type      | Required | Description                                                     |
-| ------------------------------ | --------- | -------- | --------------------------------------------------------------- |
-| `--authority <address>`        | PublicKey | Yes      | Current metadata authority                                      |
-| `--mint <address>`             | PublicKey | Yes      | Token-2022 mint address                                         |
-| `--metadata-account <address>` | PublicKey | No       | Explicit metadata account (if using Metadata Pointer)           |
-| `--new-authority <address>`    | PublicKey | No       | New metadata authority (omit to keep current; null not exposed) |
-
-##### transfer-mint-authority
-
 Transfer the mint authority of a token to a new authority. If the current mint authority is an SPL token multisig, provide the multisig address and the signer pubkeys that will sign.
 
 **Syntax:**
@@ -981,6 +959,70 @@ pnpm bs58 spl-token \
   --multisig "7fYy8h..." \
   --multisig-signers '["A1...","B2..."]'
 ```
+
+
+
+##### update-metadata-authority
+
+Update the metadata authority for Token-2022 mints. This uses the Token-2022 Metadata Pointer extension. If your mint uses a separate metadata account, pass it via `--metadata-account`; otherwise, the mint address is used by default. Set `--new-mint-authority` to omit or pass `--new-authority`? No—this instruction specifically updates the metadata authority; pass `--new-authority` if changing, or omit to leave as-is; set to null is not supported via CLI for safety.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction update-metadata-authority [options]
+```
+
+**Options:**
+
+| Option                         | Type      | Required | Description                                                     |
+| ------------------------------ | --------- | -------- | --------------------------------------------------------------- |
+| `--authority <address>`        | PublicKey | Yes      | Current metadata authority                                      |
+| `--mint <address>`             | PublicKey | Yes      | Token-2022 mint address                                         |
+| `--metadata-account <address>` | PublicKey | No       | Explicit metadata account (if using Metadata Pointer)           |
+| `--new-authority <address>`    | PublicKey | No       | New metadata authority (omit to keep current; null not exposed) |
+
+### Metaplex Token Metadata
+
+**Command:** `metaplex` (alias: `mpl`)
+
+Metaplex Token Metadata program operations (mpl-token-metadata). This is distinct from Token-2022’s metadata extension; use this when your mint’s metadata is managed by Metaplex.
+
+#### Metaplex Instructions
+
+##### update-authority
+
+Update the update authority of a Metaplex metadata account for a given mint. This creates a single Metaplex `updateV1` instruction via UMI and converts it to a web3 instruction for BS58 output.
+
+**Syntax:**
+
+```bash
+pnpm bs58 metaplex --instruction update-authority [options]
+```
+
+**Options:**
+
+| Option                      | Type      | Required | Description                           |
+| --------------------------- | --------- | -------- | ------------------------------------- |
+| `--authority <address>`     | PublicKey | Yes      | Current update authority (signer)     |
+| `--mint <address>`          | PublicKey | Yes      | Token mint address                    |
+| `--new-authority <address>` | PublicKey | Yes      | New update authority address          |
+
+**Example:**
+
+```bash
+pnpm bs58 metaplex \
+  --env devnet \
+  --instruction update-authority \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --new-authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB"
+```
+
+Notes:
+- This targets Metaplex mpl-token-metadata and uses UMI under the hood.
+- If your token uses Token-2022’s metadata extension instead, use `spl-token --instruction update-metadata-authority`.
+
+
 
 ## Command Reference
 
