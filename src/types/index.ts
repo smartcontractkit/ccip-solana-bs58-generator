@@ -487,3 +487,187 @@ export interface LoggerConfig {
   pretty?: boolean;
   destination?: string;
 }
+
+// SPL Token schemas
+export const SplMintArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  recipient: z.string().transform(val => new PublicKey(val)),
+  amount: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0n) throw new Error('Amount must be non-negative');
+    return num;
+  }),
+  multisig: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : undefined)),
+  multisigSigners: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val) return undefined;
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+        return parsed.map((a: unknown) => new PublicKey(String(a)));
+      } catch (e) {
+        throw new Error(
+          `Invalid JSON for multisig signers: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SplCreateMultisigArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  seed: z.string(),
+  mint: z.string().transform(val => new PublicKey(val)),
+  signers: z.string().transform(val => {
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+      return parsed.map((a: unknown) => new PublicKey(String(a)));
+    } catch (e) {
+      throw new Error(`Invalid JSON for signers: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }),
+  threshold: z.string().transform(val => {
+    const n = parseInt(val, 10);
+    if (!Number.isInteger(n) || n <= 0) throw new Error('Threshold must be a positive integer');
+    return n;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SplTransferMintAuthorityArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  newMintAuthority: z.string().transform(val => new PublicKey(val)),
+  multisig: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : undefined)),
+  multisigSigners: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val) return undefined;
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+        return parsed.map((a: unknown) => new PublicKey(String(a)));
+      } catch (e) {
+        throw new Error(
+          `Invalid JSON for multisig signers: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SplTransferFreezeAuthorityArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  newFreezeAuthority: z.string().transform(val => new PublicKey(val)),
+  multisig: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : undefined)),
+  multisigSigners: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val) return undefined;
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+        return parsed.map((a: unknown) => new PublicKey(String(a)));
+      } catch (e) {
+        throw new Error(
+          `Invalid JSON for multisig signers: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SplUpdateMetadataAuthorityArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  metadataAccount: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : undefined)),
+  newAuthority: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : null)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
