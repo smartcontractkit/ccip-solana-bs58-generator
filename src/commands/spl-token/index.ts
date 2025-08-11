@@ -13,14 +13,16 @@ export function createSplTokenCommands(): Command {
       'Instruction to execute (create-multisig, mint, transfer-mint-authority, update-metadata-authority)'
     )
     .option('--authority <authority>', 'Payer/authority public key')
-    .option('--mint <pubkey>', 'Token mint address (for mint)')
+    .option(
+      '--mint <pubkey>',
+      'Token mint address (required for mint; also used to detect token program for create-multisig)'
+    )
     .option('--recipient <pubkey>', 'Recipient owner address (for mint)')
     .option('--amount <u64>', 'Amount in smallest unit (for mint)')
     .option('--multisig <pubkey>', 'SPL multisig address (optional, for mint)')
     .option('--multisig-signers <json>', 'JSON array of signer pubkeys (optional, for mint)')
     .option('--signers <json>', 'JSON array of signer pubkeys (for create-multisig)')
     .option('--threshold <m>', 'Threshold (for create-multisig)')
-    .option('--mint <pubkey>', 'Mint to detect token program (required for create-multisig)')
     .option('--seed <string>', 'Seed for createAccountWithSeed (required for create-multisig)')
     .option('--new-mint-authority <pubkey>', 'New mint authority (for transfer-mint-authority)')
 

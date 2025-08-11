@@ -47,7 +47,7 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
   const lamports = await connection.getMinimumBalanceForRentExemption(space);
 
   const builder = new SplInstructionBuilder(tokenProgramId);
-  const { instructions } = await builder.createMultisigWithSeed(
+  const { address: multisigAddress, instructions } = await builder.createMultisigWithSeed(
     authority,
     authority,
     seed,
@@ -62,5 +62,6 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
   logger.info('🔄 Building and simulating transaction...');
   const tx = await tb.buildTransaction(ixs, authority, 'spl.create_multisig');
   logger.info('✅ Transaction simulation completed');
+  console.log(`📮 Derived SPL Token Multisig Address: ${multisigAddress.toBase58()}`);
   TransactionDisplay.displayResults(tx, 'spl.create_multisig');
 }
