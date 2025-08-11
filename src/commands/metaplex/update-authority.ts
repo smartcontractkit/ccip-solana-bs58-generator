@@ -118,6 +118,9 @@ async function validateMetaplexMetadata(
   } catch (error) {
     logger.error('❌ Failed to validate Metaplex metadata');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof Error && error.stack) {
+      logger.error(`Stack trace: ${error.stack}`);
+    }
     console.error('❌ Failed to validate Metaplex metadata for this mint.');
     console.error('💡 Ensure the mint has valid Metaplex Token Metadata.');
     console.error('💡 Check your RPC connection and try again.');

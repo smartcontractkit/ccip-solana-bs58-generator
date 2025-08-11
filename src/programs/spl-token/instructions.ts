@@ -1,8 +1,12 @@
-import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, SystemProgram, TransactionInstruction, Connection } from '@solana/web3.js';
 import {
   createInitializeMultisigInstruction,
   createMintToInstruction,
   createSetAuthorityInstruction,
+  createInitializeMintInstruction,
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+  getMintLen,
   AuthorityType,
 } from '@solana/spl-token';
 import { createUpdateAuthorityInstruction } from '@solana/spl-token-metadata';
@@ -105,5 +109,82 @@ export class InstructionBuilder {
       oldAuthority,
       newAuthority: newAuthority ?? null,
     });
+  }
+
+  /**
+   * Create instructions to create and initialize a mint using createAccountWithSeed
+   */
+  async createMintWithSeed(
+    mint: PublicKey,
+    mintAuthority: PublicKey,
+    seed: string,
+    freezeAuthority: PublicKey | null,
+    decimals: number,
+    connection: Connection
+  ): Promise<TransactionInstruction[]> {
+    const space = getMintLen([]);
+    const lamports = await connection.getMinimumBalanceForRentExemption(space);
+
+    const createAccountIx = SystemProgram.createAccountWithSeed({
+      fromPubkey: mintAuthority,
+      newAccountPubkey: mint,
+      basePubkey: mintAuthority,
+      seed,
+      space,
+      lamports,
+      programId: this.tokenProgramId,
+    });
+
+    const initializeMintIx = createInitializeMintInstruction(
+      mint,
+      decimals,
+      mintAuthority,
+      freezeAuthority,
+      this.tokenProgramId
+    );
+
+    return [createAccountIx, initializeMintIx];
+  }
+
+  /**
+   * Create an associated token account instruction
+   */
+  createAssociatedTokenAccount(
+    payer: PublicKey,
+    owner: PublicKey,
+    mint: PublicKey
+  ): TransactionInstruction {
+    const associatedTokenAddress = getAssociatedTokenAddressSync(
+      mint,
+      owner,
+      false,
+      this.tokenProgramId
+    );
+
+    return createAssociatedTokenAccountInstruction(
+      payer,
+      associatedTokenAddress,
+      owner,
+      mint,
+      this.tokenProgramId
+    );
+  }
+
+  /**
+   * Create ATA instruction with pre-calculated address (bypasses validation)
+   */
+  createAssociatedTokenAccountWithAddress(
+    payer: PublicKey,
+    associatedTokenAddress: PublicKey,
+    owner: PublicKey,
+    mint: PublicKey
+  ): TransactionInstruction {
+    return createAssociatedTokenAccountInstruction(
+      payer,
+      associatedTokenAddress,
+      owner,
+      mint,
+      this.tokenProgramId
+    );
   }
 }

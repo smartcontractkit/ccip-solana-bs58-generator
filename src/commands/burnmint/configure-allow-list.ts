@@ -155,6 +155,9 @@ export async function configureAllowListCommand(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     commandLogger.error({ error: errorMessage }, 'configureAllowList command failed');
+    if (error instanceof Error && error.stack) {
+      commandLogger.error({ stack: error.stack }, 'Stack trace');
+    }
 
     // Provide helpful error messages for common issues
     if (errorMessage.includes('Non-base58 character')) {

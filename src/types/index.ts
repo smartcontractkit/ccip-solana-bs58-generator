@@ -692,3 +692,49 @@ export const MetaplexUpdateAuthorityArgsSchema = z.object({
     )
     .optional(),
 });
+
+// Create mint schema
+export const CreateMintArgsSchema = z.object({
+  authority: z.string().transform(val => new PublicKey(val)),
+  decimals: z.number().int().min(0).max(255),
+  tokenProgram: z.enum(['spl-token', 'token-2022']).default('spl-token'),
+  withMetaplex: z.boolean().default(false),
+  name: z.string().max(32).optional(),
+  symbol: z.string().max(10).optional(),
+  uri: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+  initialSupply: z
+    .string()
+    .transform(val => BigInt(val))
+    .optional(),
+  recipient: z
+    .string()
+    .transform(val => new PublicKey(val))
+    .optional(),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});

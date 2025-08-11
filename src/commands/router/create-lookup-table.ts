@@ -5,6 +5,7 @@ import { RouterCreateLookupTableArgsSchema } from '../../types/index.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { buildCreateAndExtendAlt } from '../../utils/alt.js';
+import { logger } from '../../utils/logger.js';
 
 export async function createLookupTableCommand(options: Record<string, string>, command: Command) {
   try {
@@ -60,6 +61,9 @@ export async function createLookupTableCommand(options: Record<string, string>, 
     TransactionDisplay.displayResults(generated, 'router.create_lookup_table');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (error instanceof Error && error.stack) {
+      logger.error(`Stack trace: ${error.stack}`);
+    }
     TransactionDisplay.displayError(message);
     process.exitCode = 1;
   }

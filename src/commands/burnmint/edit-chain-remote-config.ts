@@ -165,6 +165,9 @@ export async function editChainRemoteConfigCommand(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     commandLogger.error({ error: errorMessage }, 'editChainRemoteConfig command failed');
+    if (error instanceof Error && error.stack) {
+      commandLogger.error({ stack: error.stack }, 'Stack trace');
+    }
 
     // Provide helpful error messages for common issues
     if (errorMessage.includes('Non-base58 character')) {

@@ -77,6 +77,9 @@ export async function ownerOverridePendingAdministratorCommand(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     cmdLogger.error({ error: message }, 'ownerOverridePendingAdministrator failed');
+    if (error instanceof Error && error.stack) {
+      cmdLogger.error({ stack: error.stack }, 'Stack trace');
+    }
     console.error(`❌ ${message}`);
     process.exit(1);
   }
