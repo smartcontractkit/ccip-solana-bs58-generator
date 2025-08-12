@@ -45,12 +45,12 @@ import { toWeb3JsInstruction } from '@metaplex-foundation/umi-web3js-adapters';
 /**
  * Calculate ATA address without curve validation (for instruction building)
  */
-async function findAssociatedTokenAddress(
+function findAssociatedTokenAddress(
   mint: PublicKey,
   owner: PublicKey,
   tokenProgramId: PublicKey
-): Promise<PublicKey> {
-  const [address] = await PublicKey.findProgramAddress(
+): PublicKey {
+  const [address] = PublicKey.findProgramAddressSync(
     [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
@@ -228,7 +228,7 @@ async function createMintWithMetaplex(params: CreateMintParams, rpcUrl: string):
       logger.info('💰 Adding initial supply mint instructions...');
 
       // Calculate ATA for recipient
-      const recipientAta = await findAssociatedTokenAddress(
+      const recipientAta = findAssociatedTokenAddress(
         mintAddress,
         params.recipient!,
         tokenProgramId
@@ -335,7 +335,7 @@ async function createPlainMint(
 
       try {
         // Calculate ATA address manually to avoid validation issues
-        const recipientAta = await findAssociatedTokenAddress(
+        const recipientAta = findAssociatedTokenAddress(
           mintAddress,
           params.recipient!,
           tokenProgramId

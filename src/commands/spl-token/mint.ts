@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { getAccount, getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { getAccount, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { detectTokenProgramId } from '../../utils/token.js';
 import { SplMintArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
@@ -9,6 +9,21 @@ import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { logger } from '../../utils/logger.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
+
+/**
+ * Calculate ATA address without curve validation (for instruction building)
+ */
+function findAssociatedTokenAddress(
+  mint: PublicKey,
+  owner: PublicKey,
+  tokenProgramId: PublicKey
+): PublicKey {
+  const [address] = PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return address;
+}
 
 export async function mintCommand(options: Record<string, string>, command: Command) {
   try {
@@ -43,7 +58,7 @@ export async function mintCommand(options: Record<string, string>, command: Comm
     const tokenProgramId = detectedProgram;
 
     // Compute ATA; do NOT create on-chain, only warn if missing
-    const recipientAta = getAssociatedTokenAddressSync(mint, recipient, false, tokenProgramId);
+    const recipientAta = findAssociatedTokenAddress(mint, recipient, tokenProgramId);
 
     let ataExists = false;
     try {
