@@ -44,6 +44,9 @@ A command-line interface for generating Base58 transaction data from Solana prog
   - [Metaplex Token Metadata](#metaplex-token-metadata)
     - [Instructions](#metaplex-instructions)
       - [Update Authority](#update-authority)
+  - [Utility Commands](#utility-commands)
+    - [Instructions](#utility-instructions)
+      - [Derive Accounts](#derive-accounts)
 - [Command Reference](#command-reference)
   - [Help Commands](#help-commands)
   - [Common Patterns](#common-patterns)
@@ -1105,9 +1108,73 @@ pnpm bs58 metaplex \
 
 Notes:
 - This targets Metaplex mpl-token-metadata and uses UMI under the hood.
-- If your token uses Token-2022’s metadata extension instead, use `spl-token --instruction update-metadata-authority`.
+- If your token uses Token-2022's metadata extension instead, use `spl-token --instruction update-metadata-authority`.
 
+### Utility Commands
 
+**Command:** `utils` (alias: `u`)
+
+Utility commands for account derivation and address calculation. Essential for getting critical addresses like the Pool Signer PDA.
+
+#### Utility Instructions
+
+##### derive-accounts
+
+Derive and display all relevant account addresses for a given program and mint. This is especially useful for finding the **Pool Signer PDA** that handles autonomous cross-chain operations.
+
+**Syntax:**
+
+```bash
+pnpm bs58 utils --instruction derive-accounts [options]
+```
+
+**Options:**
+
+| Option                             | Type      | Required | Description                                    |
+| ---------------------------------- | --------- | -------- | ---------------------------------------------- |
+| `--program-type <type>`            | enum      | Yes      | Program type: burnmint-token-pool, router, spl-token |
+| `--program-id <address>`           | PublicKey | Yes      | Program ID for derivations                      |
+| `--mint <address>`                 | PublicKey | Yes      | Token mint address                             |
+| `--pool-program-id <address>`      | PublicKey | No       | Pool program ID (for router derivations)       |
+| `--remote-chain-selector <selector>` | u64      | No       | Remote chain selector (for chain config derivations) |
+
+**Examples:**
+
+```bash
+# Derive all burnmint token pool accounts (includes Pool Signer PDA!)
+pnpm bs58 utils \
+  --env devnet \
+  --instruction derive-accounts \
+  --program-type burnmint-token-pool \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EbrEbzXXUGurxRq55xtie1r4e8rHH99jUAwUaEygrKND"
+
+# Derive router accounts
+pnpm bs58 utils \
+  --env devnet \
+  --instruction derive-accounts \
+  --program-type router \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --mint "EbrEbzXXUGurxRq55xtie1r4e8rHH99jUAwUaEygrKND"
+```
+
+**Key Accounts Derived:**
+
+For `burnmint-token-pool`:
+- **Pool State PDA**: Main pool configuration (created by `initialize-pool`)
+- **🎯 Pool Signer PDA**: **CRITICAL** - Autonomous mint/burn authority for cross-chain operations
+- **Global Config PDA**: Program-wide configuration
+- **Pool Token ATA**: Pool's token account
+- **Chain Config PDA**: Per-chain configuration (if `--remote-chain-selector` provided)
+
+For `router`:
+- **Token Admin Registry PDA**: Token administration registry
+- **Router Config PDA**: Global router configuration  
+- **Router Pool Signer PDA**: Router's authority for calling pool programs
+
+**Critical Note:**
+
+The **Pool Signer PDA** is the most important address from this command - it's the autonomous authority that signs all mint/burn transactions for cross-chain operations. This address is **NOT** shown in the `initialize-pool` transaction but is essential for understanding your token's cross-chain infrastructure.
 
 ## Command Reference
 
