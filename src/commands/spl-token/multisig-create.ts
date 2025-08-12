@@ -10,58 +10,69 @@ import { SplCreateMultisigArgsSchema } from '../../types/index.js';
 import { detectTokenProgramId } from '../../utils/token.js';
 
 export async function createSplMultisigCommand(options: Record<string, string>, command: Command) {
-  const global = command.parent?.opts() || {};
-  const rpcUrl = global.resolvedRpcUrl as string;
-  if (!(await validateRpcConnectivity(rpcUrl))) {
-    console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
+  try {
+    const global = command.parent?.opts() || {};
+    const rpcUrl = global.resolvedRpcUrl as string;
+    if (!(await validateRpcConnectivity(rpcUrl))) {
+      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
+      process.exit(1);
+    }
+
+    const connection = new Connection(rpcUrl);
+    const parsed = validateArgs(SplCreateMultisigArgsSchema, {
+      authority: options.authority,
+      signers: options.signers,
+      threshold: options.threshold,
+      seed: options.seed,
+      mint: options.mint,
+      rpcUrl,
+    });
+    if (!parsed.success) {
+      console.error(`❌ Invalid arguments: ${parsed.errors.join(', ')}`);
+      process.exit(1);
+    }
+    const authority = parsed.data.authority;
+    const seed = parsed.data.seed;
+    const signerPubkeys = parsed.data.signers;
+    const threshold = parsed.data.threshold;
+    const mint = parsed.data.mint;
+
+    // Detect correct token program from the provided mint
+    const detectedProgram = await detectTokenProgramId(connection, mint);
+    const tokenProgramId = detectedProgram.equals(TOKEN_2022_PROGRAM_ID)
+      ? TOKEN_2022_PROGRAM_ID
+      : TOKEN_PROGRAM_ID;
+
+    // Create multisig account with seed (deterministic, no new signer required)
+    const space = 355; // multisig account size
+    const lamports = await connection.getMinimumBalanceForRentExemption(space);
+
+    const builder = new SplInstructionBuilder(tokenProgramId);
+    const { address: multisigAddress, instructions } = await builder.createMultisigWithSeed(
+      authority,
+      authority,
+      seed,
+      signerPubkeys,
+      threshold,
+      space,
+      lamports
+    );
+
+    const ixs: TransactionInstruction[] = instructions;
+    const tb = new TransactionBuilder({ rpcUrl });
+    logger.info('🔄 Building and simulating transaction...');
+    const tx = await tb.buildTransaction(ixs, authority, 'spl.create_multisig');
+    logger.info('✅ Transaction simulation completed');
+    console.log(`📮 Derived SPL Token Multisig Address: ${multisigAddress.toBase58()}`);
+    TransactionDisplay.displayResults(tx, 'spl.create_multisig');
+  } catch (error) {
+    logger.error('❌ Failed to create SPL Token multisig');
+    logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof Error && error.stack) {
+      logger.error(`Stack trace: ${error.stack}`);
+    }
+    console.error('❌ Failed to create SPL Token multisig.');
+    console.error('💡 Check your parameters, signer configuration, and RPC connection.');
     process.exit(1);
   }
-
-  const connection = new Connection(rpcUrl);
-  const parsed = validateArgs(SplCreateMultisigArgsSchema, {
-    authority: options.authority,
-    signers: options.signers,
-    threshold: options.threshold,
-    seed: options.seed,
-    mint: options.mint,
-    rpcUrl,
-  });
-  if (!parsed.success) {
-    console.error(`❌ Invalid arguments: ${parsed.errors.join(', ')}`);
-    process.exit(1);
-  }
-  const authority = parsed.data.authority;
-  const seed = parsed.data.seed;
-  const signerPubkeys = parsed.data.signers;
-  const threshold = parsed.data.threshold;
-  const mint = parsed.data.mint;
-
-  // Detect correct token program from the provided mint
-  const detectedProgram = await detectTokenProgramId(connection, mint);
-  const tokenProgramId = detectedProgram.equals(TOKEN_2022_PROGRAM_ID)
-    ? TOKEN_2022_PROGRAM_ID
-    : TOKEN_PROGRAM_ID;
-
-  // Create multisig account with seed (deterministic, no new signer required)
-  const space = 355; // multisig account size
-  const lamports = await connection.getMinimumBalanceForRentExemption(space);
-
-  const builder = new SplInstructionBuilder(tokenProgramId);
-  const { address: multisigAddress, instructions } = await builder.createMultisigWithSeed(
-    authority,
-    authority,
-    seed,
-    signerPubkeys,
-    threshold,
-    space,
-    lamports
-  );
-
-  const ixs: TransactionInstruction[] = instructions;
-  const tb = new TransactionBuilder({ rpcUrl });
-  logger.info('🔄 Building and simulating transaction...');
-  const tx = await tb.buildTransaction(ixs, authority, 'spl.create_multisig');
-  logger.info('✅ Transaction simulation completed');
-  console.log(`📮 Derived SPL Token Multisig Address: ${multisigAddress.toBase58()}`);
-  TransactionDisplay.displayResults(tx, 'spl.create_multisig');
 }
