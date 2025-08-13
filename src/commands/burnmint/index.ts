@@ -19,7 +19,7 @@ export function createBurnmintCommands(): Command {
     .alias('bm')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit)'
+      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list)'
     )
     .option(
       '--program-id <programId>',
@@ -72,24 +72,27 @@ export function createBurnmintCommands(): Command {
     )
     .option(
       '--inbound-enabled <enabled>',
-      'Enable inbound rate limiting (true/false, required for set-chain-rate-limit)'
+      'Enable inbound rate limiting (true/false, ONLY for set-chain-rate-limit)'
     )
     .option(
       '--inbound-capacity <capacity>',
-      'Inbound rate limit capacity (required for set-chain-rate-limit)'
+      'Inbound rate limit capacity in smallest token units (ONLY for set-chain-rate-limit)'
     )
-    .option('--inbound-rate <rate>', 'Inbound rate limit rate (required for set-chain-rate-limit)')
+    .option(
+      '--inbound-rate <rate>',
+      'Inbound rate limit refill rate per second in smallest units (ONLY for set-chain-rate-limit)'
+    )
     .option(
       '--outbound-enabled <enabled>',
-      'Enable outbound rate limiting (true/false, required for set-chain-rate-limit)'
+      'Enable outbound rate limiting (true/false, ONLY for set-chain-rate-limit)'
     )
     .option(
       '--outbound-capacity <capacity>',
-      'Outbound rate limit capacity (required for set-chain-rate-limit)'
+      'Outbound rate limit capacity in smallest token units (ONLY for set-chain-rate-limit)'
     )
     .option(
       '--outbound-rate <rate>',
-      'Outbound rate limit rate (required for set-chain-rate-limit)'
+      'Outbound rate limit refill rate per second in smallest units (ONLY for set-chain-rate-limit)'
     )
     .hook('preAction', thisCommand => {
       // Environment/RPC validation is handled by the global preAction hook
@@ -381,15 +384,26 @@ Examples:
     --program-id "..." --mint "..." --authority "..."
 
 Available Instructions:
+
+🏗️  Pool Management:
+  • initialize-pool              Initialize a new burn-mint token pool
   • accept-ownership             Accept ownership of a token pool
   • transfer-ownership           Transfer ownership to a new owner
-  • init-chain-remote-config     Initialize remote chain configuration
-  • edit-chain-remote-config     Edit existing remote chain configuration
-  • append-remote-pool-addresses Append addresses to remote pool configuration
-  • delete-chain-config          Delete chain configuration
+
+⚙️  Chain Configuration (Pool Addresses & Token Info):
+  • init-chain-remote-config     Initialize remote chain config (pool addresses, token address, decimals)
+  • edit-chain-remote-config     Edit remote chain config (pool addresses, token address, decimals ONLY)
+  • append-remote-pool-addresses Append addresses to existing remote pool configuration
+  • delete-chain-config          Delete entire chain configuration
+
+🚦 Rate Limiting (Separate from Chain Config):
+  • set-chain-rate-limit         Configure inbound/outbound rate limits (must run AFTER init-chain-remote-config)
+
+🛡️  Access Control:
   • configure-allow-list         Configure allowed addresses list
   • remove-from-allow-list       Remove addresses from allowed list
-  • set-chain-rate-limit         Configure rate limiting for a remote chain
+
+💡 IMPORTANT: Rate limits are separate from chain config! Use init-chain-remote-config first, then set-chain-rate-limit.
 
 💡 Tips:
   • Use --env devnet for testing (cleaner than full URLs)

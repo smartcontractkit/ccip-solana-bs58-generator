@@ -44,6 +44,9 @@ A command-line interface for generating Base58 transaction data from Solana prog
   - [Metaplex Token Metadata](#metaplex-token-metadata)
     - [Instructions](#metaplex-instructions)
       - [Update Authority](#update-authority)
+  - [Common Workflows](#common-workflows)
+    - [Setting Up Cross-Chain Token Configuration](#setting-up-cross-chain-token-configuration)
+    - [Updating Existing Configuration](#updating-existing-configuration)
   - [Utility Commands](#utility-commands)
     - [Instructions](#utility-instructions)
       - [Derive Accounts](#derive-accounts)
@@ -270,7 +273,11 @@ The command generates:
 
 ##### set-chain-rate-limit
 
-Configure rate limiting for token transfers to/from a specific remote chain.
+Configure rate limiting for token transfers to/from a specific remote chain. This command ONLY modifies rate limit settings.
+
+**⚠️ PREREQUISITE**: You must run `init-chain-remote-config` first to create the chain configuration before setting rate limits.
+
+**📋 IMPORTANT**: Rate limits are specified in the **smallest token units** (e.g., for a 9-decimal token, 1 token = 1,000,000,000 smallest units).
 
 **Syntax:**
 
@@ -339,7 +346,10 @@ The command generates:
 
 ##### init-chain-remote-config
 
-Initialize remote chain configuration for a given chain selector.
+Initialize remote chain configuration for a given chain selector. This command ONLY sets up pool addresses, token address, and decimals.
+
+**⚠️ IMPORTANT**: This command does **NOT** set rate limits! Rate limits must be configured separately using `set-chain-rate-limit` after initializing the chain config.
+
 Pool addresses must be empty at init; append addresses after initialization.
 
 **Syntax:**
@@ -385,7 +395,10 @@ pnpm bs58 burnmint-token-pool \
 
 ##### edit-chain-remote-config
 
-Edit an existing remote chain configuration.
+Edit an existing remote chain configuration. This command ONLY modifies pool addresses, token address, and decimals.
+
+**⚠️ IMPORTANT**: This command does **NOT** modify rate limits! To change rate limits, use `set-chain-rate-limit` instead.
+
 If `--pool-addresses` is omitted, the on-chain list will be cleared (empty vector).
 
 **Syntax:**
@@ -1109,6 +1122,80 @@ pnpm bs58 metaplex \
 Notes:
 - This targets Metaplex mpl-token-metadata and uses UMI under the hood.
 - If your token uses Token-2022's metadata extension instead, use `spl-token --instruction update-metadata-authority`.
+
+## 🔄 **Common Workflows**
+
+### Setting Up Cross-Chain Token Configuration
+
+**⚠️ CRITICAL**: Chain configuration and rate limits are separate! Follow this exact order:
+
+```bash
+# Step 1: Initialize the pool (one-time setup)
+pnpm bs58 burnmint-token-pool --instruction initialize-pool \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>"
+
+# Step 2: Initialize chain config (pool addresses, token info)
+pnpm bs58 burnmint-token-pool --instruction init-chain-remote-config \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --pool-addresses '[]' \
+  --token-address "<REMOTE_TOKEN_ADDRESS>" \
+  --decimals "<REMOTE_DECIMALS>"
+
+# Step 3: Set rate limits (separate instruction!)
+pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --inbound-enabled "true" \
+  --inbound-capacity "<CAPACITY_IN_SMALLEST_UNITS>" \
+  --inbound-rate "<RATE_PER_SECOND_IN_SMALLEST_UNITS>" \
+  --outbound-enabled "true" \
+  --outbound-capacity "<CAPACITY_IN_SMALLEST_UNITS>" \
+  --outbound-rate "<RATE_PER_SECOND_IN_SMALLEST_UNITS>"
+
+# Step 4: Add pool addresses (after pools are deployed)
+pnpm bs58 burnmint-token-pool --instruction append-remote-pool-addresses \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --addresses '["<POOL_ADDRESS_1>", "<POOL_ADDRESS_2>"]'
+```
+
+### Updating Existing Configuration
+
+**Updating Pool Addresses or Token Info (NOT rate limits):**
+```bash
+pnpm bs58 burnmint-token-pool --instruction edit-chain-remote-config \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --pool-addresses '["<NEW_POOL_1>", "<NEW_POOL_2>"]' \
+  --token-address "<NEW_TOKEN_ADDRESS>" \
+  --decimals "<NEW_DECIMALS>"
+```
+
+**Updating Rate Limits ONLY:**
+```bash
+pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --inbound-enabled "true" \
+  --inbound-capacity "<NEW_CAPACITY>" \
+  --inbound-rate "<NEW_RATE>" \
+  --outbound-enabled "false" \
+  --outbound-capacity "0" \
+  --outbound-rate "0"
+```
 
 ### Utility Commands
 
