@@ -1,5 +1,9 @@
 # CCIP Solana BS58 Generator
 
+> **Note**
+>
+> _This repository represents an example of using a Chainlink product or service. It is provided to help you understand how to interact with Chainlink's systems so that you can integrate them into your own. This template is provided "AS IS" without warranties of any kind, has not been audited, and may be missing key checks or error handling to make the usage of the product more clear. You must thoroughly test and simulate all transactions offchain, validate functionality on testnet/devnet environments, and conduct comprehensive security reviews before deploying to mainnet or any production environment._
+
 A command-line interface for generating Base58 transaction data from Solana program IDLs for multisig execution.
 
 ## Table of Contents
@@ -44,6 +48,9 @@ A command-line interface for generating Base58 transaction data from Solana prog
   - [Metaplex Token Metadata](#metaplex-token-metadata)
     - [Instructions](#metaplex-instructions)
       - [Update Authority](#update-authority)
+  - [Common Workflows](#common-workflows)
+    - [Setting Up Cross-Chain Token Configuration](#setting-up-cross-chain-token-configuration)
+    - [Updating Existing Configuration](#updating-existing-configuration)
   - [Utility Commands](#utility-commands)
     - [Instructions](#utility-instructions)
       - [Derive Accounts](#derive-accounts)
@@ -270,7 +277,11 @@ The command generates:
 
 ##### set-chain-rate-limit
 
-Configure rate limiting for token transfers to/from a specific remote chain.
+Configure rate limiting for token transfers to/from a specific remote chain. This command ONLY modifies rate limit settings.
+
+**⚠️ PREREQUISITE**: You must run `init-chain-remote-config` first to create the chain configuration before setting rate limits.
+
+**📋 IMPORTANT**: Rate limits are specified in the **smallest token units** (e.g., for a 9-decimal token, 1 token = 1,000,000,000 smallest units).
 
 **Syntax:**
 
@@ -339,7 +350,10 @@ The command generates:
 
 ##### init-chain-remote-config
 
-Initialize remote chain configuration for a given chain selector.
+Initialize remote chain configuration for a given chain selector. This command ONLY sets up pool addresses, token address, and decimals.
+
+**⚠️ IMPORTANT**: This command does **NOT** set rate limits! Rate limits must be configured separately using `set-chain-rate-limit` after initializing the chain config.
+
 Pool addresses must be empty at init; append addresses after initialization.
 
 **Syntax:**
@@ -385,7 +399,10 @@ pnpm bs58 burnmint-token-pool \
 
 ##### edit-chain-remote-config
 
-Edit an existing remote chain configuration.
+Edit an existing remote chain configuration. This command ONLY modifies pool addresses, token address, and decimals.
+
+**⚠️ IMPORTANT**: This command does **NOT** modify rate limits! To change rate limits, use `set-chain-rate-limit` instead.
+
 If `--pool-addresses` is omitted, the on-chain list will be cleared (empty vector).
 
 **Syntax:**
@@ -836,17 +853,17 @@ pnpm bs58 spl-token --instruction create-mint [options]
 
 **Options:**
 
-| Option                        | Type      | Required | Description                                                |
-| ----------------------------- | --------- | -------- | ---------------------------------------------------------- |
-| `--authority <address>`       | PublicKey | Yes      | Mint authority and payer (signer)                         |
-| `--decimals <number>`         | u8        | Yes      | Token decimals (0-255)                                     |
-| `--token-program <program>`   | string    | No       | Token program: spl-token or token-2022 (default: spl-token) |
-| `--with-metaplex <boolean>`   | boolean   | No       | Create with Metaplex metadata (default: false)            |
-| `--name <string>`             | string    | *        | Token name (required if with-metaplex=true, max 32 chars) |
-| `--symbol <string>`           | string    | *        | Token symbol (required if with-metaplex=true, max 10 chars) |
-| `--uri <string>`              | string    | *        | Metadata URI (required if with-metaplex=true)             |
-| `--initial-supply <number>`   | number    | No       | Initial supply in smallest units (optional)               |
-| `--recipient <address>`       | PublicKey | *        | Recipient for initial supply (required if initial-supply > 0) |
+| Option                      | Type      | Required | Description                                                   |
+| --------------------------- | --------- | -------- | ------------------------------------------------------------- |
+| `--authority <address>`     | PublicKey | Yes      | Mint authority and payer (signer)                             |
+| `--decimals <number>`       | u8        | Yes      | Token decimals (0-255)                                        |
+| `--token-program <program>` | string    | No       | Token program: spl-token or token-2022 (default: spl-token)   |
+| `--with-metaplex <boolean>` | boolean   | No       | Create with Metaplex metadata (default: false)                |
+| `--name <string>`           | string    | \*       | Token name (required if with-metaplex=true, max 32 chars)     |
+| `--symbol <string>`         | string    | \*       | Token symbol (required if with-metaplex=true, max 10 chars)   |
+| `--uri <string>`            | string    | \*       | Metadata URI (required if with-metaplex=true)                 |
+| `--initial-supply <number>` | number    | No       | Initial supply in smallest units (optional)                   |
+| `--recipient <address>`     | PublicKey | \*       | Recipient for initial supply (required if initial-supply > 0) |
 
 **Example (Plain mint):**
 
@@ -1048,8 +1065,6 @@ pnpm bs58 spl-token \
   --multisig-signers '["A1...","B2..."]'
 ```
 
-
-
 ##### update-metadata-authority
 
 Update the metadata authority for Token-2022 mints. This uses the Token-2022 Metadata Pointer extension. If your mint uses a separate metadata account, pass it via `--metadata-account`; otherwise, the mint address is used by default. Set `--new-mint-authority` to omit or pass `--new-authority`? No—this instruction specifically updates the metadata authority; pass `--new-authority` if changing, or omit to leave as-is; set to null is not supported via CLI for safety.
@@ -1089,11 +1104,11 @@ pnpm bs58 metaplex --instruction update-authority [options]
 
 **Options:**
 
-| Option                      | Type      | Required | Description                           |
-| --------------------------- | --------- | -------- | ------------------------------------- |
-| `--authority <address>`     | PublicKey | Yes      | Current update authority (signer)     |
-| `--mint <address>`          | PublicKey | Yes      | Token mint address                    |
-| `--new-authority <address>` | PublicKey | Yes      | New update authority address          |
+| Option                      | Type      | Required | Description                       |
+| --------------------------- | --------- | -------- | --------------------------------- |
+| `--authority <address>`     | PublicKey | Yes      | Current update authority (signer) |
+| `--mint <address>`          | PublicKey | Yes      | Token mint address                |
+| `--new-authority <address>` | PublicKey | Yes      | New update authority address      |
 
 **Example:**
 
@@ -1107,8 +1122,85 @@ pnpm bs58 metaplex \
 ```
 
 Notes:
+
 - This targets Metaplex mpl-token-metadata and uses UMI under the hood.
 - If your token uses Token-2022's metadata extension instead, use `spl-token --instruction update-metadata-authority`.
+
+## 🔄 **Common Workflows**
+
+### Setting Up Cross-Chain Token Configuration
+
+**⚠️ CRITICAL**: Chain configuration and rate limits are separate! Follow this exact order:
+
+```bash
+# Step 1: Initialize the pool (one-time setup)
+pnpm bs58 burnmint-token-pool --instruction initialize-pool \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>"
+
+# Step 2: Initialize chain config (pool addresses, token info)
+pnpm bs58 burnmint-token-pool --instruction init-chain-remote-config \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --pool-addresses '[]' \
+  --token-address "<REMOTE_TOKEN_ADDRESS>" \
+  --decimals "<REMOTE_DECIMALS>"
+
+# Step 3: Set rate limits (separate instruction!)
+pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --inbound-enabled "true" \
+  --inbound-capacity "<CAPACITY_IN_SMALLEST_UNITS>" \
+  --inbound-rate "<RATE_PER_SECOND_IN_SMALLEST_UNITS>" \
+  --outbound-enabled "true" \
+  --outbound-capacity "<CAPACITY_IN_SMALLEST_UNITS>" \
+  --outbound-rate "<RATE_PER_SECOND_IN_SMALLEST_UNITS>"
+
+# Step 4: Add pool addresses (after pools are deployed)
+pnpm bs58 burnmint-token-pool --instruction append-remote-pool-addresses \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --addresses '["<POOL_ADDRESS_1>", "<POOL_ADDRESS_2>"]'
+```
+
+### Updating Existing Configuration
+
+**Updating Pool Addresses or Token Info (NOT rate limits):**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction edit-chain-remote-config \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --pool-addresses '["<NEW_POOL_1>", "<NEW_POOL_2>"]' \
+  --token-address "<NEW_TOKEN_ADDRESS>" \
+  --decimals "<NEW_DECIMALS>"
+```
+
+**Updating Rate Limits ONLY:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<AUTHORITY>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --inbound-enabled "true" \
+  --inbound-capacity "<NEW_CAPACITY>" \
+  --inbound-rate "<NEW_RATE>" \
+  --outbound-enabled "false" \
+  --outbound-capacity "0" \
+  --outbound-rate "0"
+```
 
 ### Utility Commands
 
@@ -1130,13 +1222,13 @@ pnpm bs58 utils --instruction derive-accounts [options]
 
 **Options:**
 
-| Option                             | Type      | Required | Description                                    |
-| ---------------------------------- | --------- | -------- | ---------------------------------------------- |
-| `--program-type <type>`            | enum      | Yes      | Program type: burnmint-token-pool, router, spl-token |
-| `--program-id <address>`           | PublicKey | Yes      | Program ID for derivations                      |
-| `--mint <address>`                 | PublicKey | Yes      | Token mint address                             |
-| `--pool-program-id <address>`      | PublicKey | No       | Pool program ID (for router derivations)       |
-| `--remote-chain-selector <selector>` | u64      | No       | Remote chain selector (for chain config derivations) |
+| Option                               | Type      | Required | Description                                          |
+| ------------------------------------ | --------- | -------- | ---------------------------------------------------- |
+| `--program-type <type>`              | enum      | Yes      | Program type: burnmint-token-pool, router, spl-token |
+| `--program-id <address>`             | PublicKey | Yes      | Program ID for derivations                           |
+| `--mint <address>`                   | PublicKey | Yes      | Token mint address                                   |
+| `--pool-program-id <address>`        | PublicKey | No       | Pool program ID (for router derivations)             |
+| `--remote-chain-selector <selector>` | u64       | No       | Remote chain selector (for chain config derivations) |
 
 **Examples:**
 
@@ -1161,6 +1253,7 @@ pnpm bs58 utils \
 **Key Accounts Derived:**
 
 For `burnmint-token-pool`:
+
 - **Pool State PDA**: Main pool configuration (created by `initialize-pool`)
 - **🎯 Pool Signer PDA**: **CRITICAL** - Autonomous mint/burn authority for cross-chain operations
 - **Global Config PDA**: Program-wide configuration
@@ -1168,8 +1261,9 @@ For `burnmint-token-pool`:
 - **Chain Config PDA**: Per-chain configuration (if `--remote-chain-selector` provided)
 
 For `router`:
+
 - **Token Admin Registry PDA**: Token administration registry
-- **Router Config PDA**: Global router configuration  
+- **Router Config PDA**: Global router configuration
 - **Router Pool Signer PDA**: Router's authority for calling pool programs
 
 **Critical Note:**
@@ -1397,11 +1491,3 @@ To add support for a new program:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-[Contributing guidelines]
-
-## Support
-
-[Support information]
