@@ -969,7 +969,7 @@ Notes on multisig signers:
 
 ##### create-multisig
 
-Create and initialize an SPL token multisig account using a deterministic address (base + seed). The CLI requires a `--mint` and automatically detects whether to use SPL Token v1 or Token-2022 from the mint’s owner.
+Create and initialize an SPL token multisig account using a deterministic address (base + seed + mint). The CLI requires a `--mint` and automatically detects whether to use SPL Token v1 or Token-2022 from the mint's owner. The mint address is incorporated into the seed to ensure unique multisig addresses per token.
 
 **Syntax:**
 
@@ -1001,7 +1001,7 @@ pnpm bs58 spl-token \
   --signers '["A1...","B2...","C3..."]' \
   --threshold "2"
 
-Note: The derived multisig address uses `createAccountWithSeed(authority, seed, tokenProgramId)`. Using authority as base keeps the flow single-signer and predictable.
+Note: The derived multisig address uses `createAccountWithSeed(authority, compositeSeed, tokenProgramId)` where `compositeSeed = sha256(seed + mint).hex().slice(0,32)`. This ensures each mint gets a unique multisig address even with the same authority and seed combination, while staying within the 32-byte ASCII seed limit.
 ```
 
 ##### transfer-mint-authority

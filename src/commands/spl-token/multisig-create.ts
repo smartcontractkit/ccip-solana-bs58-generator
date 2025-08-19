@@ -52,6 +52,7 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
       authority,
       authority,
       seed,
+      mint,
       signerPubkeys,
       threshold,
       space,
@@ -64,6 +65,9 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
     const tx = await tb.buildTransaction(ixs, authority, 'spl.create_multisig');
     logger.info('✅ Transaction simulation completed');
     console.log(`📮 Derived SPL Token Multisig Address: ${multisigAddress.toBase58()}`);
+    console.log(
+      `💡 Address derived from: authority + sha256("${seed}" + mint).hex().slice(0,32) + tokenProgram`
+    );
     TransactionDisplay.displayResults(tx, 'spl.create_multisig');
   } catch (error) {
     logger.error('❌ Failed to create SPL Token multisig');

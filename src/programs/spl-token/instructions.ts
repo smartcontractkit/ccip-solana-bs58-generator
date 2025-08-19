@@ -10,6 +10,7 @@ import {
   AuthorityType,
 } from '@solana/spl-token';
 import { createUpdateAuthorityInstruction } from '@solana/spl-token-metadata';
+import { createHash } from 'crypto';
 
 /**
  * Instruction builder for SPL Token program
@@ -48,18 +49,36 @@ export class InstructionBuilder {
     payer: PublicKey,
     base: PublicKey,
     seed: string,
+    mint: PublicKey,
     signerPubkeys: PublicKey[],
     threshold: number,
     space: number,
     lamports: number
   ): Promise<{ address: PublicKey; instructions: TransactionInstruction[] }> {
-    const multisigAddress = await PublicKey.createWithSeed(base, seed, this.tokenProgramId);
+    // Validate multisig constraints (SPL Token limits)
+    if (threshold < 1 || threshold > signerPubkeys.length || signerPubkeys.length > 11) {
+      throw new Error(
+        `Invalid multisig parameters: threshold=${threshold}, signers=${signerPubkeys.length}. Must satisfy: 1 ≤ threshold ≤ signers ≤ 11`
+      );
+    }
 
+    // Create deterministic composite seed within 32-byte ASCII limit
+    const compositeSeed = createHash('sha256')
+      .update(seed)
+      .update(mint.toBuffer())
+      .digest('hex')
+      .slice(0, 32); // 32 ASCII chars = OK for createAccountWithSeed
+
+    const multisigAddress = await PublicKey.createWithSeed(
+      base,
+      compositeSeed,
+      this.tokenProgramId
+    );
     const createIx = SystemProgram.createAccountWithSeed({
       fromPubkey: payer,
       newAccountPubkey: multisigAddress,
       basePubkey: base,
-      seed,
+      seed: compositeSeed,
       lamports,
       space,
       programId: this.tokenProgramId,
