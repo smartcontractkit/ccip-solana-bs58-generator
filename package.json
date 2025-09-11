@@ -1,6 +1,7 @@
 {
-  "name": "ccip-solana-bs58-generator",
+  "name": "@chainlink/ccip-solana-bs58-generator",
   "version": "1.0.0",
+  "private": true,
   "description": "CLI tool for generating BS58 transaction data from Solana burnmint_token_pool IDL",
   "type": "module",
   "main": "dist/index.js",
