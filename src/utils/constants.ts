@@ -44,6 +44,17 @@ export const BURNMINT_TOKEN_POOL = {
   STATE_SEED: 'ccip_tokenpool_config',
   CHAIN_CONFIG_SEED: 'ccip_tokenpool_chainconfig',
   POOL_SIGNER_SEED: 'ccip_tokenpool_signer',
+  CONFIG_SEED: 'config',
+} as const;
+
+/**
+ * Lockrelease Token Pool specific constants
+ */
+export const LOCKRELEASE_TOKEN_POOL = {
+  STATE_SEED: 'ccip_tokenpool_config',
+  CHAIN_CONFIG_SEED: 'ccip_tokenpool_chainconfig',
+  POOL_SIGNER_SEED: 'ccip_tokenpool_signer',
+  CONFIG_SEED: 'config',
 } as const;
 
 /**

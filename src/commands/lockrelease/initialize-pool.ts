@@ -5,5 +5,5 @@ export async function initializePoolCommand(
   options: InitializePoolOptions,
   command: CommandContext
 ): Promise<void> {
-  return initializePool(options, command, 'burnmint-token-pool');
+  return initializePool(options, command, 'lockrelease-token-pool');
 }

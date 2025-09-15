@@ -2,11 +2,11 @@ import type { CommandContext, SetChainRateLimitOptions } from '../../types/comma
 import { setChainRateLimit } from '../shared/set-chain-rate-limit.js';
 
 /**
- * Set chain rate limit command for burnmint token pool
+ * Set chain rate limit command for lockrelease token pool
  */
 export async function setChainRateLimitCommand(
   options: SetChainRateLimitOptions,
   command: CommandContext
 ): Promise<void> {
-  return setChainRateLimit(options, command, 'burnmint-token-pool');
+  return setChainRateLimit(options, command, 'lockrelease-token-pool');
 }

@@ -5,5 +5,5 @@ export async function configureAllowListCommand(
   options: ConfigureAllowListOptions,
   command: CommandContext
 ): Promise<void> {
-  return configureAllowList(options, command, 'burnmint-token-pool');
+  return configureAllowList(options, command, 'lockrelease-token-pool');
 }

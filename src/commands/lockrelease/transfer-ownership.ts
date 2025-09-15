@@ -5,5 +5,5 @@ export async function transferOwnershipCommand(
   options: TransferOwnershipOptions,
   command: CommandContext
 ): Promise<void> {
-  return transferOwnership(options, command, 'burnmint-token-pool');
+  return transferOwnership(options, command, 'lockrelease-token-pool');
 }

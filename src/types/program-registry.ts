@@ -1,5 +1,6 @@
 import type { Idl } from './index.js';
 import burnmintIdl from '../programs/burnmint-token-pool/idl.json' assert { type: 'json' };
+import lockreleaseIdl from '../programs/lockrelease-token-pool/idl.json' assert { type: 'json' };
 import routerIdl from '../programs/router/idl.json' assert { type: 'json' };
 
 /**
@@ -34,6 +35,28 @@ export const PROGRAM_REGISTRY = {
       'deleteChainConfig',
       'configureAllowList',
       'removeFromAllowList',
+    ],
+  },
+  'lockrelease-token-pool': {
+    name: 'lockrelease-token-pool',
+    displayName: 'Lockrelease Token Pool',
+    description: 'CCIP Lockrelease Token Pool Program',
+    hasIdl: true,
+    idl: lockreleaseIdl as unknown as Idl,
+    supportedInstructions: [
+      'accept_ownership',
+      'transfer_ownership',
+      'set_chain_rate_limit',
+      'init_chain_remote_config',
+      'edit_chain_remote_config',
+      'append_remote_pool_addresses',
+      'delete_chain_config',
+      'configure_allow_list',
+      'remove_from_allow_list',
+      'provide_liquidity',
+      'withdraw_liquidity',
+      'set_can_accept_liquidity',
+      'set_rebalancer',
     ],
   },
   router: {

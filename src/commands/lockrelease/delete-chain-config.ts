@@ -2,11 +2,11 @@ import type { CommandContext, DeleteChainConfigOptions } from '../../types/comma
 import { deleteChainConfig } from '../shared/delete-chain-config.js';
 
 /**
- * Delete chain config command for burnmint token pool
+ * Delete chain config command for lockrelease token pool
  */
 export async function deleteChainConfigCommand(
   options: DeleteChainConfigOptions,
   command: CommandContext
 ): Promise<void> {
-  return deleteChainConfig(options, command, 'burnmint-token-pool');
+  return deleteChainConfig(options, command, 'lockrelease-token-pool');
 }

@@ -4,6 +4,7 @@ import { mintCommand } from './mint.js';
 import { transferMintAuthorityCommand } from './transfer-mint-authority.js';
 import { updateMetadataAuthorityCommand } from './update-metadata-authority.js';
 import { createMintCommand } from './create-mint.js';
+import { approveCommand } from './approve.js';
 
 export function createSplTokenCommands(): Command {
   const splToken = new Command('spl-token')
@@ -11,7 +12,7 @@ export function createSplTokenCommands(): Command {
     .alias('spl')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (create-mint, create-multisig, mint, transfer-mint-authority, update-metadata-authority)'
+      'Instruction to execute (create-mint, create-multisig, mint, transfer-mint-authority, update-metadata-authority, approve)'
     )
     .option('--authority <authority>', 'Payer/authority public key')
     .option(
@@ -45,6 +46,13 @@ export function createSplTokenCommands(): Command {
     .option('--symbol <string>', 'Token symbol (required if with-metaplex=true, max 10 chars)')
     .option('--uri <string>', 'Metadata URI (required if with-metaplex=true)')
     .option('--initial-supply <number>', 'Initial supply in smallest units (optional)')
+
+    // approve specific options
+    .option(
+      '--token-account <pubkey>',
+      'Token account to approve from (optional, auto-derives from authority + mint if not provided)'
+    )
+    .option('--delegate <pubkey>', 'Delegate address to approve (required for approve)')
     .hook('preAction', thisCommand => {
       const globalOpts = thisCommand.parent?.opts() || {};
       if (!globalOpts.resolvedRpcUrl) {
@@ -160,6 +168,11 @@ export function createSplTokenCommands(): Command {
           console.error('❌ update-metadata-authority requires: --authority, --mint');
           process.exit(1);
         }
+      } else if (instr === 'approve') {
+        if (!options.authority || !options.mint || !options.delegate || !options.amount) {
+          console.error('❌ approve requires: --authority, --mint, --delegate, --amount');
+          process.exit(1);
+        }
       } else {
         console.error(`❌ Unknown instruction: ${instr}`);
         process.exit(1);
@@ -177,6 +190,8 @@ export function createSplTokenCommands(): Command {
         transferMintAuthorityCommand(options, command);
       } else if (i === 'update-metadata-authority') {
         updateMetadataAuthorityCommand(options, command);
+      } else if (i === 'approve') {
+        approveCommand(options, command);
       }
     });
 

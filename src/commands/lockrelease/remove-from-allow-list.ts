@@ -5,5 +5,5 @@ export async function removeFromAllowListCommand(
   options: RemoveFromAllowListOptions,
   command: CommandContext
 ): Promise<void> {
-  return removeFromAllowList(options, command, 'burnmint-token-pool');
+  return removeFromAllowList(options, command, 'lockrelease-token-pool');
 }
