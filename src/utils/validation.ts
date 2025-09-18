@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Connection } from '@solana/web3.js';
 
 /**
  * Validate that a string is a valid URL
@@ -39,32 +40,22 @@ export function validateArgs<T>(
 }
 
 /**
- * Validate network connectivity to RPC endpoint
+ * Validate network connectivity to RPC endpoint using Solana's built-in retry logic
  * @param rpcUrl RPC URL to test
- * @param timeoutMs Timeout in milliseconds
  * @returns True if RPC is accessible
  */
-export async function validateRpcConnectivity(
-  rpcUrl: string,
-  timeoutMs: number = 5000
-): Promise<boolean> {
+export async function validateRpcConnectivity(rpcUrl: string): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    console.debug('🔄 Testing RPC connectivity using Solana web3.js built-in retry...');
 
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getHealth',
-      }),
-      signal: controller.signal,
-    });
+    // Create connection that will use Solana's built-in retry logic
+    // Note: Solana web3.js has built-in retry with 5 attempts and exponential backoff (500ms → 1s → 2s → 4s → 8s)
+    const connection = new Connection(rpcUrl);
 
-    clearTimeout(timeoutId);
-    return response.ok;
+    // Make a simple RPC call that will trigger Solana's retry logic if needed
+    await connection.getSlot();
+
+    return true;
   } catch {
     return false;
   }
