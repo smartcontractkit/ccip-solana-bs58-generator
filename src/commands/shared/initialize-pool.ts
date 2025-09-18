@@ -1,6 +1,6 @@
 import type { TransactionOptions } from '../../types/index.js';
 import { BaseInitializePoolArgsSchema } from '../../types/index.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -46,14 +46,6 @@ export async function initializePool(
 
     // Validate RPC connectivity
     const rpc = rpcUrl ?? (globalOptions.resolvedRpcUrl as string);
-    console.log('🔗 Validating RPC connectivity...');
-    const ok = await validateRpcConnectivity(rpc);
-
-    if (!ok) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpc}`);
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     // Build transaction
     const txOptions: TransactionOptions = { rpcUrl: rpc };

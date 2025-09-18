@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { Connection } from '@solana/web3.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { RouterCreateLookupTableArgsSchema } from '../../types/index.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -27,13 +27,6 @@ export async function createLookupTableCommand(options: Record<string, string>, 
       process.exit(1);
     }
     const rpcUrl = parsed.data.rpcUrl ?? globalOptions.resolvedRpcUrl!;
-    console.log('🔗 Validating RPC connectivity...');
-    const ok = await validateRpcConnectivity(rpcUrl);
-    if (!ok) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     console.log('🔄 Generating create_lookup_table transaction...');
 

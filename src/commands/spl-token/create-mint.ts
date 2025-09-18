@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { CreateMintArgsSchema } from '../../types/index.js';
@@ -79,10 +79,6 @@ export async function createMintCommand(options: Record<string, string>, command
   }
 
   const rpcUrl = parsed.data.rpcUrl ?? (global.resolvedRpcUrl as string);
-  if (!(await validateRpcConnectivity(rpcUrl))) {
-    console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-    process.exit(1);
-  }
 
   const connection = new Connection(rpcUrl);
 

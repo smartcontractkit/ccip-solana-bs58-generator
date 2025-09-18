@@ -1,6 +1,6 @@
 import type { TransactionOptions } from '../../types/index.js';
 import { TransferOwnershipArgsSchema } from '../../types/index.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -53,17 +53,6 @@ export async function transferOwnership(
 
     // Validate RPC connectivity
     const rpc = rpcUrl ?? (globalOptions.resolvedRpcUrl as string);
-    console.log('🔗 Validating RPC connectivity...');
-    const ok = await validateRpcConnectivity(rpc);
-
-    if (!ok) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpc}`);
-      console.error('💡 Common RPC URLs:');
-      console.error('   • Devnet: https://api.devnet.solana.com');
-      console.error('   • Mainnet: https://api.mainnet-beta.solana.com');
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     // Build transaction
     const txOptions: TransactionOptions = { rpcUrl: rpc };

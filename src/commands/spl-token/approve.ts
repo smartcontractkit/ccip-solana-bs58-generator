@@ -1,6 +1,6 @@
 import type { TransactionOptions } from '../../types/index.js';
 import { ApproveArgsSchema } from '../../types/index.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -65,21 +65,6 @@ export async function approveCommand(
 
     const validatedArgs = validation.data;
     const rpcUrl = validatedArgs.rpcUrl || globalOptions.resolvedRpcUrl!;
-
-    // Validate RPC connectivity
-    console.log('🔗 Validating RPC connectivity...');
-    cmdLogger.debug({ rpcUrl }, 'Validating RPC connectivity');
-    const isConnected = await validateRpcConnectivity(rpcUrl);
-    if (!isConnected) {
-      const errorMessage = `Cannot connect to RPC endpoint: ${rpcUrl}`;
-      cmdLogger.error(errorMessage);
-      console.error(`❌ ${errorMessage}`);
-      console.error('💡 Common RPC URLs:');
-      console.error('   • Devnet: https://api.devnet.solana.com');
-      console.error('   • Mainnet: https://api.mainnet-beta.solana.com');
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     // Detect token program on-chain
     console.log('🔍 Detecting token program...');

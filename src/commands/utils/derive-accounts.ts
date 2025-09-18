@@ -1,7 +1,7 @@
 import { PublicKey, Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { logger, createChildLogger } from '../../utils/logger.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
 import { AccountDerivation as LockreleaseDerivation } from '../../programs/lockrelease-token-pool/accounts.js';
 import { AccountDerivation as RouterDerivation } from '../../programs/router/accounts.js';
@@ -98,15 +98,6 @@ export async function deriveAccountsCommand(
     const validatedArgs = validation.data;
     const { programType, programId, mint, poolProgramId, remoteChainSelector, rpcUrl } =
       validatedArgs;
-
-    // Validate RPC connectivity (needed for token program detection)
-    console.log('🔗 Validating RPC connectivity...');
-    const ok = await validateRpcConnectivity(rpcUrl);
-    if (!ok) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     const connection = new Connection(rpcUrl);
     const accounts: DerivedAccount[] = [];

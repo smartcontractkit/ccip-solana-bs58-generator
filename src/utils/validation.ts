@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { Connection } from '@solana/web3.js';
 
 /**
  * Validate that a string is a valid URL
@@ -37,26 +36,4 @@ export function validateArgs<T>(
   });
 
   return { success: false, errors };
-}
-
-/**
- * Validate network connectivity to RPC endpoint using Solana's built-in retry logic
- * @param rpcUrl RPC URL to test
- * @returns True if RPC is accessible
- */
-export async function validateRpcConnectivity(rpcUrl: string): Promise<boolean> {
-  try {
-    console.debug('🔄 Testing RPC connectivity...');
-
-    // Create connection that will use Solana's built-in retry logic
-    // Note: Solana web3.js has built-in retry with 5 attempts and exponential backoff (500ms → 1s → 2s → 4s → 8s)
-    const connection = new Connection(rpcUrl);
-
-    // Make a simple RPC call that will trigger Solana's retry logic if needed
-    await connection.getSlot();
-
-    return true;
-  } catch {
-    return false;
-  }
 }

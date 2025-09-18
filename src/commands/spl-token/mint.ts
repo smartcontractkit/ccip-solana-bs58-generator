@@ -4,7 +4,6 @@ import { getAccount, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { detectTokenProgramId } from '../../utils/token.js';
 import { SplMintArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
-import { validateRpcConnectivity } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { logger } from '../../utils/logger.js';
@@ -42,10 +41,6 @@ export async function mintCommand(options: Record<string, string>, command: Comm
       process.exit(1);
     }
     const rpcUrl = parsed.data.rpcUrl ?? (global.resolvedRpcUrl as string);
-    if (!(await validateRpcConnectivity(rpcUrl))) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
 
     const connection = new Connection(rpcUrl);
     const authority = parsed.data.authority;
