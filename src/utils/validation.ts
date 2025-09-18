@@ -37,35 +37,3 @@ export function validateArgs<T>(
 
   return { success: false, errors };
 }
-
-/**
- * Validate network connectivity to RPC endpoint
- * @param rpcUrl RPC URL to test
- * @param timeoutMs Timeout in milliseconds
- * @returns True if RPC is accessible
- */
-export async function validateRpcConnectivity(
-  rpcUrl: string,
-  timeoutMs: number = 5000
-): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getHealth',
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch {
-    return false;
-  }
-}

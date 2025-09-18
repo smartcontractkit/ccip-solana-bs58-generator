@@ -23,8 +23,8 @@ export const AcceptOwnershipArgsSchema = z.object({
     .optional(),
 });
 
-// Burnmint initialize pool
-export const BurnmintInitializePoolArgsSchema = z.object({
+// Base initialize pool schema (shared by all token pool types)
+export const BaseInitializePoolArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
   authority: z.string().transform(val => new PublicKey(val)),
@@ -43,6 +43,12 @@ export const BurnmintInitializePoolArgsSchema = z.object({
     )
     .optional(),
 });
+
+// Burnmint initialize pool (uses base schema)
+export const BurnmintInitializePoolArgsSchema = BaseInitializePoolArgsSchema;
+
+// Lockrelease initialize pool (uses base schema)
+export const LockreleaseInitializePoolArgsSchema = BaseInitializePoolArgsSchema;
 
 export const TransferOwnershipArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
@@ -195,6 +201,127 @@ export const AppendRemotePoolAddressesArgsSchema = z.object({
       throw new Error(`Invalid JSON for addresses: ${e instanceof Error ? e.message : String(e)}`);
     }
   }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const ProvideLiquidityArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  amount: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num <= 0) throw new Error('Amount must be positive');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const WithdrawLiquidityArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  amount: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num <= 0) throw new Error('Amount must be positive');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SetRebalancerArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  rebalancer: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const SetCanAcceptLiquidityArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  allow: z.string().transform(val => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    throw new Error('Allow must be "true" or "false"');
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const ApproveArgsSchema = z.object({
+  mint: z.string().transform(val => new PublicKey(val)),
+  tokenAccount: z
+    .string()
+    .optional()
+    .transform(val => (val ? new PublicKey(val) : undefined)),
+  delegate: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  amount: z.string().transform(val => BigInt(val)),
   rpcUrl: z
     .string()
     .refine(

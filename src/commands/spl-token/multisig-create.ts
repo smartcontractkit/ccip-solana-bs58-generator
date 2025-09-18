@@ -3,7 +3,7 @@ import { Connection, TransactionInstruction } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { TransactionDisplay } from '../../utils/display.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { logger } from '../../utils/logger.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
 import { SplCreateMultisigArgsSchema } from '../../types/index.js';
@@ -13,10 +13,6 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
   try {
     const global = command.parent?.opts() || {};
     const rpcUrl = global.resolvedRpcUrl as string;
-    if (!(await validateRpcConnectivity(rpcUrl))) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
 
     const connection = new Connection(rpcUrl);
     const parsed = validateArgs(SplCreateMultisigArgsSchema, {

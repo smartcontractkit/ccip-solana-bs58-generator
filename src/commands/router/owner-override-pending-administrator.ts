@@ -1,6 +1,6 @@
 import type { TransactionOptions } from '../../types/index.js';
 import { RouterOwnerOverridePendingAdministratorArgsSchema } from '../../types/index.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -46,13 +46,6 @@ export async function ownerOverridePendingAdministratorCommand(
     }
     const { programId, mint, authority, tokenAdminRegistryAdmin, rpcUrl } = parsed.data;
     const rpc = rpcUrl ?? (globalOptions.resolvedRpcUrl as string);
-    console.log('🔗 Validating RPC connectivity...');
-    const isConnected = await validateRpcConnectivity(rpc);
-    if (!isConnected) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
 
     const transactionOptions: TransactionOptions = { rpcUrl: rpc };
     const transactionBuilder = new TransactionBuilder(transactionOptions);

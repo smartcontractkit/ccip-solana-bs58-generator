@@ -59,7 +59,10 @@ export class AccountDerivation {
    * seeds = [b"config"]
    */
   static deriveGlobalConfigPda(programId: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync([Buffer.from('config')], programId);
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from(BURNMINT_TOKEN_POOL.CONFIG_SEED)],
+      programId
+    );
   }
 
   /**

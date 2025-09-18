@@ -5,6 +5,7 @@ import {
   createSetAuthorityInstruction,
   createInitializeMintInstruction,
   createAssociatedTokenAccountInstruction,
+  createApproveInstruction,
   getAssociatedTokenAddressSync,
   getMintLen,
   AuthorityType,
@@ -203,6 +204,26 @@ export class InstructionBuilder {
       associatedTokenAddress,
       owner,
       mint,
+      this.tokenProgramId
+    );
+  }
+
+  /**
+   * Approve a delegate to transfer tokens from a token account
+   */
+  approve(
+    tokenAccount: PublicKey,
+    delegate: PublicKey,
+    owner: PublicKey,
+    amount: bigint,
+    multisigSignerPubkeys: PublicKey[] = []
+  ): TransactionInstruction {
+    return createApproveInstruction(
+      tokenAccount,
+      delegate,
+      owner,
+      amount,
+      multisigSignerPubkeys,
       this.tokenProgramId
     );
   }

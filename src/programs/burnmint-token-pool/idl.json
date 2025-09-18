@@ -1064,10 +1064,7 @@
           {
             "name": "amount",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -1090,9 +1087,7 @@
           },
           {
             "name": "offchainTokenData",
-            "docs": [
-              "@dev WARNING: offchainTokenData is untrusted data."
-            ],
+            "docs": ["@dev WARNING: offchainTokenData is untrusted data."],
             "type": "bytes"
           }
         ]

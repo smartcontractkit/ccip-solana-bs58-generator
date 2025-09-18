@@ -1,15 +1,21 @@
 import { PublicKey, Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { logger, createChildLogger } from '../../utils/logger.js';
-import { validateArgs, validateRpcConnectivity } from '../../utils/validation.js';
+import { validateArgs } from '../../utils/validation.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
+import { AccountDerivation as LockreleaseDerivation } from '../../programs/lockrelease-token-pool/accounts.js';
 import { AccountDerivation as RouterDerivation } from '../../programs/router/accounts.js';
 import { detectTokenProgramId } from '../../utils/token.js';
+import {
+  BURNMINT_TOKEN_POOL,
+  LOCKRELEASE_TOKEN_POOL,
+  ROUTER_SEEDS,
+} from '../../utils/constants.js';
 import { z } from 'zod';
 
 // Validation schema for derive-accounts command
 const DeriveAccountsArgsSchema = z.object({
-  programType: z.enum(['burnmint-token-pool', 'router', 'spl-token']),
+  programType: z.enum(['burnmint-token-pool', 'lockrelease-token-pool', 'router', 'spl-token']),
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
   poolProgramId: z
@@ -79,7 +85,9 @@ export async function deriveAccountsCommand(
       commandLogger.error(errorMessage);
       console.error(`❌ ${errorMessage}`);
       console.error('💡 Expected format:');
-      console.error('   • Program Type: burnmint-token-pool, router, or spl-token');
+      console.error(
+        '   • Program Type: burnmint-token-pool, lockrelease-token-pool, router, or spl-token'
+      );
       console.error('   • Program ID: Base58 public key (44 characters)');
       console.error('   • Mint: Base58 public key (44 characters)');
       console.error('   • Pool Program ID: Base58 public key (optional, for router)');
@@ -91,15 +99,6 @@ export async function deriveAccountsCommand(
     const { programType, programId, mint, poolProgramId, remoteChainSelector, rpcUrl } =
       validatedArgs;
 
-    // Validate RPC connectivity (needed for token program detection)
-    console.log('🔗 Validating RPC connectivity...');
-    const ok = await validateRpcConnectivity(rpcUrl);
-    if (!ok) {
-      console.error(`❌ Cannot connect to RPC endpoint: ${rpcUrl}`);
-      process.exit(1);
-    }
-    console.log('   ✅ RPC connection verified');
-
     const connection = new Connection(rpcUrl);
     const accounts: DerivedAccount[] = [];
 
@@ -108,6 +107,9 @@ export async function deriveAccountsCommand(
     switch (programType) {
       case 'burnmint-token-pool':
         await deriveBurnmintAccounts(accounts, programId, mint, connection, remoteChainSelector);
+        break;
+      case 'lockrelease-token-pool':
+        await deriveLockreleaseAccounts(accounts, programId, mint, connection, remoteChainSelector);
         break;
       case 'router':
         await deriveRouterAccounts(accounts, programId, mint, poolProgramId);
@@ -118,7 +120,7 @@ export async function deriveAccountsCommand(
     }
 
     // Simple table output - consistent with other commands
-    displayAccountsTable(accounts);
+    displayAccountsTable(accounts, programType);
 
     commandLogger.info('✅ Account derivation completed successfully');
   } catch (error) {
@@ -143,7 +145,7 @@ async function deriveBurnmintAccounts(
   accounts.push({
     name: 'Pool State PDA',
     address: statePda.toString(),
-    seeds: '["ccip_tokenpool_config", mint]',
+    seeds: `["${BURNMINT_TOKEN_POOL.STATE_SEED}", mint]`,
     bump: stateBump,
     description: 'Main pool configuration account (created by initialize-pool)',
   });
@@ -153,7 +155,7 @@ async function deriveBurnmintAccounts(
   accounts.push({
     name: 'Pool Signer PDA',
     address: poolSignerPda.toString(),
-    seeds: '["ccip_tokenpool_signer", mint]',
+    seeds: `["${BURNMINT_TOKEN_POOL.POOL_SIGNER_SEED}", mint]`,
     bump: signerBump,
     description: '🎯 CRITICAL: Autonomous mint/burn authority for cross-chain operations',
   });
@@ -163,7 +165,7 @@ async function deriveBurnmintAccounts(
   accounts.push({
     name: 'Global Config PDA',
     address: globalConfigPda.toString(),
-    seeds: '["config"]',
+    seeds: `["${BURNMINT_TOKEN_POOL.CONFIG_SEED}"]`,
     bump: globalBump,
     description: 'Program-wide configuration settings',
   });
@@ -188,7 +190,75 @@ async function deriveBurnmintAccounts(
     accounts.push({
       name: 'Chain Config PDA',
       address: chainConfigPda.toString(),
-      seeds: '["ccip_tokenpool_chainconfig", chain_selector, mint]',
+      seeds: `["${BURNMINT_TOKEN_POOL.CHAIN_CONFIG_SEED}", chain_selector, mint]`,
+      bump: chainBump,
+      description: `Chain configuration for selector ${remoteChainSelector}`,
+    });
+  }
+}
+
+async function deriveLockreleaseAccounts(
+  accounts: DerivedAccount[],
+  programId: PublicKey,
+  mint: PublicKey,
+  connection: Connection,
+  remoteChainSelector?: bigint
+): Promise<void> {
+  // Pool State PDA
+  const [statePda, stateBump] = LockreleaseDerivation.deriveStatePda(programId, mint);
+  accounts.push({
+    name: 'Pool State PDA',
+    address: statePda.toString(),
+    seeds: `["${LOCKRELEASE_TOKEN_POOL.STATE_SEED}", mint]`,
+    bump: stateBump,
+    description: 'Main pool configuration account (created by initialize-pool)',
+  });
+
+  // Pool Signer PDA - THE CRITICAL ONE!
+  const [poolSignerPda, signerBump] = LockreleaseDerivation.derivePoolSignerPda(programId, mint);
+  accounts.push({
+    name: 'Pool Signer PDA',
+    address: poolSignerPda.toString(),
+    seeds: `["${LOCKRELEASE_TOKEN_POOL.POOL_SIGNER_SEED}", mint]`,
+    bump: signerBump,
+    description: '🎯 CRITICAL: Autonomous liquidity authority for cross-chain operations',
+  });
+
+  // Global Config PDA
+  const [globalConfigPda, globalBump] = LockreleaseDerivation.deriveGlobalConfigPda(programId);
+  accounts.push({
+    name: 'Global Config PDA',
+    address: globalConfigPda.toString(),
+    seeds: `["${LOCKRELEASE_TOKEN_POOL.CONFIG_SEED}"]`,
+    bump: globalBump,
+    description: 'Program-wide configuration settings',
+  });
+
+  // Pool Token ATA (where the pool holds liquidity)
+  const tokenProgramId = await detectTokenProgramId(connection, mint);
+  const poolTokenAta = LockreleaseDerivation.derivePoolTokenAccount(
+    programId,
+    mint,
+    tokenProgramId
+  );
+  accounts.push({
+    name: 'Pool Token ATA',
+    address: poolTokenAta.toString(),
+    seeds: '[mint, pool_signer_pda, token_program]',
+    description: "Pool's token account (holds liquidity, owned by Pool Signer PDA)",
+  });
+
+  // Chain Config PDA (if chain selector provided)
+  if (remoteChainSelector) {
+    const [chainConfigPda, chainBump] = LockreleaseDerivation.deriveChainConfigPda(
+      programId,
+      mint,
+      remoteChainSelector
+    );
+    accounts.push({
+      name: 'Chain Config PDA',
+      address: chainConfigPda.toString(),
+      seeds: `["${LOCKRELEASE_TOKEN_POOL.CHAIN_CONFIG_SEED}", chain_selector, mint]`,
       bump: chainBump,
       description: `Chain configuration for selector ${remoteChainSelector}`,
     });
@@ -206,7 +276,7 @@ async function deriveRouterAccounts(
   accounts.push({
     name: 'Token Admin Registry PDA',
     address: registryPda.toString(),
-    seeds: '["token_admin_registry", mint]',
+    seeds: `["${ROUTER_SEEDS.TOKEN_ADMIN_REGISTRY}", mint]`,
     bump: registryBump,
     description: 'Token admin registry for pool configuration',
   });
@@ -216,7 +286,7 @@ async function deriveRouterAccounts(
   accounts.push({
     name: 'Router Config PDA',
     address: configPda.toString(),
-    seeds: '["config"]',
+    seeds: `["${ROUTER_SEEDS.CONFIG}"]`,
     bump: configBump,
     description: 'Global router configuration',
   });
@@ -230,7 +300,7 @@ async function deriveRouterAccounts(
     accounts.push({
       name: 'Router Pool Signer PDA',
       address: poolSignerPda.toString(),
-      seeds: '["external_token_pools_signer", pool_program_id]',
+      seeds: `["${ROUTER_SEEDS.EXTERNAL_TOKEN_POOLS_SIGNER}", pool_program_id]`,
       bump: poolSignerBump,
       description: "Router's authority for calling pool programs",
     });
@@ -267,7 +337,7 @@ async function deriveSplTokenAccounts(
   });
 }
 
-function displayAccountsTable(accounts: DerivedAccount[]): void {
+function displayAccountsTable(accounts: DerivedAccount[], programType?: string): void {
   console.log('\n📊 Derived Accounts:\n');
 
   accounts.forEach((account, index) => {
@@ -281,12 +351,21 @@ function displayAccountsTable(accounts: DerivedAccount[]): void {
     console.log('');
   });
 
-  // Highlight the Pool Signer PDA
+  // Highlight the Pool Signer PDA with context-specific message
   const poolSigner = accounts.find(acc => acc.name === 'Pool Signer PDA');
   if (poolSigner) {
     console.log('🎯 CRITICAL ADDRESS FOR CROSS-CHAIN OPERATIONS:');
     console.log(`   Pool Signer PDA: ${poolSigner.address}`);
-    console.log('   ↳ This address signs all mint/burn transactions autonomously');
+
+    if (programType === 'lockrelease-token-pool') {
+      console.log(
+        '   ↳ This address signs token transfers for lock/release operations autonomously'
+      );
+    } else if (programType === 'burnmint-token-pool') {
+      console.log('   ↳ This address signs all mint/burn transactions autonomously');
+    } else {
+      console.log('   ↳ This address signs token operations autonomously');
+    }
     console.log('');
   }
 }

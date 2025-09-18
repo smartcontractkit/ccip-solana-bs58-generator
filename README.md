@@ -30,6 +30,21 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Delete Chain Config](#delete-chain-config)
       - [Configure Allow List](#configure-allow-list)
       - [Remove From Allow List](#remove-from-allow-list)
+  - [Lockrelease Token Pool](#lockrelease-token-pool)
+    - [Instructions](#lockrelease-instructions)
+      - [Initialize Pool](#lockrelease-initialize-pool)
+      - [Transfer Ownership](#lockrelease-transfer-ownership)
+      - [Accept Ownership](#lockrelease-accept-ownership)
+      - [Init Chain Remote Config](#lockrelease-init-chain-remote-config)
+      - [Edit Chain Remote Config](#lockrelease-edit-chain-remote-config)
+      - [Append Remote Pool Addresses](#lockrelease-append-remote-pool-addresses)
+      - [Delete Chain Config](#lockrelease-delete-chain-config)
+      - [Set Chain Rate Limit](#lockrelease-set-chain-rate-limit)
+      - [Configure Allow List](#lockrelease-configure-allow-list)
+      - [Remove From Allow List](#lockrelease-remove-from-allow-list)
+      - [Set Rebalancer](#set-rebalancer)
+      - [Provide Liquidity](#provide-liquidity)
+      - [Withdraw Liquidity](#withdraw-liquidity)
   - [Router](#router)
     - [Instructions](#router-instructions)
       - [Owner Propose Administrator](#owner-propose-administrator)
@@ -45,6 +60,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Create Multisig](#create-multisig)
       - [Transfer Mint Authority](#transfer-mint-authority)
       - [Update Metadata Authority](#update-metadata-authority)
+      - [Approve](#approve)
   - [Metaplex Token Metadata](#metaplex-token-metadata)
     - [Instructions](#metaplex-instructions)
       - [Update Authority](#update-authority)
@@ -610,6 +626,250 @@ pnpm bs58 burnmint-token-pool \
 | 2     | Authority     | Signer, Writable | Authority account              |
 | 3     | SystemProgram | Read-only        | System program                 |
 
+### Lockrelease Token Pool
+
+**Command:** `lockrelease-token-pool` (alias: `lr`)
+
+Token pool program for locking tokens on source chain and releasing on destination chain, with liquidity management features.
+
+#### Lockrelease Instructions
+
+##### lockrelease-initialize-pool
+
+Initialize the lockrelease pool state for a given SPL mint. This creates the pool State PDA and wires program-global config (router, RMN) into the pool. The caller becomes the pool owner.
+
+**Syntax:**
+
+```bash
+pnpm bs58 lockrelease-token-pool initialize-pool [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                      |
+| ------------------------ | --------- | -------- | -------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Lockrelease token pool program ID |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address               |
+| `--authority <address>`  | PublicKey | Yes      | Future pool owner (signer)       |
+
+**Example:**
+
+```bash
+pnpm bs58 lockrelease-token-pool initialize-pool \
+  --env devnet \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
+```
+
+**Accounts:**
+
+| Index | Account       | Type             | Description                                      |
+| ----- | ------------- | ---------------- | ------------------------------------------------ |
+| 0     | State         | Writable         | Pool state PDA (`ccip_tokenpool_config`, mint)  |
+| 1     | Mint          | Read-only        | Token mint                                       |
+| 2     | Authority     | Signer, Writable | Pool owner (signer)                              |
+| 3     | SystemProgram | Read-only        | System program                                   |
+| 4     | Program       | Read-only        | Lockrelease program ID                           |
+| 5     | ProgramData   | Read-only        | Program Data PDA (upgradeable loader)            |
+| 6     | Global Config | Read-only        | Global config PDA (`config`)                     |
+
+##### set-rebalancer
+
+Set the rebalancer address for the pool. The rebalancer is authorized to provide and withdraw liquidity.
+
+**⚠️ PREREQUISITE**: This must be called by the pool owner before any liquidity operations can be performed.
+
+**Syntax:**
+
+```bash
+pnpm bs58 lockrelease-token-pool set-rebalancer [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                      |
+| ------------------------ | --------- | -------- | -------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Lockrelease token pool program ID |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address               |
+| `--authority <address>`  | PublicKey | Yes      | Authority public key (pool owner) |
+| `--rebalancer <address>` | PublicKey | Yes      | New rebalancer address           |
+
+**Example:**
+
+```bash
+pnpm bs58 lockrelease-token-pool set-rebalancer \
+  --env devnet \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --rebalancer "RebalancerAddress123456789..."
+```
+
+**Accounts:**
+
+| Index | Account   | Type      | Description                    |
+| ----- | --------- | --------- | ------------------------------ |
+| 0     | State     | Writable  | Token pool state account (PDA) |
+| 1     | Mint      | Read-only | Token mint account             |
+| 2     | Authority | Signer    | Pool owner account             |
+
+##### provide-liquidity
+
+Provide liquidity to the pool. Only the configured rebalancer can call this instruction.
+
+**⚠️ PREREQUISITE**: The pool owner must call `set-rebalancer` first to authorize a rebalancer address.
+
+**🔍 SMART FEATURES**: 
+- Token program automatically detected from mint
+- Rebalancer's Associated Token Account (ATA) automatically derived
+
+**Syntax:**
+
+```bash
+pnpm bs58 lockrelease-token-pool provide-liquidity [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                                     |
+| ------------------------ | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Lockrelease token pool program ID               |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`  | PublicKey | Yes      | Authority address (must be configured rebalancer) |
+| `--amount <amount>`      | u64       | Yes      | Amount to provide (in smallest token units)     |
+
+**Example:**
+
+```bash
+pnpm bs58 lockrelease-token-pool provide-liquidity \
+  --env devnet \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "RebalancerAddress123456789..." \
+  --amount "1000000000"
+```
+
+**Accounts:**
+
+| Index | Account              | Type      | Description                                    |
+| ----- | -------------------- | --------- | ---------------------------------------------- |
+| 0     | State                | Read-only | Token pool state account (PDA)                |
+| 1     | TokenProgram         | Read-only | Token program (auto-detected)                  |
+| 2     | Mint                 | Writable  | Token mint account                             |
+| 3     | PoolSigner           | Read-only | Pool signer PDA                                |
+| 4     | PoolTokenAccount     | Writable  | Pool's token account (ATA)                     |
+| 5     | RemoteTokenAccount   | Writable  | Rebalancer's token account (ATA, auto-derived) |
+| 6     | Authority            | Signer    | Rebalancer account                             |
+
+##### withdraw-liquidity
+
+Withdraw liquidity from the pool. Only the configured rebalancer can call this instruction.
+
+**⚠️ PREREQUISITE**: The pool owner must call `set-rebalancer` first to authorize a rebalancer address.
+
+**🔍 SMART FEATURES**: 
+- Token program automatically detected from mint
+- Rebalancer's Associated Token Account (ATA) automatically derived
+
+**Syntax:**
+
+```bash
+pnpm bs58 lockrelease-token-pool withdraw-liquidity [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                                     |
+| ------------------------ | --------- | -------- | ----------------------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Lockrelease token pool program ID               |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                              |
+| `--authority <address>`  | PublicKey | Yes      | Authority address (must be configured rebalancer) |
+| `--amount <amount>`      | u64       | Yes      | Amount to withdraw (in smallest token units)    |
+
+**Example:**
+
+```bash
+pnpm bs58 lockrelease-token-pool withdraw-liquidity \
+  --env devnet \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "RebalancerAddress123456789..." \
+  --amount "500000000"
+```
+
+**Accounts:** (same as provide-liquidity)
+
+| Index | Account              | Type      | Description                                    |
+| ----- | -------------------- | --------- | ---------------------------------------------- |
+| 0     | State                | Read-only | Token pool state account (PDA)                |
+| 1     | TokenProgram         | Read-only | Token program (auto-detected)                  |
+| 2     | Mint                 | Writable  | Token mint account                             |
+| 3     | PoolSigner           | Read-only | Pool signer PDA                                |
+| 4     | PoolTokenAccount     | Writable  | Pool's token account (ATA)                     |
+| 5     | RemoteTokenAccount   | Writable  | Rebalancer's token account (ATA, auto-derived) |
+| 6     | Authority            | Signer    | Rebalancer account                             |
+
+**📋 Lockrelease Pool Workflow:**
+
+```bash
+# Step 1: Initialize the pool (pool owner)
+pnpm bs58 lockrelease-token-pool initialize-pool \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<POOL_OWNER>"
+
+# Step 2: Set rebalancer (pool owner, REQUIRED before liquidity operations)
+pnpm bs58 lockrelease-token-pool set-rebalancer \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<POOL_OWNER>" \
+  --rebalancer "<REBALANCER_ADDRESS>"
+
+# Step 3: Configure chain for cross-chain operations (same as burnmint)
+pnpm bs58 lockrelease-token-pool init-chain-remote-config \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<POOL_OWNER>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --pool-addresses '[]' \
+  --token-address "<REMOTE_TOKEN_ADDRESS>" \
+  --decimals "<REMOTE_DECIMALS>"
+
+# Step 4: Set rate limits (same as burnmint)
+pnpm bs58 lockrelease-token-pool set-chain-rate-limit \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<POOL_OWNER>" \
+  --remote-chain-selector "<CHAIN_SELECTOR>" \
+  --inbound-enabled "true" \
+  --inbound-capacity "<CAPACITY>" \
+  --inbound-rate "<RATE>" \
+  --outbound-enabled "true" \
+  --outbound-capacity "<CAPACITY>" \
+  --outbound-rate "<RATE>"
+
+# Step 5: Provide liquidity (rebalancer)
+pnpm bs58 lockrelease-token-pool provide-liquidity \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<REBALANCER_ADDRESS>" \
+  --amount "<AMOUNT_IN_SMALLEST_UNITS>"
+
+# Step 6: Withdraw liquidity when needed (rebalancer)
+pnpm bs58 lockrelease-token-pool withdraw-liquidity \
+  --program-id "<POOL_PROGRAM_ID>" \
+  --mint "<TOKEN_MINT>" \
+  --authority "<REBALANCER_ADDRESS>" \
+  --amount "<AMOUNT_IN_SMALLEST_UNITS>"
+```
+
+**💡 Key Differences from Burnmint:**
+- **Liquidity Management**: Lockrelease pools support liquidity provision/withdrawal
+- **Rebalancer Role**: Dedicated rebalancer address for liquidity operations
+- **Lock/Release Mechanism**: Tokens are locked (not burned) and released (not minted)
+- **Same Chain Config**: Uses identical chain configuration commands as burnmint
+
 ### Router
 
 **Command:** `router` (alias: `r`)
@@ -1083,6 +1343,44 @@ pnpm bs58 spl-token --instruction update-metadata-authority [options]
 | `--mint <address>`             | PublicKey | Yes      | Token-2022 mint address                                         |
 | `--metadata-account <address>` | PublicKey | No       | Explicit metadata account (if using Metadata Pointer)           |
 | `--new-authority <address>`    | PublicKey | No       | New metadata authority (omit to keep current; null not exposed) |
+
+##### approve
+
+Approve a delegate to transfer tokens from a token account. This allows another address (delegate) to transfer up to a specified amount of tokens from the owner's token account.
+
+**Syntax:**
+
+```bash
+pnpm bs58 spl-token --instruction approve [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                                                    |
+| ------------------------------- | --------- | -------- | -------------------------------------------------------------- |
+| `--authority <address>`         | PublicKey | Yes      | Token account owner (signer)                                   |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address                                             |
+| `--delegate <address>`          | PublicKey | Yes      | Delegate address to approve                                    |
+| `--amount <amount>`             | u64       | Yes      | Amount to approve for delegation (in smallest token units)    |
+| `--token-account <address>`     | PublicKey | No       | Token account to approve from (auto-derives if not provided)  |
+
+**Example:**
+
+```bash
+# Approve Pool Signer PDA to transfer tokens from rebalancer's ATA
+pnpm bs58 spl-token \
+  --env devnet \
+  --instruction approve \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --mint "FVJeMAQSH9dJvVmhe8NHC2DHTEEqT5cgVXTL5CYYmKu1" \
+  --delegate "E8odUv4V4DXy3RWvkNYF7H33X9J56RtsFp4ExVXB86UA" \
+  --amount "50000000000"
+```
+
+**Use Cases:**
+- **Lockrelease Pool**: Required before `provide-liquidity` to allow Pool Signer PDA to transfer from rebalancer's ATA
+- **DeFi Protocols**: Allow smart contracts to transfer tokens on behalf of users
+- **Automated Trading**: Enable trading bots to operate with user tokens
 
 ### Metaplex Token Metadata
 
