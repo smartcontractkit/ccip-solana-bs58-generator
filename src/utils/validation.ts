@@ -46,7 +46,7 @@ export function validateArgs<T>(
  */
 export async function validateRpcConnectivity(rpcUrl: string): Promise<boolean> {
   try {
-    console.debug('🔄 Testing RPC connectivity using Solana web3.js built-in retry...');
+    console.debug('🔄 Testing RPC connectivity...');
 
     // Create connection that will use Solana's built-in retry logic
     // Note: Solana web3.js has built-in retry with 5 attempts and exponential backoff (500ms → 1s → 2s → 4s → 8s)
