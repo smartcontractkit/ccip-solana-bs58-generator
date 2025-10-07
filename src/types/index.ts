@@ -573,6 +573,38 @@ export const RouterCreateLookupTableArgsSchema = z.object({
     .optional(),
 });
 
+// Router ALT append
+export const RouterAppendToLookupTableArgsSchema = z.object({
+  lookupTableAddress: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  additionalAddresses: z.string().transform(val => {
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+      if (parsed.length === 0) throw new Error('Must provide at least one address to append');
+      return parsed.map((a: unknown) => new PublicKey(String(a)));
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON for additional addresses: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 // Simple options for transaction building and simulation (no execution)
 export interface TransactionOptions {
   rpcUrl: string;
