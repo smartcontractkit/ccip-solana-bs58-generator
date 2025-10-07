@@ -1002,7 +1002,7 @@ pnpm bs58 router \
 
 ##### create-lookup-table
 
-Create and extend an Address Lookup Table (ALT) for a mint’s Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
+Create and extend an Address Lookup Table (ALT) for a mint's Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
 
 **Syntax:**
 
@@ -1052,8 +1052,52 @@ pnpm bs58 router \
 
 Notes:
 
-- Token program is automatically detected by reading the mint’s owner.
+- Token program is automatically detected by reading the mint's owner.
 - The ALT is created and extended in one transaction and printed before the Base58 payload.
+
+##### append-to-lookup-table
+
+Append additional addresses to an existing Address Lookup Table (ALT). This command validates the ALT exists, checks authority permissions, and ensures the 256-address limit is not exceeded.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction append-to-lookup-table [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                                               |
+| ------------------------------- | --------- | -------- | --------------------------------------------------------- |
+| `--lookup-table-address <addr>` | PublicKey | Yes      | Existing ALT address to append to                        |
+| `--authority <address>`         | PublicKey | Yes      | ALT authority (must match ALT's current authority)       |
+| `--additional-addresses <json>` | JSON      | Yes      | JSON array of Base58 pubkeys to append                   |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction append-to-lookup-table \
+  --lookup-table-address "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --additional-addresses '["EXTRA_ADDRESS_1", "EXTRA_ADDRESS_2"]'
+```
+
+**Features:**
+
+- **Validation**: Checks ALT exists and authority permissions
+- **Capacity Check**: Ensures 256-address limit is not exceeded
+- **Chunked Extension**: Safely extends ALT in chunks of 30 addresses
+- **State Display**: Shows current and final address counts
+- **Error Handling**: Comprehensive error messages with helpful suggestions
+
+**Notes:**
+
+- The ALT must exist and be owned by the specified authority
+- Maximum 256 total addresses per ALT (Solana limit)
+- Addresses are added in chunks to avoid transaction size limits
+- Transaction is simulated before generating Base58 output
 
 ##### set-pool
 

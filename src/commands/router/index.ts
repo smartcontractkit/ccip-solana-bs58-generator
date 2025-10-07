@@ -5,6 +5,7 @@ import { acceptAdminRoleCommand } from './accept-admin-role.js';
 import { transferAdminRoleCommand } from './transfer-admin-role.js';
 import { setPoolCommand } from './set-pool.js';
 import { createLookupTableCommand } from './create-lookup-table.js';
+import { appendToLookupTableCommand } from './append-to-lookup-table.js';
 
 /**
  * CCIP Router commands
@@ -15,7 +16,7 @@ export function createRouterCommands(): Command {
     .alias('r')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table)'
+      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table, append-to-lookup-table)'
     )
     .option('--program-id <programId>', 'Router program ID (required for all instructions)')
     .option('--mint <mint>', 'Token mint address (required for registry instructions)')
@@ -27,7 +28,11 @@ export function createRouterCommands(): Command {
     .option('--pool-program-id <pubkey>', 'Pool program ID (required for create-lookup-table)')
     .option(
       '--additional-addresses <json>',
-      'JSON array of Base58 pubkeys to append (optional, only for create-lookup-table)'
+      'JSON array of Base58 pubkeys to append (optional for create-lookup-table, required for append-to-lookup-table)'
+    )
+    .option(
+      '--lookup-table-address <pubkey>',
+      'Existing ALT address (required for append-to-lookup-table)'
     )
     // owner/ccip-admin propose/override use the same param name
     .option(
@@ -50,13 +55,15 @@ export function createRouterCommands(): Command {
 
       const options = thisCommand.opts();
 
-      // common
-      if (!options.programId || !options.authority) {
+      // common - append-to-lookup-table doesn't need program-id
+      const instr = options.instruction as string;
+      if (instr !== 'append-to-lookup-table' && (!options.programId || !options.authority)) {
         console.error('❌ All instructions require: --program-id and --authority');
         process.exit(1);
+      } else if (instr === 'append-to-lookup-table' && !options.authority) {
+        console.error('❌ append-to-lookup-table requires: --authority');
+        process.exit(1);
       }
-
-      const instr = options.instruction as string;
       if (
         instr === 'owner-propose-administrator' ||
         instr === 'owner-override-pending-administrator'
@@ -91,6 +98,13 @@ export function createRouterCommands(): Command {
           );
           process.exit(1);
         }
+      } else if (instr === 'append-to-lookup-table') {
+        if (!options.lookupTableAddress || !options.additionalAddresses) {
+          console.error(
+            '❌ append-to-lookup-table requires: --lookup-table-address and --additional-addresses'
+          );
+          process.exit(1);
+        }
       } else {
         console.error(`❌ Unknown instruction: ${instr}`);
         process.exit(1);
@@ -110,6 +124,8 @@ export function createRouterCommands(): Command {
         setPoolCommand(options, command);
       } else if (i === 'create-lookup-table') {
         createLookupTableCommand(options, command);
+      } else if (i === 'append-to-lookup-table') {
+        appendToLookupTableCommand(options, command);
       }
     });
 
