@@ -1,7 +1,10 @@
 import { Command } from 'commander';
 import { initializePoolCommand } from './initialize-pool.js';
 import { acceptOwnershipCommand } from './accept-ownership.js';
+import { getChainConfigCommand } from './get-chain-config.js';
+import { getStateCommand } from './get-state.js';
 import { transferOwnershipCommand } from './transfer-ownership.js';
+import { setRateLimitAdminCommand } from './set-rate-limit-admin.js';
 import { configureAllowListCommand } from './configure-allow-list.js';
 import { removeFromAllowListCommand } from './remove-from-allow-list.js';
 import { initChainRemoteConfigCommand } from './init-chain-remote-config.js';
@@ -23,7 +26,7 @@ export function createLockReleaseCommands(): Command {
     .alias('lr')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, provide-liquidity, withdraw-liquidity, set-rebalancer, set-can-accept-liquidity)'
+      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, provide-liquidity, withdraw-liquidity, set-rebalancer, set-can-accept-liquidity)'
     )
     .option(
       '--program-id <programId>',
@@ -36,6 +39,12 @@ export function createLockReleaseCommands(): Command {
     .option(
       '--proposed-owner <proposedOwner>',
       'Proposed new owner public key (required for transfer-ownership)'
+    )
+
+    // setRateLimitAdmin specific options
+    .option(
+      '--new-rate-limit-admin <newRateLimitAdmin>',
+      'New rate limit admin public key (required for set-rate-limit-admin)'
     )
 
     // initChainRemoteConfig / editChainRemoteConfig specific options
@@ -116,6 +125,34 @@ export function createLockReleaseCommands(): Command {
       '--allow <allow>',
       'Allow liquidity operations (true/false) (required for set-can-accept-liquidity)'
     )
+    .hook('preAction', thisCommand => {
+      // Environment/RPC validation is handled by the global preAction hook
+      const globalOpts = thisCommand.parent?.opts() || {};
+      if (!globalOpts.resolvedRpcUrl) {
+        console.error('❌ Either --env or --rpc-url is required for transaction commands');
+        console.error('💡 Use --env devnet or --rpc-url "https://custom-endpoint.com"');
+        process.exit(1);
+      }
+
+      // Validate instruction-specific requirements
+      const options = thisCommand.opts();
+
+      // Common required options for all instructions
+      if (!options.programId || !options.mint) {
+        console.error('❌ All instructions require: --program-id and --mint');
+        process.exit(1);
+      }
+
+      // Most instructions also require --authority (except read-only operations)
+      const readOnlyInstructions = ['get-state', 'get-chain-config'];
+      if (!readOnlyInstructions.includes(options.instruction) && !options.authority) {
+        console.error('❌ This instruction requires: --authority');
+        console.error(
+          `💡 Read-only operations (${readOnlyInstructions.join(', ')}) do not require --authority`
+        );
+        process.exit(1);
+      }
+    })
     .addHelpText(
       'after',
       `
@@ -155,6 +192,9 @@ Available Instructions:
   • initialize-pool              Initialize the pool state
   • accept-ownership             Accept ownership transfer
   • transfer-ownership           Transfer pool ownership
+  • set-rate-limit-admin         Set the rate limit admin for a token pool
+  • get-state                    Read and display the current state of a token pool
+  • get-chain-config             Read and display chain configuration and rate limits for a remote chain
   • init-chain-remote-config     Initialize remote chain configuration
   • edit-chain-remote-config     Edit existing remote chain configuration
   • append-remote-pool-addresses Append addresses to remote pool config
@@ -175,6 +215,12 @@ Available Instructions:
         acceptOwnershipCommand(options, command);
       } else if (options.instruction === 'transfer-ownership') {
         transferOwnershipCommand(options, command);
+      } else if (options.instruction === 'set-rate-limit-admin') {
+        setRateLimitAdminCommand(options, command);
+      } else if (options.instruction === 'get-state') {
+        getStateCommand(options, command);
+      } else if (options.instruction === 'get-chain-config') {
+        getChainConfigCommand(options, command);
       } else if (options.instruction === 'init-chain-remote-config') {
         initChainRemoteConfigCommand(options, command);
       } else if (options.instruction === 'edit-chain-remote-config') {
@@ -200,7 +246,7 @@ Available Instructions:
       } else {
         console.error(`❌ Unknown instruction: ${options.instruction}`);
         console.error(
-          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit, provide-liquidity, withdraw-liquidity, set-rebalancer, set-can-accept-liquidity'
+          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit, provide-liquidity, withdraw-liquidity, set-rebalancer, set-can-accept-liquidity'
         );
         process.exit(1);
       }
@@ -212,7 +258,10 @@ Available Instructions:
 export {
   initializePoolCommand,
   acceptOwnershipCommand,
+  getChainConfigCommand,
+  getStateCommand,
   transferOwnershipCommand,
+  setRateLimitAdminCommand,
   configureAllowListCommand,
   removeFromAllowListCommand,
   initChainRemoteConfigCommand,

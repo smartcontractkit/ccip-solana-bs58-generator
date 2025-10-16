@@ -100,6 +100,71 @@ export class InstructionBuilder {
   }
 
   /**
+   * Create setRateLimitAdmin instruction using Anchor
+   * @param mint The mint public key
+   * @param authority The current authority public key
+   * @param newRateLimitAdmin The new rate limit admin public key
+   * @returns Transaction instruction
+   */
+  async setRateLimitAdmin(
+    mint: PublicKey,
+    authority: PublicKey,
+    newRateLimitAdmin: PublicKey
+  ): Promise<TransactionInstruction> {
+    logger.debug(
+      {
+        mint: mint.toString(),
+        authority: authority.toString(),
+        newRateLimitAdmin: newRateLimitAdmin.toString(),
+        programId: this.programId.toString(),
+      },
+      'Building setRateLimitAdmin instruction with Anchor'
+    );
+
+    // Validate instruction exists in IDL
+    AnchorUtils.validateInstructionExists(this.idl, 'setRateLimitAdmin');
+
+    // Derive accounts using our existing logic
+    const accounts = BurnmintTokenPoolAccounts.setRateLimitAdmin(
+      this.programId,
+      mint,
+      authority
+    ).build();
+
+    logger.debug(
+      {
+        stateAccount: accounts[0]?.pubkey?.toString(),
+        authorityAccount: accounts[1]?.pubkey?.toString(),
+        accountsLength: accounts.length,
+      },
+      'Account details before instruction building'
+    );
+
+    // Serialize instruction data - mint (32 bytes) + newRateLimitAdmin (32 bytes) = 64 bytes
+    const instructionDataBuffer = Buffer.alloc(64);
+    mint.toBuffer().copy(instructionDataBuffer, 0);
+    newRateLimitAdmin.toBuffer().copy(instructionDataBuffer, 32);
+
+    // Build instruction using the reusable utility
+    const instruction = AnchorUtils.buildInstruction(
+      'set_rate_limit_admin',
+      this.programId,
+      accounts,
+      instructionDataBuffer
+    );
+
+    logger.debug(
+      {
+        instructionDataLength: instruction.data.length,
+        discriminator: Array.from(instruction.data.subarray(0, 8)),
+      },
+      'Generated real Anchor instruction'
+    );
+
+    return instruction;
+  }
+
+  /**
    * Create setChainRateLimit instruction using Anchor
    * @param mint The mint public key
    * @param authority The authority public key

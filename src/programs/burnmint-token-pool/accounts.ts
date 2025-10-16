@@ -139,6 +139,25 @@ export class BurnmintTokenPoolAccounts {
   }
 
   /**
+   * Build accounts for setRateLimitAdmin instruction
+   * @param programId The burnmint_token_pool program ID
+   * @param mint The mint public key
+   * @param authority The current authority public key
+   * @returns Account builder with required accounts
+   */
+  static setRateLimitAdmin(
+    programId: PublicKey,
+    mint: PublicKey,
+    authority: PublicKey
+  ): AccountBuilder {
+    const [statePda] = AccountDerivation.deriveStatePda(programId, mint);
+
+    return new AccountBuilder()
+      .addWritable(statePda) // state account (writable)
+      .addSigner(authority, true); // authority account (writable, signer)
+  }
+
+  /**
    * Build accounts for setChainRateLimit instruction
    * @param programId The burnmint_token_pool program ID
    * @param mint The mint public key

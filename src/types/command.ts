@@ -37,6 +37,33 @@ export interface TransferOwnershipOptions {
 }
 
 /**
+ * Standard options for set rate limit admin commands
+ */
+export interface SetRateLimitAdminOptions {
+  programId: string;
+  mint: string;
+  authority: string;
+  newRateLimitAdmin: string;
+}
+
+/**
+ * Standard options for get state commands
+ */
+export interface GetStateOptions {
+  programId: string;
+  mint: string;
+}
+
+/**
+ * Standard options for get chain config commands
+ */
+export interface GetChainConfigOptions {
+  programId: string;
+  mint: string;
+  remoteChainSelector: string;
+}
+
+/**
  * Standard options for configure allow list commands
  */
 export interface ConfigureAllowListOptions {
