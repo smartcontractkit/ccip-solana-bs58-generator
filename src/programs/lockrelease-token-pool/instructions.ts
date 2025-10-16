@@ -69,8 +69,8 @@ export class InstructionBuilder {
       'Building accept_ownership instruction for lockrelease'
     );
 
-    // Validate instruction exists in IDL (using snake_case)
-    AnchorUtils.validateInstructionExists(this.idl, 'accept_ownership');
+    // Validate instruction exists in IDL (using camelCase)
+    AnchorUtils.validateInstructionExists(this.idl, 'acceptOwnership');
 
     // Derive accounts using our existing logic
     const accounts = LockreleaseTokenPoolAccounts.acceptOwnership(
@@ -121,7 +121,7 @@ export class InstructionBuilder {
       'Building transfer_ownership instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'transfer_ownership');
+    AnchorUtils.validateInstructionExists(this.idl, 'transferOwnership');
 
     const accounts = LockreleaseTokenPoolAccounts.transferOwnership(
       this.programId,
@@ -235,7 +235,7 @@ export class InstructionBuilder {
       'Building configure_allow_list instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'configure_allow_list');
+    AnchorUtils.validateInstructionExists(this.idl, 'configureAllowList');
 
     const accounts = LockreleaseTokenPoolAccounts.configureAllowList(
       this.programId,
@@ -296,7 +296,7 @@ export class InstructionBuilder {
       'Building remove_from_allow_list instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'remove_from_allow_list');
+    AnchorUtils.validateInstructionExists(this.idl, 'removeFromAllowList');
 
     const accounts = LockreleaseTokenPoolAccounts.removeFromAllowList(
       this.programId,
@@ -355,10 +355,10 @@ export class InstructionBuilder {
         amount: amount.toString(),
         programId: this.programId.toString(),
       },
-      'Building provide_liquidity instruction for lockrelease'
+      'Building provideLiquidity instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'provide_liquidity');
+    AnchorUtils.validateInstructionExists(this.idl, 'provideLiquidity');
 
     const accounts = LockreleaseTokenPoolAccounts.provideLiquidity(
       this.programId,
@@ -407,10 +407,10 @@ export class InstructionBuilder {
         amount: amount.toString(),
         programId: this.programId.toString(),
       },
-      'Building withdraw_liquidity instruction for lockrelease'
+      'Building withdrawLiquidity instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'withdraw_liquidity');
+    AnchorUtils.validateInstructionExists(this.idl, 'withdrawLiquidity');
 
     const accounts = LockreleaseTokenPoolAccounts.withdrawLiquidity(
       this.programId,
@@ -457,10 +457,10 @@ export class InstructionBuilder {
         canAccept,
         programId: this.programId.toString(),
       },
-      'Building set_can_accept_liquidity instruction for lockrelease'
+      'Building setCanAcceptLiquidity instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'set_can_accept_liquidity');
+    AnchorUtils.validateInstructionExists(this.idl, 'setCanAcceptLiquidity');
 
     const accounts = LockreleaseTokenPoolAccounts.setCanAcceptLiquidity(
       this.programId,
@@ -504,10 +504,10 @@ export class InstructionBuilder {
         rebalancer: rebalancer.toString(),
         programId: this.programId.toString(),
       },
-      'Building set_rebalancer instruction for lockrelease'
+      'Building setRebalancer instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'set_rebalancer');
+    AnchorUtils.validateInstructionExists(this.idl, 'setRebalancer');
 
     const accounts = LockreleaseTokenPoolAccounts.setRebalancer(
       this.programId,
@@ -567,7 +567,7 @@ export class InstructionBuilder {
       'Building init_chain_remote_config instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'init_chain_remote_config');
+    AnchorUtils.validateInstructionExists(this.idl, 'initChainRemoteConfig');
 
     const accounts = LockreleaseTokenPoolAccounts.initChainRemoteConfig(
       this.programId,
@@ -674,7 +674,7 @@ export class InstructionBuilder {
       'Building edit_chain_remote_config instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'edit_chain_remote_config');
+    AnchorUtils.validateInstructionExists(this.idl, 'editChainRemoteConfig');
 
     const accounts = LockreleaseTokenPoolAccounts.editChainRemoteConfig(
       this.programId,
@@ -762,7 +762,7 @@ export class InstructionBuilder {
       'Building append_remote_pool_addresses instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'append_remote_pool_addresses');
+    AnchorUtils.validateInstructionExists(this.idl, 'appendRemotePoolAddresses');
 
     const accounts = LockreleaseTokenPoolAccounts.appendRemotePoolAddresses(
       this.programId,
@@ -843,7 +843,7 @@ export class InstructionBuilder {
       'Building set_chain_rate_limit instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'set_chain_rate_limit');
+    AnchorUtils.validateInstructionExists(this.idl, 'setChainRateLimit');
 
     const accounts = LockreleaseTokenPoolAccounts.setChainRateLimit(
       this.programId,
@@ -940,7 +940,7 @@ export class InstructionBuilder {
       'Building delete_chain_config instruction for lockrelease'
     );
 
-    AnchorUtils.validateInstructionExists(this.idl, 'delete_chain_config');
+    AnchorUtils.validateInstructionExists(this.idl, 'deleteChainConfig');
 
     const accounts = LockreleaseTokenPoolAccounts.deleteChainConfig(
       this.programId,
