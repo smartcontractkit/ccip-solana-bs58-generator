@@ -178,6 +178,8 @@ Token pool program for burning tokens on source chain and minting on destination
 
 Initialize the burn-mint pool state for a given SPL mint. This creates the pool State PDA and wires program-global config (router, RMN) into the pool. The caller becomes the pool owner.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -219,6 +221,8 @@ pnpm bs58 burnmint-token-pool \
 
 Transfer ownership of the pool to a proposed new owner.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -257,6 +261,8 @@ pnpm bs58 burnmint-token-pool \
 ##### accept-ownership
 
 Accept ownership of a token pool previously proposed via transfer-ownership.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **Syntax:**
 
@@ -301,6 +307,8 @@ The command generates:
 ##### set-chain-rate-limit
 
 Configure rate limiting for token transfers to/from a specific remote chain. This command ONLY modifies rate limit settings.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **⚠️ PREREQUISITE**: You must run `init-chain-remote-config` first to create the chain configuration before setting rate limits.
 
@@ -375,6 +383,8 @@ The command generates:
 
 Initialize remote chain configuration for a given chain selector. This command ONLY sets up pool addresses, token address, and decimals.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **⚠️ IMPORTANT**: This command does **NOT** set rate limits! Rate limits must be configured separately using `set-chain-rate-limit` after initializing the chain config.
 
 Pool addresses must be empty at init; append addresses after initialization.
@@ -423,6 +433,8 @@ pnpm bs58 burnmint-token-pool \
 ##### edit-chain-remote-config
 
 Edit an existing remote chain configuration. This command ONLY modifies pool addresses, token address, and decimals.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **⚠️ IMPORTANT**: This command does **NOT** modify rate limits! To change rate limits, use `set-chain-rate-limit` instead.
 
@@ -474,6 +486,8 @@ pnpm bs58 burnmint-token-pool \
 
 Append additional remote pool addresses to a chain configuration.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -516,6 +530,8 @@ pnpm bs58 burnmint-token-pool \
 
 Delete a chain configuration for a given chain selector.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -554,6 +570,8 @@ pnpm bs58 burnmint-token-pool \
 ##### configure-allow-list
 
 Configure allowed addresses and enable/disable the allow list.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **Syntax:**
 
@@ -597,6 +615,8 @@ pnpm bs58 burnmint-token-pool \
 
 Remove addresses from the allow list.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -637,6 +657,8 @@ pnpm bs58 burnmint-token-pool \
 
 Set the rate limit admin for a token pool. The rate limit admin is authorized to configure rate limits using `set-chain-rate-limit`.
 
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
 **Syntax:**
 
 ```bash
@@ -674,6 +696,8 @@ pnpm bs58 burnmint-token-pool \
 ##### get-state
 
 Read and display the current on-chain state of a token pool. This is a **read-only** operation that fetches and deserializes the state account data.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **Syntax:**
 
@@ -714,6 +738,8 @@ The command displays comprehensive information about the pool state:
 ##### get-chain-config
 
 Read and display the chain configuration for a specific remote chain, including pool addresses, token information, and current rate limit states with real-time token bucket levels.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
 
 **Syntax:**
 
