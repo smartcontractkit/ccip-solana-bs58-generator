@@ -71,6 +71,70 @@ export const TransferOwnershipArgsSchema = z.object({
     .optional(),
 });
 
+export const SetRateLimitAdminArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  authority: z.string().transform(val => new PublicKey(val)),
+  newRateLimitAdmin: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const GetStateArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const GetChainConfigArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)),
+  mint: z.string().transform(val => new PublicKey(val)),
+  remoteChainSelector: z.string().transform(val => {
+    const num = BigInt(val);
+    if (num < 0) throw new Error('Remote chain selector must be non-negative');
+    return num;
+  }),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
 export const SetChainRateLimitArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),

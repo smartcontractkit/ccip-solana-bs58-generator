@@ -1,7 +1,10 @@
 import { Command } from 'commander';
 import { acceptOwnershipCommand } from './accept-ownership.js';
+import { getChainConfigCommand } from './get-chain-config.js';
+import { getStateCommand } from './get-state.js';
 import { initializePoolCommand } from './initialize-pool.js';
 import { setChainRateLimitCommand } from './set-chain-rate-limit.js';
+import { setRateLimitAdminCommand } from './set-rate-limit-admin.js';
 import { transferOwnershipCommand } from './transfer-ownership.js';
 import { initChainRemoteConfigCommand } from './init-chain-remote-config.js';
 import { editChainRemoteConfigCommand } from './edit-chain-remote-config.js';
@@ -19,7 +22,7 @@ export function createBurnmintCommands(): Command {
     .alias('bm')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list)'
+      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list)'
     )
     .option(
       '--program-id <programId>',
@@ -31,6 +34,11 @@ export function createBurnmintCommands(): Command {
     .option(
       '--proposed-owner <proposedOwner>',
       'Proposed new owner public key (required for transfer-ownership)'
+    )
+    // setRateLimitAdmin specific options
+    .option(
+      '--new-rate-limit-admin <newRateLimitAdmin>',
+      'New rate limit admin public key (required for set-rate-limit-admin)'
     )
     // initChainRemoteConfig / editChainRemoteConfig specific options
     .option(
@@ -107,8 +115,18 @@ export function createBurnmintCommands(): Command {
       const options = thisCommand.opts();
 
       // Common required options for all instructions
-      if (!options.programId || !options.mint || !options.authority) {
-        console.error('❌ All instructions require: --program-id, --mint, and --authority');
+      if (!options.programId || !options.mint) {
+        console.error('❌ All instructions require: --program-id and --mint');
+        process.exit(1);
+      }
+
+      // Most instructions also require --authority (except read-only operations)
+      const readOnlyInstructions = ['get-state', 'get-chain-config'];
+      if (!readOnlyInstructions.includes(options.instruction) && !options.authority) {
+        console.error('❌ This instruction requires: --authority');
+        console.error(
+          `💡 Read-only operations (${readOnlyInstructions.join(', ')}) do not require --authority`
+        );
         process.exit(1);
       }
 
@@ -124,6 +142,18 @@ export function createBurnmintCommands(): Command {
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
           console.error('    --proposed-owner "NewOwnerPublicKey123456789..."');
+          process.exit(1);
+        }
+      } else if (options.instruction === 'set-rate-limit-admin') {
+        if (!options.newRateLimitAdmin) {
+          console.error('❌ set-rate-limit-admin instruction requires: --new-rate-limit-admin');
+          console.error('');
+          console.error('Example:');
+          console.error('  $ pnpm bs58 burnmint-token-pool --instruction set-rate-limit-admin \\');
+          console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
+          console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
+          console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
+          console.error('    --new-rate-limit-admin "NewRateLimitAdminPublicKey123456789..."');
           process.exit(1);
         }
       } else if (options.instruction === 'init-chain-remote-config') {
@@ -389,6 +419,11 @@ Available Instructions:
   • initialize-pool              Initialize a new burn-mint token pool
   • accept-ownership             Accept ownership of a token pool
   • transfer-ownership           Transfer ownership to a new owner
+  • set-rate-limit-admin         Set the rate limit admin for a token pool
+
+📖 Read Operations:
+  • get-state                    Read and display the current state of a token pool
+  • get-chain-config             Read and display chain configuration and rate limits for a remote chain
 
 ⚙️  Chain Configuration (Pool Addresses & Token Info):
   • init-chain-remote-config     Initialize remote chain config (pool addresses, token address, decimals)
@@ -421,6 +456,12 @@ Available Instructions:
         acceptOwnershipCommand(options, command);
       } else if (options.instruction === 'transfer-ownership') {
         transferOwnershipCommand(options, command);
+      } else if (options.instruction === 'set-rate-limit-admin') {
+        setRateLimitAdminCommand(options, command);
+      } else if (options.instruction === 'get-state') {
+        getStateCommand(options, command);
+      } else if (options.instruction === 'get-chain-config') {
+        getChainConfigCommand(options, command);
       } else if (options.instruction === 'init-chain-remote-config') {
         initChainRemoteConfigCommand(options, command);
       } else if (options.instruction === 'edit-chain-remote-config') {
@@ -438,7 +479,7 @@ Available Instructions:
       } else {
         console.error(`❌ Unknown instruction: ${options.instruction}`);
         console.error(
-          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
+          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
         );
         process.exit(1);
       }

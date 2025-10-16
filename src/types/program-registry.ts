@@ -28,6 +28,9 @@ export const PROGRAM_REGISTRY = {
     supportedInstructions: [
       'acceptOwnership',
       'transferOwnership',
+      'setRateLimitAdmin',
+      'getState',
+      'getChainConfig',
       'setChainRateLimit',
       'initChainRemoteConfig',
       'editChainRemoteConfig',
@@ -46,6 +49,9 @@ export const PROGRAM_REGISTRY = {
     supportedInstructions: [
       'accept_ownership',
       'transfer_ownership',
+      'setRateLimitAdmin',
+      'getState',
+      'getChainConfig',
       'set_chain_rate_limit',
       'init_chain_remote_config',
       'edit_chain_remote_config',

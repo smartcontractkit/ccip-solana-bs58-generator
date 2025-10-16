@@ -30,19 +30,14 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Delete Chain Config](#delete-chain-config)
       - [Configure Allow List](#configure-allow-list)
       - [Remove From Allow List](#remove-from-allow-list)
+      - [Set Rate Limit Admin](#set-rate-limit-admin)
+      - [Get State](#get-state)
+      - [Get Chain Config](#get-chain-config)
   - [Lockrelease Token Pool](#lockrelease-token-pool)
     - [Instructions](#lockrelease-instructions)
       - [Initialize Pool](#lockrelease-initialize-pool)
-      - [Transfer Ownership](#lockrelease-transfer-ownership)
-      - [Accept Ownership](#lockrelease-accept-ownership)
-      - [Init Chain Remote Config](#lockrelease-init-chain-remote-config)
-      - [Edit Chain Remote Config](#lockrelease-edit-chain-remote-config)
-      - [Append Remote Pool Addresses](#lockrelease-append-remote-pool-addresses)
-      - [Delete Chain Config](#lockrelease-delete-chain-config)
-      - [Set Chain Rate Limit](#lockrelease-set-chain-rate-limit)
-      - [Configure Allow List](#lockrelease-configure-allow-list)
-      - [Remove From Allow List](#lockrelease-remove-from-allow-list)
       - [Set Rebalancer](#set-rebalancer)
+      - [Set Can Accept Liquidity](#set-can-accept-liquidity)
       - [Provide Liquidity](#provide-liquidity)
       - [Withdraw Liquidity](#withdraw-liquidity)
   - [Router](#router)
@@ -626,11 +621,175 @@ pnpm bs58 burnmint-token-pool \
 | 2     | Authority     | Signer, Writable | Authority account              |
 | 3     | SystemProgram | Read-only        | System program                 |
 
+##### set-rate-limit-admin
+
+Set the rate limit admin for a token pool. The rate limit admin is authorized to configure rate limits using `set-chain-rate-limit`.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction set-rate-limit-admin [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                    |
+| ------------------------------- | --------- | -------- | ------------------------------ |
+| `--program-id <address>`        | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address             |
+| `--authority <address>`         | PublicKey | Yes      | Current pool owner             |
+| `--new-rate-limit-admin <addr>` | PublicKey | Yes      | New rate limit admin address   |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction set-rate-limit-admin \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --new-rate-limit-admin "RateLimitAdminPublicKey123456789..."
+```
+
+**Accounts:**
+
+| Index | Account   | Type             | Description                    |
+| ----- | --------- | ---------------- | ------------------------------ |
+| 0     | State     | Writable         | Token pool state account (PDA) |
+| 1     | Authority | Signer, Writable | Current pool owner             |
+
+##### get-state
+
+Read and display the current on-chain state of a token pool. This is a **read-only** operation that fetches and deserializes the state account data.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction get-state [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                    |
+| ------------------------ | --------- | -------- | ------------------------------ |
+| `--program-id <address>` | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address             |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction get-state \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo"
+```
+
+**Output:**
+
+The command displays comprehensive information about the pool state:
+- Program information (type, version, addresses)
+- Token configuration (mint, decimals, token program)
+- Pool accounts (signer PDA, token account)
+- Governance (owner, proposed owner, rate limit admin)
+- Configuration (router, RMN remote)
+- Access control (allow list status and addresses)
+- Lockrelease-specific fields (rebalancer, liquidity acceptance)
+
+**Note:** This is a **read-only** operation and does not require `--authority`.
+
+##### get-chain-config
+
+Read and display the chain configuration for a specific remote chain, including pool addresses, token information, and current rate limit states with real-time token bucket levels.
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction get-chain-config [options]
+```
+
+**Options:**
+
+| Option                               | Type      | Required | Description                    |
+| ------------------------------------ | --------- | -------- | ------------------------------ |
+| `--program-id <address>`             | PublicKey | Yes      | Burnmint token pool program ID |
+| `--mint <address>`                   | PublicKey | Yes      | Token mint address             |
+| `--remote-chain-selector <selector>` | u64       | Yes      | Remote chain selector          |
+
+**Example:**
+
+```bash
+pnpm bs58 burnmint-token-pool \
+  --env devnet \
+  --instruction get-chain-config \
+  --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --remote-chain-selector "16015286601757825753"
+```
+
+**Output:**
+
+The command displays comprehensive information about the chain configuration:
+- Program information (type, chain config PDA)
+- Local token information (Solana mint address and decimals)
+- Remote token configuration (destination chain token address, decimals, pool addresses)
+- Inbound rate limit (enabled status, capacity, rate, current tokens, last updated)
+- Outbound rate limit (enabled status, capacity, rate, current tokens, last updated)
+
+**Example Output:**
+```
+📊 Chain Configuration for Remote Chain: 16015286601757825753
+
+Program Information:
+  Program Type:         Burnmint Token Pool
+  Program ID:           41FGToCmdaWa1dgZLKFAjvmx6e6AjVTX7SVRibvsMGVB
+  Chain Config PDA:     7G8iWscQudiuBHkpCeufgR4hfPk5SssBEWsh6Au4KaF6
+
+Local Token (Solana):
+  Mint Address:         63nnXf3wDDLoLGdvFtpAA2NPTyxSMLTo56JBXEvrothB
+  Decimals:             9
+  Note:                 Rate limits below use these decimals
+
+Remote Token (Destination Chain):
+  Token Address:        0x000...5715 (32 bytes)
+  Token Decimals:       18
+  Pool Addresses:       1 address(es)
+    1. 0x4678... (20 bytes)
+
+Inbound Rate Limit: (in local token units)
+  Enabled:              true
+  Capacity:             20,000,000,000 (20.000000000 tokens)
+  Rate:                 100,000,000 (0.100000000 tokens/sec)
+  Current Tokens:       20,000,000,000 (20.000000000 available)
+  Last Updated:         2025-10-16 13:56:34 UTC
+```
+
+**Key Features:**
+- **Token Formatting**: Amounts displayed with proper decimals (e.g., "100.000000000 tokens")
+- **Current Bucket Levels**: Shows real-time available tokens in rate limit buckets
+- **Timestamp Display**: Human-readable dates with UTC timestamps
+- **Hex Addresses**: Remote addresses shown with byte lengths
+- **Empty Handling**: Gracefully shows when no pool addresses are configured
+
+**Important Notes:**
+- This is a **read-only** operation and does not require `--authority`
+- **Rate limits are always in local token units** (Solana side decimals), not remote token units
+- Remote configuration shows the destination chain token info (address, decimals)
+
 ### Lockrelease Token Pool
 
 **Command:** `lockrelease-token-pool` (alias: `lr`)
 
 Token pool program for locking tokens on source chain and releasing on destination chain, with liquidity management features.
+
+**📋 Supported Instructions:**
+
+Lockrelease pools support **ALL burnmint instructions** documented above, plus the following lockrelease-specific instructions:
+- ✅ All shared instructions: `initialize-pool`, `transfer-ownership`, `accept-ownership`, `set-rate-limit-admin`, `get-state`, `get-chain-config`, `init-chain-remote-config`, `edit-chain-remote-config`, `append-remote-pool-addresses`, `delete-chain-config`, `set-chain-rate-limit`, `configure-allow-list`, `remove-from-allow-list`
+- ➕ Lockrelease-specific: `set-rebalancer`, `set-can-accept-liquidity`, `provide-liquidity`, `withdraw-liquidity`
+
+Simply replace `burnmint-token-pool` with `lockrelease-token-pool` in any burnmint command.
 
 #### Lockrelease Instructions
 
@@ -704,6 +863,47 @@ pnpm bs58 lockrelease-token-pool set-rebalancer \
   --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
   --rebalancer "RebalancerAddress123456789..."
+```
+
+**Accounts:**
+
+| Index | Account   | Type      | Description                    |
+| ----- | --------- | --------- | ------------------------------ |
+| 0     | State     | Writable  | Token pool state account (PDA) |
+| 1     | Mint      | Read-only | Token mint account             |
+| 2     | Authority | Signer    | Pool owner account             |
+
+##### set-can-accept-liquidity
+
+Enable or disable the pool's ability to accept liquidity. Only the pool owner can call this instruction.
+
+**⚠️ PREREQUISITE**: The pool must be initialized first.
+
+**Syntax:**
+
+```bash
+pnpm bs58 lockrelease-token-pool --instruction set-can-accept-liquidity [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                         |
+| ------------------------ | --------- | -------- | ----------------------------------- |
+| `--program-id <address>` | PublicKey | Yes      | Lockrelease token pool program ID   |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                  |
+| `--authority <address>`  | PublicKey | Yes      | Authority public key (pool owner)   |
+| `--allow <boolean>`      | boolean   | Yes      | Allow liquidity operations (true/false) |
+
+**Example:**
+
+```bash
+pnpm bs58 lockrelease-token-pool \
+  --env devnet \
+  --instruction set-can-accept-liquidity \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --allow "true"
 ```
 
 **Accounts:**
