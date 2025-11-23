@@ -38,6 +38,92 @@ export interface BuildAppendAltResult {
   totalAddressesAfterAppend: number;
 }
 
+export interface DeriveCcipBaseAddressesArgs {
+  connection: Connection;
+  routerProgramId: PublicKey;
+  feeQuoterProgramId: PublicKey;
+  poolProgramId: PublicKey;
+  tokenMint: PublicKey;
+  lookupTableAddress: PublicKey;
+}
+
+export interface DeriveCcipBaseAddressesResult {
+  addresses: PublicKey[];
+  addressLabels: string[];
+}
+
+/**
+ * Derive the base CCIP addresses for a token (10 addresses total)
+ * These are the same addresses that would be included in create-lookup-table
+ *
+ * @param args - CCIP program IDs, mint, and ALT address
+ * @returns Array of derived addresses and their labels
+ */
+export async function deriveCcipBaseAddresses(
+  args: DeriveCcipBaseAddressesArgs
+): Promise<DeriveCcipBaseAddressesResult> {
+  const {
+    connection,
+    routerProgramId,
+    feeQuoterProgramId,
+    poolProgramId,
+    tokenMint,
+    lookupTableAddress,
+  } = args;
+
+  const tokenProgramId = await detectTokenProgramId(connection, tokenMint);
+
+  const [tokenAdminRegistryPda] = RouterDerivation.deriveTokenAdminRegistryPda(
+    routerProgramId,
+    tokenMint
+  );
+  const [poolConfigPda] = BurnmintDerivation.deriveStatePda(poolProgramId, tokenMint);
+  const [poolSignerPda] = BurnmintDerivation.derivePoolSignerPda(poolProgramId, tokenMint);
+  const poolTokenAta = getAssociatedTokenAddressSync(
+    tokenMint,
+    poolSignerPda,
+    true,
+    tokenProgramId
+  );
+
+  const [feeTokenConfigPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from(FEE_QUOTER_SEEDS.FEE_BILLING_TOKEN_CONFIG), tokenMint.toBuffer()],
+    feeQuoterProgramId
+  );
+  const [routerPoolSignerPda] = RouterDerivation.deriveExternalTokenPoolsSignerPda(
+    routerProgramId,
+    poolProgramId
+  );
+
+  const addresses: PublicKey[] = [
+    lookupTableAddress,
+    tokenAdminRegistryPda,
+    poolProgramId,
+    poolConfigPda,
+    poolTokenAta,
+    poolSignerPda,
+    tokenProgramId,
+    tokenMint,
+    feeTokenConfigPda,
+    routerPoolSignerPda,
+  ];
+
+  const addressLabels: string[] = [
+    'Lookup Table Address',
+    'Token Admin Registry PDA',
+    'Pool Program ID',
+    'Pool Config PDA',
+    'Pool Token ATA',
+    'Pool Signer PDA',
+    'Token Program ID',
+    'Token Mint',
+    'Fee Token Config PDA',
+    'Router Pool Signer PDA',
+  ];
+
+  return { addresses, addressLabels };
+}
+
 export async function buildCreateAndExtendAlt(args: BuildAltArgs): Promise<BuildAltResult> {
   const {
     connection,

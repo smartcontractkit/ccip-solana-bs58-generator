@@ -32,8 +32,17 @@ program
   .requiredOption('--keypair <path>', 'EOA keypair file path for paying and executing')
   .requiredOption('--authority <pubkey>', 'ALT authority (Squads vault address)')
   .requiredOption('--env <env>', 'Environment (mainnet, devnet, testnet, localhost)')
+  .option('--verbose', 'Enable verbose logging')
   .option('--json', 'Output as JSON for scripting')
   .action(async options => {
+    // Configure logging level (matching main CLI pattern)
+    if (options.verbose) {
+      logger.level = 'debug';
+      logger.info('Verbose logging enabled (debug level)');
+    } else {
+      logger.level = 'info';
+    }
+
     const cmdLogger = createChildLogger(logger, { command: 'router.create-alt' });
 
     try {

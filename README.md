@@ -1240,26 +1240,14 @@ pnpm bs58 router \
 
 ##### create-lookup-table
 
-Create and extend an Address Lookup Table (ALT) for a mint's Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
+Generate a Base58-encoded transaction for creating and extending an Address Lookup Table (ALT) for CCIP Router integration. This transaction must be imported and executed via a multisig (e.g., Squads) within ~60-90 seconds due to Solana's blockhash expiration.
 
-> 🆕 **Need to execute immediately with an EOA instead of generating Base58?**
->
-> Use the companion CLI to create and populate the ALT in one step, then manage it via Squads later:
->
-> ```bash
-> pnpm create-alt \
->   --env devnet \
->   --keypair ~/.config/solana/id.json \
->   --authority $SOL_SQUAD_VAULT_MULTISIG \
->   --program-id $CCIP_ROUTER_PROGRAM \
->   --fee-quoter-program-id $CCIP_FEE_QUOTER_PROGRAM \
->   --pool-program-id $CCIP_POOL_PROGRAM \
->   --mint $SOL_TOKEN_MINT
-> ```
->
-> - Executes the transaction immediately (no blockhash expiration window)
-> - Prints Solana Explorer links for both the transaction and the new ALT
-> - Supports `--json` for automation workflows
+**⚠️ Time Constraint:** ALT addresses are derived from `[authority, recent_slot]`. This transaction must be **imported AND executed** within 60-90 seconds, or the derived ALT address will no longer match.
+
+**💡 Recommended Workflow:** For multisig scenarios where immediate execution isn't guaranteed, use the two-step approach:
+
+1. **Create empty ALT** (immediate, EOA-executed): Use `pnpm create-alt` (see below)
+2. **Populate ALT** (delayed, Squads-executed): Use `append-to-lookup-table` with CCIP auto-derivation
 
 **Syntax:**
 
@@ -1273,25 +1261,25 @@ pnpm bs58 router --instruction create-lookup-table [options]
 | ------------------------------- | --------- | -------- | --------------------------------------------------------- |
 | `--program-id <address>`        | PublicKey | Yes      | Router program ID                                         |
 | `--fee-quoter-program-id <id>`  | PublicKey | Yes      | Fee Quoter program ID                                     |
-| `--pool-program-id <id>`        | PublicKey | Yes      | Burn-mint pool program ID                                 |
+| `--pool-program-id <id>`        | PublicKey | Yes      | Pool program ID (burnmint or lockrelease)                 |
 | `--mint <address>`              | PublicKey | Yes      | Token mint address                                        |
 | `--authority <address>`         | PublicKey | Yes      | ALT authority and payer                                   |
 | `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append after base entries |
 
-Address order inside the ALT:
+**Base Addresses (10 total, derived automatically):**
 
-1. ALT address (self)
+1. ALT address (self-reference)
 2. Token Admin Registry PDA (router)
 3. Pool program ID
-4. Pool config PDA (burn-mint pool state)
+4. Pool config PDA (pool state)
 5. Pool token ATA (mint, owner = pool signer PDA, token-program aware)
-6. Pool signer PDA (burn-mint)
-7. Token program ID (SPL v1 or Token-2022, auto-detected from the mint)
+6. Pool signer PDA
+7. Token program ID (SPL v1 or Token-2022, auto-detected from mint)
 8. Token mint
 9. Fee token config PDA (fee quoter)
-10. CCIP router pool signer PDA (router, seed external_token_pools_signer + poolProgramId)
+10. CCIP router pool signer PDA (router, seed: `external_token_pools_signer` + pool program ID)
 
-Any `--additional-addresses` are appended after index 10. Max total addresses: 256.
+Any `--additional-addresses` are appended after index 10. **Maximum total addresses: 256.**
 
 **Example:**
 
@@ -1299,45 +1287,113 @@ Any `--additional-addresses` are appended after index 10. Max total addresses: 2
 pnpm bs58 router \
   --env devnet \
   --instruction create-lookup-table \
-  --program-id "<ROUTER_PID>" \
-  --fee-quoter-program-id "<FEE_QUOTER_PID>" \
-  --pool-program-id "<BURNMINT_POOL_PID>" \
-  --mint "<MINT_PUBKEY>" \
-  --authority "<AUTHORITY_PUBKEY>" \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --fee-quoter-program-id "FeeQPGkKDeRV1MgoYfMH6L8o3KeuYjwUZrgn4LRKfjHi" \
+  --pool-program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "4nnGYCEfoBezZS4nRu1DeRaDmwVoWrP5ZPEUGjSwrZN7" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
   --additional-addresses '["<EXTRA1>","<EXTRA2>"]'
 ```
 
-Notes:
+**Output:** Displays the derived ALT address and Base58 transaction for multisig import.
 
-- Token program is automatically detected by reading the mint's owner.
-- The ALT is created and extended in one transaction and printed before the Base58 payload.
+---
 
-###### Atomic ALT Creation (EOA workflow)
+#### 🎯 Recommended: Two-Step ALT Creation for Multisigs
 
-When a Squads multisig cannot import and execute the Base58 payload within ~60–90 seconds, run the companion CLI to create the ALT immediately with a local keypair while leaving the Squads vault as the authority:
+For Squads multisigs or any scenario where immediate execution isn't guaranteed, use this two-step workflow to avoid blockhash expiration issues:
+
+##### Step 1: Create Empty ALT (Immediate Execution)
+
+Use the `create-alt` companion script to create an empty ALT immediately. Your EOA pays and signs, but the Squads vault becomes the authority:
 
 ```bash
 pnpm create-alt \
   --env devnet \
   --keypair ~/.config/solana/id.json \
+  --authority $SOL_SQUAD_VAULT_MULTISIG
+```
+
+**Features:**
+- ✅ **No time pressure** – Transaction executes immediately (no blockhash expiration)
+- ✅ **EOA pays, Squads owns** – Your EOA signs and pays; Squads vault is the ALT authority
+- ✅ **Automation friendly** – Supports `--json` output for scripting
+- ✅ **Explorer links** – Outputs transaction and ALT explorer URLs
+
+**Example Output:**
+
+```
+✅ Address Lookup Table Created (no addresses appended)
+
+   ALT Address:     DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76
+   Authority:       59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY
+   Payer:           EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB
+   Transaction:     5sW1...
+   Explorer (tx):   https://explorer.solana.com/tx/5sW1...?cluster=devnet
+   Explorer (ALT):  https://explorer.solana.com/address/DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76?cluster=devnet
+
+ℹ️  Append addresses later via Squads or the append-to-lookup-table command.
+```
+
+**JSON Output (for automation):**
+
+```bash
+ALT_INFO=$(pnpm create-alt --keypair $KEYPAIR --authority $VAULT --env devnet --json)
+ALT_ADDRESS=$(echo "$ALT_INFO" | jq -r '.altAddress')
+TX_SIG=$(echo "$ALT_INFO" | jq -r '.signature')
+```
+
+##### Step 2: Populate ALT with CCIP Addresses (Squads Execution)
+
+After creating the empty ALT, populate it with the CCIP-specific addresses using `append-to-lookup-table` with **CCIP auto-derivation**:
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction append-to-lookup-table \
+  --lookup-table-address DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76 \
+  --authority $SOL_SQUAD_VAULT_MULTISIG \
+  --program-id $CCIP_ROUTER_PROGRAM \
+  --fee-quoter-program-id $CCIP_FEE_QUOTER_PROGRAM \
+  --pool-program-id $CCIP_POOL_PROGRAM \
+  --mint $SOL_TOKEN_MINT
+```
+
+**What happens:**
+- 🧮 **Auto-derives 10 CCIP base addresses** (same addresses as `create-lookup-table` would have included)
+- 📦 Generates Base58 transaction for Squads multisig
+- ⏳ **No time pressure** – Can wait for multisig approvals without blockhash expiration
+
+**Optional:** Add extra addresses beyond the base 10:
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction append-to-lookup-table \
+  --lookup-table-address DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76 \
   --authority $SOL_SQUAD_VAULT_MULTISIG \
   --program-id $CCIP_ROUTER_PROGRAM \
   --fee-quoter-program-id $CCIP_FEE_QUOTER_PROGRAM \
   --pool-program-id $CCIP_POOL_PROGRAM \
   --mint $SOL_TOKEN_MINT \
-  --json
+  --additional-addresses '["<EXTRA1>", "<EXTRA2>"]'
 ```
 
-**Highlights:**
+**Why This Workflow?**
+- ✅ **Solves blockhash expiration** – Step 1 creates the ALT immediately; Step 2 has no time constraints
+- ✅ **Multisig-friendly** – Squads can take time to gather approvals for Step 2
+- ✅ **Same result** – Final ALT contains identical addresses as the one-shot `create-lookup-table` approach
+- ✅ **Flexible** – Can add additional addresses later using the same `append-to-lookup-table` command
 
-- Creates and extends the ALT on-chain instantly (EOA pays/executes)
-- Emits explorer links for both the transaction and resulting ALT
-- `--json` output includes signature, explorer URLs, and ALT address for automation
-- After creation, use `pnpm bs58 router --instruction append-to-lookup-table` to manage it through Squads as usual
+---
 
 ##### append-to-lookup-table
 
-Append additional addresses to an existing Address Lookup Table (ALT). This command validates the ALT exists, checks authority permissions, and ensures the 256-address limit is not exceeded.
+Append additional addresses to an existing Address Lookup Table (ALT). Supports three modes:
+
+1. **CCIP Auto-Derivation** – Automatically derives the 10 CCIP base addresses when program parameters are provided
+2. **Manual Addresses** – Append custom addresses via `--additional-addresses`
+3. **Combined** – Both CCIP auto-derivation + manual addresses
 
 **Syntax:**
 
@@ -1347,13 +1403,22 @@ pnpm bs58 router --instruction append-to-lookup-table [options]
 
 **Options:**
 
-| Option                          | Type      | Required | Description                                               |
-| ------------------------------- | --------- | -------- | --------------------------------------------------------- |
-| `--lookup-table-address <addr>` | PublicKey | Yes      | Existing ALT address to append to                        |
-| `--authority <address>`         | PublicKey | Yes      | ALT authority (must match ALT's current authority)       |
-| `--additional-addresses <json>` | JSON      | Yes      | JSON array of Base58 pubkeys to append                   |
+| Option                          | Type      | Required | Description                                                |
+| ------------------------------- | --------- | -------- | ---------------------------------------------------------- |
+| `--lookup-table-address <addr>` | PublicKey | Yes      | Existing ALT address to append to                          |
+| `--authority <address>`         | PublicKey | Yes      | ALT authority (must match ALT's current authority)         |
+| `--program-id <address>`        | PublicKey | No       | Router program ID (for CCIP auto-derivation)               |
+| `--fee-quoter-program-id <id>`  | PublicKey | No       | Fee Quoter program ID (for CCIP auto-derivation)           |
+| `--pool-program-id <id>`        | PublicKey | No       | Pool program ID (for CCIP auto-derivation)                 |
+| `--mint <address>`              | PublicKey | No       | Token mint address (for CCIP auto-derivation)              |
+| `--additional-addresses <json>` | JSON      | No       | JSON array of Base58 pubkeys to append manually            |
 
-**Example:**
+**Validation:**
+- ❗ At least one address source must be provided (CCIP params OR manual addresses)
+- ❗ If providing CCIP params, all four must be specified: `--program-id`, `--fee-quoter-program-id`, `--pool-program-id`, `--mint`
+- ✅ Can combine CCIP auto-derivation + manual addresses
+
+**Example 1: Manual Addresses Only**
 
 ```bash
 pnpm bs58 router \
@@ -1361,16 +1426,69 @@ pnpm bs58 router \
   --instruction append-to-lookup-table \
   --lookup-table-address "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
   --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
-  --additional-addresses '["EXTRA_ADDRESS_1", "EXTRA_ADDRESS_2"]'
+  --additional-addresses '["ADDR1", "ADDR2", "ADDR3"]'
+```
+
+**Example 2: CCIP Auto-Derivation Only**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction append-to-lookup-table \
+  --lookup-table-address "DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --fee-quoter-program-id "FeeQPGkKDeRV1MgoYfMH6L8o3KeuYjwUZrgn4LRKfjHi" \
+  --pool-program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "4nnGYCEfoBezZS4nRu1DeRaDmwVoWrP5ZPEUGjSwrZN7"
+```
+
+**Example 3: CCIP + Manual Addresses**
+
+```bash
+pnpm bs58 router \
+  --env devnet \
+  --instruction append-to-lookup-table \
+  --lookup-table-address "DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76" \
+  --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --fee-quoter-program-id "FeeQPGkKDeRV1MgoYfMH6L8o3KeuYjwUZrgn4LRKfjHi" \
+  --pool-program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "4nnGYCEfoBezZS4nRu1DeRaDmwVoWrP5ZPEUGjSwrZN7" \
+  --additional-addresses '["EXTRA1", "EXTRA2"]'
 ```
 
 **Features:**
 
-- **Validation**: Checks ALT exists and authority permissions
-- **Capacity Check**: Ensures 256-address limit is not exceeded
-- **Chunked Extension**: Safely extends ALT in chunks of 30 addresses
-- **State Display**: Shows current and final address counts
-- **Error Handling**: Comprehensive error messages with helpful suggestions
+- ✅ **CCIP Auto-Derivation** – Automatically derives the same 10 addresses as `create-lookup-table`
+- ✅ **Validation** – Checks ALT exists, authority permissions, and 256-address limit
+- ✅ **Chunked Extension** – Safely extends ALT in chunks of 30 addresses
+- ✅ **State Display** – Shows current and final address counts
+- ✅ **Verbose Mode** – Use `--verbose` to see detailed address labels for debugging
+
+**Output (with CCIP auto-derivation):**
+
+```
+📮 Lookup Table Address: DNCYByD3n34TjnPxdbtTjrjSDEDPyXYVrsETkfi31o76
+📦 CCIP addresses added: 10
+📈 Total addresses after append: 10
+   ✅ Transaction simulation completed
+
+🎯 COPY TRANSACTION DATA BELOW:
+<Base58-encoded-transaction-data>
+```
+
+**Output (verbose mode with `--verbose`):**
+
+```
+DEBUG: CCIP addresses derived
+  ccipAddressCount: 10
+  ccipAddresses:
+    - label: "Lookup Table Address", address: "DNCYByD3n34..."
+    - label: "Token Admin Registry PDA", address: "7G8iWscQudiuBHk..."
+    - label: "Pool Program ID", address: "8eqh8wppT9c5rw4..."
+    ...
+```
 
 **Notes:**
 

@@ -638,36 +638,84 @@ export const RouterCreateLookupTableArgsSchema = z.object({
 });
 
 // Router ALT append
-export const RouterAppendToLookupTableArgsSchema = z.object({
-  lookupTableAddress: z.string().transform(val => new PublicKey(val)),
-  authority: z.string().transform(val => new PublicKey(val)),
-  additionalAddresses: z.string().transform(val => {
-    try {
-      const parsed = JSON.parse(val);
-      if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
-      if (parsed.length === 0) throw new Error('Must provide at least one address to append');
-      return parsed.map((a: unknown) => new PublicKey(String(a)));
-    } catch (e) {
-      throw new Error(
-        `Invalid JSON for additional addresses: ${e instanceof Error ? e.message : String(e)}`
-      );
-    }
-  }),
-  rpcUrl: z
-    .string()
-    .refine(
-      val => {
+export const RouterAppendToLookupTableArgsSchema = z
+  .object({
+    lookupTableAddress: z.string().transform(val => new PublicKey(val)),
+    authority: z.string().transform(val => new PublicKey(val)),
+    // Optional CCIP program parameters for auto-deriving base addresses
+    programId: z
+      .string()
+      .transform(val => new PublicKey(val))
+      .optional(),
+    feeQuoterProgramId: z
+      .string()
+      .transform(val => new PublicKey(val))
+      .optional(),
+    poolProgramId: z
+      .string()
+      .transform(val => new PublicKey(val))
+      .optional(),
+    mint: z
+      .string()
+      .transform(val => new PublicKey(val))
+      .optional(),
+    // Manual addresses (can be combined with CCIP auto-derivation)
+    additionalAddresses: z
+      .string()
+      .optional()
+      .default('[]')
+      .transform(val => {
+        if (!val || val === '[]') return [] as PublicKey[];
         try {
-          new URL(val);
-          return true;
-        } catch {
-          return false;
+          const parsed = JSON.parse(val);
+          if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+          return parsed.map((a: unknown) => new PublicKey(String(a)));
+        } catch (e) {
+          throw new Error(
+            `Invalid JSON for additional addresses: ${e instanceof Error ? e.message : String(e)}`
+          );
         }
-      },
-      { message: 'Invalid URL format' }
-    )
-    .optional(),
-});
+      }),
+    rpcUrl: z
+      .string()
+      .refine(
+        val => {
+          try {
+            new URL(val);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { message: 'Invalid URL format' }
+      )
+      .optional(),
+  })
+  .refine(
+    data => {
+      // At least one address source must be provided
+      const hasCcipParams =
+        data.programId && data.feeQuoterProgramId && data.poolProgramId && data.mint;
+      const hasManualAddresses = data.additionalAddresses.length > 0;
+      return hasCcipParams || hasManualAddresses;
+    },
+    {
+      message:
+        'Must provide either CCIP program parameters (program-id, fee-quoter-program-id, pool-program-id, mint) or additional-addresses',
+    }
+  )
+  .refine(
+    data => {
+      // If any CCIP param is provided, all must be provided
+      const ccipParams = [data.programId, data.feeQuoterProgramId, data.poolProgramId, data.mint];
+      const providedCount = ccipParams.filter(p => p !== undefined).length;
+      return providedCount === 0 || providedCount === 4;
+    },
+    {
+      message:
+        'If providing CCIP parameters, all four must be specified: program-id, fee-quoter-program-id, pool-program-id, mint',
+    }
+  );
 
 // ALT creation companion script arguments
 export const CreateAltArgsSchema = z.object({
