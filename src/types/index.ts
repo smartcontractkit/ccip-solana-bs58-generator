@@ -669,14 +669,10 @@ export const RouterAppendToLookupTableArgsSchema = z.object({
     .optional(),
 });
 
-// Router ALT creation executor (for companion script)
-export const RouterCreateAltExecutorArgsSchema = z.object({
+// ALT creation companion script arguments
+export const CreateAltArgsSchema = z.object({
   keypair: z.string(), // File path to keypair, not PublicKey
   authority: z.string().transform(val => new PublicKey(val)),
-  programId: z.string().transform(val => new PublicKey(val)),
-  feeQuoterProgramId: z.string().transform(val => new PublicKey(val)),
-  poolProgramId: z.string().transform(val => new PublicKey(val)),
-  mint: z.string().transform(val => new PublicKey(val)),
   env: z.enum(['mainnet', 'devnet', 'testnet', 'localhost']),
   rpcUrl: z.string().refine(
     val => {
@@ -689,22 +685,6 @@ export const RouterCreateAltExecutorArgsSchema = z.object({
     },
     { message: 'Invalid URL format' }
   ),
-  additionalAddresses: z
-    .string()
-    .optional()
-    .default('[]')
-    .transform(val => {
-      if (!val || val === '[]') return [] as PublicKey[];
-      try {
-        const parsed = JSON.parse(val);
-        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
-        return parsed.map((a: unknown) => new PublicKey(String(a)));
-      } catch (e) {
-        throw new Error(
-          `Invalid JSON for additional addresses: ${e instanceof Error ? e.message : String(e)}`
-        );
-      }
-    }),
 });
 
 // Simple options for transaction building and simulation (no execution)

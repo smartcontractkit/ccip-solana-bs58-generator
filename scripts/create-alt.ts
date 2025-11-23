@@ -10,11 +10,16 @@
  */
 
 import { Command } from 'commander';
-import { Connection } from '@solana/web3.js';
-import { buildCreateAndExtendAlt } from '../src/utils/alt.js';
+import {
+  AddressLookupTableProgram,
+  Connection,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { getRpcUrl, type SolanaEnvironment } from '../src/utils/constants.js';
 import { validateArgs } from '../src/utils/validation.js';
-import { RouterCreateAltExecutorArgsSchema } from '../src/types/index.js';
+import { CreateAltArgsSchema } from '../src/types/index.js';
 import { createChildLogger, logger } from '../src/utils/logger.js';
 import { loadKeypair, executeTransaction } from '../src/utils/transaction-executor.js';
 import { getAddressExplorerUrl, getTransactionExplorerUrl } from '../src/utils/explorer.js';
@@ -22,23 +27,18 @@ const program = new Command();
 
 program
   .name('ccip-create-alt')
-  .description('Execute ALT creation with EOA payer and multisig authority')
+  .description('Create an empty Address Lookup Table with EOA payer and multisig authority')
   .version('1.0.0')
   .requiredOption('--keypair <path>', 'EOA keypair file path for paying and executing')
   .requiredOption('--authority <pubkey>', 'ALT authority (Squads vault address)')
-  .requiredOption('--program-id <pubkey>', 'CCIP Router program ID')
-  .requiredOption('--fee-quoter-program-id <pubkey>', 'Fee Quoter program ID')
-  .requiredOption('--pool-program-id <pubkey>', 'Pool program ID')
-  .requiredOption('--mint <pubkey>', 'Token mint address')
   .requiredOption('--env <env>', 'Environment (mainnet, devnet, testnet, localhost)')
-  .option('--additional-addresses <json>', 'Additional addresses as JSON array', '[]')
   .option('--json', 'Output as JSON for scripting')
   .action(async options => {
     const cmdLogger = createChildLogger(logger, { command: 'router.create-alt' });
 
     try {
       // Validate and transform arguments using existing validation
-      const parsed = validateArgs(RouterCreateAltExecutorArgsSchema, {
+      const parsed = validateArgs(CreateAltArgsSchema, {
         ...options,
         rpcUrl: getRpcUrl(options.env),
       });
@@ -62,36 +62,30 @@ program
       const connection = new Connection(args.rpcUrl);
 
       if (!options.json) {
-        console.log('🔄 Creating and populating Address Lookup Table...');
+        console.log('🔄 Creating Address Lookup Table (no addresses appended)...');
         console.log(`   Payer:     ${payer.publicKey.toBase58()}`);
         console.log(`   Authority: ${args.authority.toBase58()}`);
-        console.log(`   Mint:      ${args.mint.toBase58()}`);
       }
 
       cmdLogger.debug(
         {
           payer: payer.publicKey.toBase58(),
           authority: args.authority.toBase58(),
-          mint: args.mint.toBase58(),
-          additionalAddressCount: args.additionalAddresses.length,
         },
-        'Building ALT creation instructions'
+        'Deriving ALT address'
       );
 
-      // Build instructions using existing logic
-      const { instructions, lookupTableAddress } = await buildCreateAndExtendAlt({
-        connection,
-        authority: args.authority,
-        payer: payer.publicKey,
-        routerProgramId: args.programId,
-        feeQuoterProgramId: args.feeQuoterProgramId,
-        poolProgramId: args.poolProgramId,
-        tokenMint: args.mint,
-        additionalAddresses: args.additionalAddresses,
-      });
+      const { instruction: createInstruction, lookupTableAddress } =
+        buildUnsignedCreateLookupTableInstruction({
+          authority: args.authority,
+          payer: payer.publicKey,
+          recentSlot: await connection.getSlot(),
+        });
+
+      const instructions = [createInstruction];
 
       if (!options.json) {
-        console.log(`   Instructions: ${instructions.length} (create + extend)`);
+        console.log('   Instructions: 1 (create only)');
         console.log(`   Derived ALT:  ${lookupTableAddress.toBase58()}`);
         console.log('');
         console.log('📤 Sending transaction...');
@@ -164,6 +158,53 @@ type ExecutionSummary = {
   };
 };
 
+type BuildUnsignedCreateLookupTableInstructionParams = {
+  authority: PublicKey;
+  payer: PublicKey;
+  recentSlot: number;
+};
+
+const CREATE_LOOKUP_TABLE_DISCRIMINATOR = 0;
+const CREATE_LOOKUP_TABLE_DATA_LENGTH = 13;
+
+type BuildUnsignedCreateLookupTableInstructionResult = {
+  instruction: TransactionInstruction;
+  lookupTableAddress: PublicKey;
+};
+
+function buildUnsignedCreateLookupTableInstruction({
+  authority,
+  payer,
+  recentSlot,
+}: BuildUnsignedCreateLookupTableInstructionParams): BuildUnsignedCreateLookupTableInstructionResult {
+  const recentSlotBigInt = BigInt(recentSlot);
+  const recentSlotBuffer = Buffer.alloc(8);
+  recentSlotBuffer.writeBigUInt64LE(recentSlotBigInt);
+
+  const [lookupTableAddress, bump] = PublicKey.findProgramAddressSync(
+    [authority.toBuffer(), recentSlotBuffer],
+    AddressLookupTableProgram.programId
+  );
+
+  const data = Buffer.alloc(CREATE_LOOKUP_TABLE_DATA_LENGTH);
+  data.writeUInt32LE(CREATE_LOOKUP_TABLE_DISCRIMINATOR, 0);
+  data.writeBigUInt64LE(recentSlotBigInt, 4);
+  data.writeUInt8(bump, 12);
+
+  const instruction = new TransactionInstruction({
+    programId: AddressLookupTableProgram.programId,
+    keys: [
+      { pubkey: lookupTableAddress, isSigner: false, isWritable: true },
+      { pubkey: authority, isSigner: false, isWritable: false },
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+
+  return { instruction, lookupTableAddress };
+}
+
 function outputJson(summary: ExecutionSummary): void {
   console.log(
     JSON.stringify({
@@ -176,7 +217,7 @@ function outputJson(summary: ExecutionSummary): void {
 
 function outputHumanReadable(summary: ExecutionSummary): void {
   console.log('');
-  console.log('✅ Address Lookup Table Created and Populated!');
+  console.log('✅ Address Lookup Table Created (no addresses appended)');
   console.log('');
   console.log(`   ALT Address:     ${summary.altAddress}`);
   console.log(`   Authority:       ${summary.authority}`);
@@ -186,7 +227,7 @@ function outputHumanReadable(summary: ExecutionSummary): void {
   console.log(`   Explorer (tx):   ${summary.explorer.transaction}`);
   console.log(`   Explorer (ALT):  ${summary.explorer.address}`);
   console.log('');
-  console.log('🎉 ALT is ready to use with CCIP Router!');
+  console.log('ℹ️  Append addresses later via Squads or the append-to-lookup-table command.');
   console.log('');
   console.log('📋 To manage this ALT via Squads later, use:');
   console.log('');
@@ -219,11 +260,6 @@ function buildSuggestions(message: string): string[] {
 
   if (message.includes('Invalid environment')) {
     suggestions.push('Use one of: mainnet, devnet, testnet, localhost');
-  }
-
-  if (message.includes('ALT cannot exceed 256 addresses')) {
-    suggestions.push('Reduce the number of additional addresses');
-    suggestions.push('Base addresses (10) + additional must not exceed 256');
   }
 
   return suggestions;
