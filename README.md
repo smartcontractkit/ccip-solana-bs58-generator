@@ -1242,6 +1242,25 @@ pnpm bs58 router \
 
 Create and extend an Address Lookup Table (ALT) for a mint's Token Admin Registry and pool integration. The resulting ALT address is then passed to `set-pool`.
 
+> 🆕 **Need to execute immediately with an EOA instead of generating Base58?**
+>
+> Use the companion CLI to create and populate the ALT in one step, then manage it via Squads later:
+>
+> ```bash
+> pnpm create-alt \
+>   --env devnet \
+>   --keypair ~/.config/solana/id.json \
+>   --authority $SOL_SQUAD_VAULT_MULTISIG \
+>   --program-id $CCIP_ROUTER_PROGRAM \
+>   --fee-quoter-program-id $CCIP_FEE_QUOTER_PROGRAM \
+>   --pool-program-id $CCIP_POOL_PROGRAM \
+>   --mint $SOL_TOKEN_MINT
+> ```
+>
+> - Executes the transaction immediately (no blockhash expiration window)
+> - Prints Solana Explorer links for both the transaction and the new ALT
+> - Supports `--json` for automation workflows
+
 **Syntax:**
 
 ```bash
@@ -1292,6 +1311,29 @@ Notes:
 
 - Token program is automatically detected by reading the mint's owner.
 - The ALT is created and extended in one transaction and printed before the Base58 payload.
+
+###### Atomic ALT Creation (EOA workflow)
+
+When a Squads multisig cannot import and execute the Base58 payload within ~60–90 seconds, run the companion CLI to create the ALT immediately with a local keypair while leaving the Squads vault as the authority:
+
+```bash
+pnpm create-alt \
+  --env devnet \
+  --keypair ~/.config/solana/id.json \
+  --authority $SOL_SQUAD_VAULT_MULTISIG \
+  --program-id $CCIP_ROUTER_PROGRAM \
+  --fee-quoter-program-id $CCIP_FEE_QUOTER_PROGRAM \
+  --pool-program-id $CCIP_POOL_PROGRAM \
+  --mint $SOL_TOKEN_MINT \
+  --json
+```
+
+**Highlights:**
+
+- Creates and extends the ALT on-chain instantly (EOA pays/executes)
+- Emits explorer links for both the transaction and resulting ALT
+- `--json` output includes signature, explorer URLs, and ALT address for automation
+- After creation, use `pnpm bs58 router --instruction append-to-lookup-table` to manage it through Squads as usual
 
 ##### append-to-lookup-table
 

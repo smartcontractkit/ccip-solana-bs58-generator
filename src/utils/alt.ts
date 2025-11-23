@@ -13,6 +13,7 @@ import { AccountDerivation as BurnmintDerivation } from '../programs/burnmint-to
 export interface BuildAltArgs {
   connection: Connection;
   authority: PublicKey;
+  payer?: PublicKey;
   routerProgramId: PublicKey;
   feeQuoterProgramId: PublicKey;
   poolProgramId: PublicKey;
@@ -41,6 +42,7 @@ export async function buildCreateAndExtendAlt(args: BuildAltArgs): Promise<Build
   const {
     connection,
     authority,
+    payer,
     routerProgramId,
     feeQuoterProgramId,
     poolProgramId,
@@ -75,7 +77,7 @@ export async function buildCreateAndExtendAlt(args: BuildAltArgs): Promise<Build
   const recentSlot = await connection.getSlot();
   const createTuple = AddressLookupTableProgram.createLookupTable({
     authority,
-    payer: authority,
+    payer: payer ?? authority,
     recentSlot,
   });
   const [createIx, lookupTableAddress] = createTuple;
@@ -104,7 +106,7 @@ export async function buildCreateAndExtendAlt(args: BuildAltArgs): Promise<Build
     const chunk = addresses.slice(i, i + chunkSize);
     extendIxs.push(
       AddressLookupTableProgram.extendLookupTable({
-        payer: authority,
+        payer: payer ?? authority,
         authority,
         lookupTable: lookupTableAddress,
         addresses: chunk,

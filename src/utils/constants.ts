@@ -12,14 +12,19 @@ export const SOLANA_ENVIRONMENTS = {
 export type SolanaEnvironment = keyof typeof SOLANA_ENVIRONMENTS;
 
 /**
- * @deprecated Use SOLANA_ENVIRONMENTS instead
+ * Get RPC URL for a given environment
+ * @param env - Environment name (mainnet, devnet, testnet, localhost)
+ * @returns RPC URL string
+ * @throws Error if environment is invalid
  */
-export const DEFAULT_RPC_ENDPOINTS = {
-  MAINNET: SOLANA_ENVIRONMENTS.mainnet,
-  DEVNET: SOLANA_ENVIRONMENTS.devnet,
-  TESTNET: SOLANA_ENVIRONMENTS.testnet,
-  LOCALHOST: SOLANA_ENVIRONMENTS.localhost,
-} as const;
+export function getRpcUrl(env: string): string {
+  if (env in SOLANA_ENVIRONMENTS) {
+    return SOLANA_ENVIRONMENTS[env as SolanaEnvironment];
+  }
+  throw new Error(
+    `Invalid environment: ${env}. Must be one of: ${Object.keys(SOLANA_ENVIRONMENTS).join(', ')}`
+  );
+}
 
 /**
  * Default transaction configuration
