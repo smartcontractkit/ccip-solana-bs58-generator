@@ -18,17 +18,23 @@ export function createRouterCommands(): Command {
       '--instruction <instruction>',
       'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table, append-to-lookup-table)'
     )
-    .option('--program-id <programId>', 'Router program ID (required for all instructions)')
-    .option('--mint <mint>', 'Token mint address (required for registry instructions)')
+    .option('--program-id <programId>', 'Router program ID (required for most instructions)')
+    .option(
+      '--mint <mint>',
+      'Token mint address (required for registry instructions, optional for append-to-lookup-table)'
+    )
     .option('--authority <authority>', 'Authority public key (required for all instructions)')
     .option(
       '--fee-quoter-program-id <pubkey>',
-      'Fee Quoter program ID (required for create-lookup-table)'
+      'Fee Quoter program ID (required for create-lookup-table, optional for append-to-lookup-table)'
     )
-    .option('--pool-program-id <pubkey>', 'Pool program ID (required for create-lookup-table)')
+    .option(
+      '--pool-program-id <pubkey>',
+      'Pool program ID (required for create-lookup-table, optional for append-to-lookup-table)'
+    )
     .option(
       '--additional-addresses <json>',
-      'JSON array of Base58 pubkeys to append (optional for create-lookup-table, required for append-to-lookup-table)'
+      'JSON array of Base58 pubkeys to append (optional for create-lookup-table and append-to-lookup-table)'
     )
     .option(
       '--lookup-table-address <pubkey>',
@@ -99,9 +105,13 @@ export function createRouterCommands(): Command {
           process.exit(1);
         }
       } else if (instr === 'append-to-lookup-table') {
-        if (!options.lookupTableAddress || !options.additionalAddresses) {
+        if (!options.lookupTableAddress) {
+          console.error('❌ append-to-lookup-table requires: --lookup-table-address');
           console.error(
-            '❌ append-to-lookup-table requires: --lookup-table-address and --additional-addresses'
+            '💡 Additionally provide either:\n' +
+              '   • CCIP parameters: --program-id, --fee-quoter-program-id, --pool-program-id, --mint\n' +
+              '   • Manual addresses: --additional-addresses \'["addr1", "addr2"]\'\n' +
+              '   • Both (CCIP + manual addresses)'
           );
           process.exit(1);
         }

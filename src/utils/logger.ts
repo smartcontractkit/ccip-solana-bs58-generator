@@ -10,7 +10,7 @@ export function createLogger(config: LoggerConfig = {}): pino.Logger {
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   const baseConfig: pino.LoggerOptions = {
-    level: config.level || (isDevelopment ? 'debug' : 'info'),
+    level: config.level || process.env.LOG_LEVEL || 'info', // Default to 'info' instead of 'debug'
     ...(config.destination && { transport: { target: config.destination } }),
   };
 
