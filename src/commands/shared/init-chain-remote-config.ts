@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { InitChainRemoteConfigArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, InitChainRemoteConfigOptions } from '../../types/command.js';
@@ -73,6 +73,20 @@ export async function initChainRemoteConfig(
 
     const validatedArgs = validation.data;
 
+    if (validatedArgs.poolAddresses.length > 0) {
+      console.error(
+        "❌ init-chain-remote-config requires empty pool addresses (use --pool-addresses '[]')"
+      );
+      console.error(
+        '💡 The on-chain program rejects non-empty pool addresses during init (error 6013: NonemptyPoolAddressesInit).'
+      );
+      console.error("💡 Step 1: init with --pool-addresses '[]'");
+      console.error(
+        "💡 Step 2: append pools with --instruction append-remote-pool-addresses --addresses '[...]'"
+      );
+      process.exit(1);
+    }
+
     // Since we verified rpcUrl exists in preAction hook, we can safely use it
     const rpcUrl = validatedArgs.rpcUrl || globalOptions.resolvedRpcUrl!;
 
@@ -118,12 +132,9 @@ export async function initChainRemoteConfig(
     console.log(`   Mint: ${validatedArgs.mint.toString()}`);
     console.log(`   Authority: ${validatedArgs.authority.toString()}`);
     console.log(`   Remote Chain Selector: ${validatedArgs.remoteChainSelector}`);
-    if (validatedArgs.poolAddresses.length > 0) {
-      console.warn(
-        '⚠️  For init-chain-remote-config, poolAddresses should generally be empty. Use append-remote-pool-addresses afterwards.'
-      );
-    }
-    console.log(`   Pool Addresses: ${validatedArgs.poolAddresses.length} addresses`);
+    console.log(
+      `   Pool Addresses: ${validatedArgs.poolAddresses.length} addresses (must be empty at init)`
+    );
     console.log(`   Token Address: ${validatedArgs.tokenAddress}`);
     console.log(`   Decimals: ${validatedArgs.decimals}`);
 
@@ -141,15 +152,14 @@ export async function initChainRemoteConfig(
 
     // Build the complete transaction (includes automatic simulation)
     console.log('🔄 Building and simulating transaction...');
-    const transaction = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      validatedArgs.authority,
-      'initChainRemoteConfig'
-    );
+    const transaction = await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: validatedArgs.authority,
+      instructionName: 'initChainRemoteConfig',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    // Display results using the beautiful utility
-    TransactionDisplay.displayResults(transaction, 'initChainRemoteConfig');
 
     cmdLogger.info(
       {
@@ -173,6 +183,14 @@ export async function initChainRemoteConfig(
       console.error('   • Mint: Base58 public key (44 characters)');
       console.error('   • Authority: Base58 public key (44 characters)');
       console.error('   Example: 11111111111111111111111111111112');
+    } else if (
+      errorMessage.includes('6013') ||
+      errorMessage.includes('NonemptyPoolAddressesInit')
+    ) {
+      console.error('❌ Pool addresses must be empty during init-chain-remote-config');
+      console.error(
+        "💡 Use --pool-addresses '[]' for init, then append-remote-pool-addresses for pool addresses."
+      );
     } else if (errorMessage.includes('Invalid JSON')) {
       console.error('❌ Invalid JSON format');
       console.error('💡 Expected format:');

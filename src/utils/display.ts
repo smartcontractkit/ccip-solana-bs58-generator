@@ -1,5 +1,7 @@
 import type { GeneratedTransaction } from '../types/index.js';
 import { logger } from './logger.js';
+import { getTransactionExplorerUrl } from './explorer.js';
+import type { SolanaEnvironment } from './constants.js';
 
 /**
  * Utility for displaying transaction data with beautiful formatting
@@ -119,6 +121,28 @@ export class TransactionDisplay {
     }
 
     logger.info('   • This transaction is valid until the blockhash expires (~2 minutes)');
+    logger.info('');
+  }
+
+  /**
+   * Display on-chain execution results (no Base58 output)
+   */
+  static displayExecutionResults(
+    signature: string,
+    instructionName: string,
+    env?: SolanaEnvironment
+  ): void {
+    const explorerUrl = env
+      ? getTransactionExplorerUrl(signature, env)
+      : `https://explorer.solana.com/tx/${signature}`;
+
+    logger.info('');
+    logger.info('🎉 Transaction executed successfully!');
+    logger.info('');
+    logger.info('📋 Execution Details:');
+    logger.info(`   Instruction: ${instructionName}`);
+    logger.info(`   Signature:   ${signature}`);
+    logger.info(`   Explorer:    ${explorerUrl}`);
     logger.info('');
   }
 

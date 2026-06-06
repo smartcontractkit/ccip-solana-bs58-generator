@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { TransactionInstruction, PublicKey } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { MetaplexUpdateAuthorityArgsSchema } from '../../types/index.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { InstructionBuilder as MplInstructionBuilder } from '../../programs/metaplex/instructions.js';
@@ -42,13 +42,14 @@ export async function updateMetadataAuthorityCommand(
   const ixs: TransactionInstruction[] = [ix];
   const tb = new TransactionBuilder({ rpcUrl });
   logger.info('🔄 Building and simulating transaction...');
-  const tx = await tb.buildTransaction(
-    ixs,
-    parsed.data.authority as PublicKey,
-    'metaplex.update_authority'
-  );
+  await finalizeTransaction({
+    txBuilder: tb,
+    instructions: ixs,
+    payer: parsed.data.authority as PublicKey,
+    instructionName: 'metaplex.update_authority',
+    command,
+  });
   logger.info('✅ Transaction simulation completed');
-  TransactionDisplay.displayResults(tx, 'metaplex.update_authority');
 }
 
 /**

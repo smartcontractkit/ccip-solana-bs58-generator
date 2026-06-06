@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { AppendRemotePoolAddressesArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, AppendRemotePoolAddressesOptions } from '../../types/command.js';
@@ -126,15 +126,14 @@ export async function appendRemotePoolAddresses(
 
     // Build the complete transaction (includes automatic simulation)
     console.log('🔄 Building and simulating transaction...');
-    const transaction = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      validatedArgs.authority,
-      'appendRemotePoolAddresses'
-    );
+    const transaction = await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: validatedArgs.authority,
+      instructionName: 'appendRemotePoolAddresses',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    // Display results using the beautiful utility
-    TransactionDisplay.displayResults(transaction, 'appendRemotePoolAddresses');
 
     cmdLogger.info(
       {

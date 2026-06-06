@@ -1,3 +1,4 @@
+import os from 'os';
 import { PublicKey } from '@solana/web3.js';
 /**
  * Solana environments and their RPC endpoints
@@ -25,6 +26,11 @@ export function getRpcUrl(env: string): string {
     `Invalid environment: ${env}. Must be one of: ${Object.keys(SOLANA_ENVIRONMENTS).join(', ')}`
   );
 }
+
+/**
+ * Default Solana CLI keypair path
+ */
+export const DEFAULT_KEYPAIR_PATH = `${os.homedir()}/.config/solana/id.json`;
 
 /**
  * Default transaction configuration

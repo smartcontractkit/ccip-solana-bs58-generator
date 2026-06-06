@@ -1,11 +1,23 @@
 /**
+ * Global CLI options available on the root Commander program
+ */
+export interface GlobalCommandOptions {
+  verbose?: boolean;
+  environment?: string;
+  rpcUrl?: string;
+  resolvedRpcUrl?: string;
+  execute?: boolean;
+  keypair?: string;
+}
+
+/**
  * Standard Commander.js command context type used across all commands
  */
 export interface CommandContext {
   parent?: {
-    parent?: { opts(): { rpcUrl?: string; verbose?: boolean; resolvedRpcUrl?: string } };
-    opts(): { rpcUrl?: string; verbose?: boolean; resolvedRpcUrl?: string };
-  };
+    parent?: { opts(): GlobalCommandOptions } | null;
+    opts(): GlobalCommandOptions;
+  } | null;
 }
 
 /**

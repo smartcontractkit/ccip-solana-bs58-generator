@@ -5,7 +5,7 @@ import { detectTokenProgramId } from '../../utils/token.js';
 import { SplMintArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { logger } from '../../utils/logger.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
 
@@ -91,9 +91,14 @@ export async function mintCommand(options: Record<string, string>, command: Comm
 
     const tb = new TransactionBuilder({ rpcUrl });
     logger.info('🔄 Building and simulating transaction...');
-    const tx = await tb.buildTransaction(ixs, authority, 'spl.mint');
+    await finalizeTransaction({
+      txBuilder: tb,
+      instructions: ixs,
+      payer: authority,
+      instructionName: 'spl.mint',
+      command,
+    });
     logger.info('✅ Transaction simulation completed');
-    TransactionDisplay.displayResults(tx, 'spl.mint');
   } catch (error) {
     logger.error('❌ Failed to mint tokens');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

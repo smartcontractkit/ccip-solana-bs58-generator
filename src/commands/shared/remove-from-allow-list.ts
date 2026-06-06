@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { RemoveFromAllowListArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, RemoveFromAllowListOptions } from '../../types/command.js';
@@ -87,14 +87,14 @@ export async function removeFromAllowList(
     console.log('   ✅ Instruction built successfully');
 
     console.log('🔄 Building and simulating transaction...');
-    const tx = await txBuilder.buildSingleInstructionTransaction(
-      ix,
-      authority,
-      `${programType}.remove-from-allow-list`
-    );
+    const tx = await finalizeTransaction({
+      txBuilder,
+      instructions: [ix],
+      payer: authority,
+      instructionName: `${programType}.remove-from-allow-list`,
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    TransactionDisplay.displayResults(tx, `${programType}.remove-from-allow-list`);
 
     cmdLogger.info(
       {

@@ -145,6 +145,10 @@ export function createLockReleaseCommands(): Command {
 
       // Most instructions also require --authority (except read-only operations)
       const readOnlyInstructions = ['get-state', 'get-chain-config'];
+      if (globalOpts.execute && readOnlyInstructions.includes(options.instruction)) {
+        console.error('❌ --execute is not supported for read-only instructions');
+        process.exit(1);
+      }
       if (!readOnlyInstructions.includes(options.instruction) && !options.authority) {
         console.error('❌ This instruction requires: --authority');
         console.error(

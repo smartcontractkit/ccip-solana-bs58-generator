@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { Connection, TransactionInstruction } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { validateArgs } from '../../utils/validation.js';
 import { logger } from '../../utils/logger.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
@@ -58,13 +58,18 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
     const ixs: TransactionInstruction[] = instructions;
     const tb = new TransactionBuilder({ rpcUrl });
     logger.info('🔄 Building and simulating transaction...');
-    const tx = await tb.buildTransaction(ixs, authority, 'spl.create_multisig');
-    logger.info('✅ Transaction simulation completed');
     console.log(`📮 Derived SPL Token Multisig Address: ${multisigAddress.toBase58()}`);
     console.log(
       `💡 Address derived from: authority + sha256("${seed}" + mint).hex().slice(0,32) + tokenProgram`
     );
-    TransactionDisplay.displayResults(tx, 'spl.create_multisig');
+    await finalizeTransaction({
+      txBuilder: tb,
+      instructions: ixs,
+      payer: authority,
+      instructionName: 'spl.create_multisig',
+      command,
+    });
+    logger.info('✅ Transaction simulation completed');
   } catch (error) {
     logger.error('❌ Failed to create SPL Token multisig');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

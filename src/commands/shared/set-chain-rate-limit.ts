@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { SetChainRateLimitArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, SetChainRateLimitOptions } from '../../types/command.js';
@@ -149,15 +149,14 @@ export async function setChainRateLimit(
 
     // Build the complete transaction (includes automatic simulation)
     console.log('🔄 Building and simulating transaction...');
-    const transaction = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      validatedArgs.authority,
-      'setChainRateLimit'
-    );
+    const transaction = await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: validatedArgs.authority,
+      instructionName: 'setChainRateLimit',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    // Display results using the beautiful utility
-    TransactionDisplay.displayResults(transaction, 'setChainRateLimit');
 
     cmdLogger.info(
       {

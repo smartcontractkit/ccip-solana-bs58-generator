@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { Connection } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { RouterCreateLookupTableArgsSchema } from '../../types/index.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { buildCreateAndExtendAlt } from '../../utils/alt.js';
@@ -43,11 +44,13 @@ export async function createLookupTableCommand(options: Record<string, string>, 
 
     const txBuilder = new TransactionBuilder({ rpcUrl });
     console.log('🔄 Building and simulating transaction...');
-    const generated = await txBuilder.buildTransaction(
+    await finalizeTransaction({
+      txBuilder,
       instructions,
-      parsed.data.authority,
-      'router.create_lookup_table'
-    );
+      payer: parsed.data.authority,
+      instructionName: 'router.create_lookup_table',
+      command,
+    });
 
     console.log(`📮 Derived Lookup Table Address: ${lookupTableAddress.toBase58()}`);
     console.log('   ✅ Transaction simulation completed');
@@ -66,7 +69,6 @@ export async function createLookupTableCommand(options: Record<string, string>, 
     console.log(`     --mint ${parsed.data.mint.toBase58()} \\`);
     console.log(`     --env ${globalOptions.environment || 'mainnet'}`);
     console.log('');
-    TransactionDisplay.displayResults(generated, 'router.create_lookup_table');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (error instanceof Error && error.stack) {

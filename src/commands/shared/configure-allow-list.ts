@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { ConfigureAllowListArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, ConfigureAllowListOptions } from '../../types/command.js';
@@ -88,14 +88,14 @@ export async function configureAllowList(
     console.log('   ✅ Instruction built successfully');
 
     console.log('🔄 Building and simulating transaction...');
-    const tx = await txBuilder.buildSingleInstructionTransaction(
-      ix,
-      authority,
-      `${programType}.configure-allow-list`
-    );
+    const tx = await finalizeTransaction({
+      txBuilder,
+      instructions: [ix],
+      payer: authority,
+      instructionName: `${programType}.configure-allow-list`,
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    TransactionDisplay.displayResults(tx, `${programType}.configure-allow-list`);
 
     cmdLogger.info(
       {

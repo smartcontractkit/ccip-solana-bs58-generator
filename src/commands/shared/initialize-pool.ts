@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { BaseInitializePoolArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, InitializePoolOptions } from '../../types/command.js';
@@ -66,14 +66,14 @@ export async function initializePool(
     }
 
     console.log('🔄 Building and simulating transaction...');
-    const tx = await txBuilder.buildSingleInstructionTransaction(
-      ix,
-      authority,
-      `${programType}.initialize`
-    );
+    await finalizeTransaction({
+      txBuilder,
+      instructions: [ix],
+      payer: authority,
+      instructionName: `${programType}.initialize`,
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    TransactionDisplay.displayResults(tx, `${programType}.initialize`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     cmdLogger.error({ error: message }, 'initializePool failed');

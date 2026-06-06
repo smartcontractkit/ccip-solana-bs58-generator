@@ -2,7 +2,12 @@ import { Command } from 'commander';
 import { registerCommands } from './commands/index.js';
 
 import { logger } from './utils/logger.js';
-import { CLI_CONFIG, SOLANA_ENVIRONMENTS, type SolanaEnvironment } from './utils/constants.js';
+import {
+  CLI_CONFIG,
+  DEFAULT_KEYPAIR_PATH,
+  SOLANA_ENVIRONMENTS,
+  type SolanaEnvironment,
+} from './utils/constants.js';
 
 /**
  * Main CLI application entry point
@@ -24,6 +29,14 @@ async function main(): Promise<void> {
       `Solana environment (${Object.keys(SOLANA_ENVIRONMENTS).join('|')})`
     )
     .option('--rpc-url <url>', 'Custom Solana RPC URL (overrides --env if provided)')
+    .option(
+      '--execute',
+      'Sign and send the transaction with a local keypair instead of outputting Base58'
+    )
+    .option(
+      '--keypair <path>',
+      `Path to keypair file (default: ${DEFAULT_KEYPAIR_PATH} when --execute is set)`
+    )
     .hook('preAction', thisCommand => {
       const opts = thisCommand.opts();
 
@@ -65,6 +78,22 @@ async function main(): Promise<void> {
       } else if (hasEnv) {
         opts.resolvedRpcUrl = SOLANA_ENVIRONMENTS[hasEnv as SolanaEnvironment];
       }
+
+      // Execution mode validation
+      if (opts.keypair && !opts.execute) {
+        console.error('❌ --keypair can only be used with --execute');
+        process.exit(1);
+      }
+
+      if (opts.execute) {
+        if (!opts.resolvedRpcUrl) {
+          console.error('❌ --execute requires --env or --rpc-url');
+          process.exit(1);
+        }
+        if (!opts.keypair) {
+          opts.keypair = DEFAULT_KEYPAIR_PATH;
+        }
+      }
     });
 
   // Register all program-specific commands (for backwards compatibility)
@@ -84,9 +113,18 @@ async function main(): Promise<void> {
     console.log('       --mint "Token_Mint_Address" \\');
     console.log('       --authority "New_Authority_PublicKey"');
     console.log('');
+    console.log('  3. Execute directly with a local keypair (Devnet example):');
+    console.log('     $ pnpm bs58 --env devnet --execute \\');
+    console.log('       burnmint-token-pool --instruction accept-ownership \\');
+    console.log('       --program-id "Your_Program_ID" \\');
+    console.log('       --mint "Token_Mint_Address" \\');
+    console.log('       --authority "Your_EOA_PublicKey"');
+    console.log('');
     console.log('💡 Tips:');
     console.log('  • Use --verbose for detailed logging');
     console.log('  • Transaction data is Base58-encoded for Squads multisig');
+    console.log('  • Use --execute to sign and send with your local keypair');
+    console.log('  • --keypair defaults to ~/.config/solana/id.json when --execute is set');
     console.log('  • Always test on Devnet first!');
     console.log('');
   });

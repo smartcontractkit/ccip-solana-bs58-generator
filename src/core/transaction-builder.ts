@@ -121,6 +121,10 @@ export class TransactionBuilder {
           metadata: {
             generatedAt: new Date().toISOString(),
             computeUnits,
+            simulationSuccess: simulationResult.success,
+            ...(simulationResult.error !== undefined
+              ? { simulationError: simulationResult.error }
+              : {}),
           },
         };
 
