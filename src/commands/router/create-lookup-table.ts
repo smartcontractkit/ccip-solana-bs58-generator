@@ -53,22 +53,28 @@ export async function createLookupTableCommand(options: Record<string, string>, 
     });
 
     console.log(`📮 Derived Lookup Table Address: ${lookupTableAddress.toBase58()}`);
-    console.log('   ✅ Transaction simulation completed');
-    console.log('');
-    console.log('⚠️  ALT CREATION TIMING CONSTRAINT');
-    console.log('   This transaction must be imported AND executed within 60-90 seconds');
-    console.log('   due to slot-dependent address derivation.');
-    console.log('');
-    console.log('💡 RECOMMENDED: Use the companion tool for immediate execution:');
-    console.log(
-      `   pnpm create-alt --keypair <EOA_KEYPAIR> --authority ${parsed.data.authority.toBase58()} \\`
-    );
-    console.log(`     --program-id ${parsed.data.programId.toBase58()} \\`);
-    console.log(`     --fee-quoter-program-id ${parsed.data.feeQuoterProgramId.toBase58()} \\`);
-    console.log(`     --pool-program-id ${parsed.data.poolProgramId.toBase58()} \\`);
-    console.log(`     --mint ${parsed.data.mint.toBase58()} \\`);
-    console.log(`     --env ${globalOptions.environment || 'mainnet'}`);
-    console.log('');
+
+    // The slot-expiry timing constraint only applies to the Base58 → Squads flow, where a human
+    // imports and executes the transaction later. In --execute mode the EOA signs immediately, so
+    // there is no race and the companion tool is not needed.
+    if (!globalOptions.execute) {
+      console.log('   ✅ Transaction simulation completed');
+      console.log('');
+      console.log('⚠️  ALT CREATION TIMING CONSTRAINT');
+      console.log('   This transaction must be imported AND executed within 60-90 seconds');
+      console.log('   due to slot-dependent address derivation.');
+      console.log('');
+      console.log('💡 RECOMMENDED: Use the companion tool for immediate execution:');
+      console.log(
+        `   pnpm create-alt --keypair <EOA_KEYPAIR> --authority ${parsed.data.authority.toBase58()} \\`
+      );
+      console.log(`     --program-id ${parsed.data.programId.toBase58()} \\`);
+      console.log(`     --fee-quoter-program-id ${parsed.data.feeQuoterProgramId.toBase58()} \\`);
+      console.log(`     --pool-program-id ${parsed.data.poolProgramId.toBase58()} \\`);
+      console.log(`     --mint ${parsed.data.mint.toBase58()} \\`);
+      console.log(`     --env ${globalOptions.environment || 'mainnet'}`);
+      console.log('');
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (error instanceof Error && error.stack) {
