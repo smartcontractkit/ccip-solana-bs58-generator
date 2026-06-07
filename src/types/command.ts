@@ -1,3 +1,5 @@
+import type { Keypair } from '@solana/web3.js';
+
 /**
  * Global CLI options available on the root Commander program
  */
@@ -8,6 +10,8 @@ export interface GlobalCommandOptions {
   resolvedRpcUrl?: string;
   execute?: boolean;
   keypair?: string;
+  /** Cached signer keypair, loaded once per invocation in --execute mode */
+  _signerKeypair?: Keypair;
 }
 
 /**
