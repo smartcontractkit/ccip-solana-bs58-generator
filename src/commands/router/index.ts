@@ -6,6 +6,7 @@ import { transferAdminRoleCommand } from './transfer-admin-role.js';
 import { setPoolCommand } from './set-pool.js';
 import { createLookupTableCommand } from './create-lookup-table.js';
 import { appendToLookupTableCommand } from './append-to-lookup-table.js';
+import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 /**
  * CCIP Router commands
@@ -60,6 +61,7 @@ export function createRouterCommands(): Command {
       }
 
       const options = thisCommand.opts();
+      applyExecuteAuthority(thisCommand, options, globalOpts);
 
       // common - append-to-lookup-table doesn't need program-id
       const instr = options.instruction as string;

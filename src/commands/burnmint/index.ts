@@ -12,6 +12,7 @@ import { appendRemotePoolAddressesCommand } from './append-remote-pool-addresses
 import { deleteChainConfigCommand } from './delete-chain-config.js';
 import { configureAllowListCommand } from './configure-allow-list.js';
 import { removeFromAllowListCommand } from './remove-from-allow-list.js';
+import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 /**
  * Burnmint Token Pool commands
@@ -126,6 +127,7 @@ export function createBurnmintCommands(): Command {
         console.error('❌ --execute is not supported for read-only instructions');
         process.exit(1);
       }
+      applyExecuteAuthority(thisCommand, options, globalOpts);
       if (!readOnlyInstructions.includes(options.instruction) && !options.authority) {
         console.error('❌ This instruction requires: --authority');
         console.error(

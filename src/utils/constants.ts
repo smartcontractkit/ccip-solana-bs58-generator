@@ -13,6 +13,16 @@ export const SOLANA_ENVIRONMENTS = {
 export type SolanaEnvironment = keyof typeof SOLANA_ENVIRONMENTS;
 
 /**
+ * Well-known, fixed genesis hashes per Solana cluster. Used to authoritatively infer the cluster
+ * from any RPC connection (provider-agnostic), e.g. when only --rpc-url is given.
+ */
+export const SOLANA_GENESIS_HASHES: Record<'mainnet' | 'devnet' | 'testnet', string> = {
+  mainnet: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d',
+  devnet: 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG',
+  testnet: '4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY',
+};
+
+/**
  * Get RPC URL for a given environment
  * @param env - Environment name (mainnet, devnet, testnet, localhost)
  * @returns RPC URL string

@@ -35,7 +35,12 @@ export function loadKeypair(path: string): Keypair {
  * Execute a set of instructions as a single transaction
  *
  * Uses 'finalized' commitment for blockhash to reduce expiration issues on slow/congested RPCs.
- * Implements automatic retry logic for transient RPC failures.
+ *
+ * The transaction is built and signed exactly ONCE, before the retry loop. Retries only
+ * re-broadcast that same signed transaction — because the signature is identical, the network
+ * de-duplicates it, so a retry (e.g. after a confirmation timeout where the first send already
+ * landed) can never execute the instructions twice. Re-signing with a fresh blockhash would create
+ * a new signature and risk double execution (e.g. a double mint), which is exactly what we avoid.
  *
  * @param connection - Solana RPC connection
  * @param instructions - Transaction instructions to execute
@@ -67,30 +72,28 @@ export async function executeTransaction(
     'Preparing to execute transaction'
   );
 
+  // Build and sign ONCE so every retry re-broadcasts an identical signature (see note above).
+  // Use 'finalized' commitment for a more reliable blockhash on slow RPCs.
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+  logger.debug({ blockhash, lastValidBlockHeight }, 'Building and signing transaction');
+
+  const tx = new Transaction();
+  tx.recentBlockhash = blockhash;
+  tx.lastValidBlockHeight = lastValidBlockHeight;
+  tx.feePayer = feePayer.publicKey;
+  tx.add(...instructions);
+  tx.sign(...signers);
+  const rawTransaction = tx.serialize();
+
   const maxRetries = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      logger.debug({ attempt, maxRetries }, 'Fetching latest blockhash');
+      logger.debug({ attempt, maxRetries }, 'Sending signed transaction');
 
-      // Use 'finalized' commitment for more reliable blockhash on slow RPCs
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
-
-      logger.debug({ blockhash, lastValidBlockHeight }, 'Building transaction');
-
-      // Build and sign transaction
-      const tx = new Transaction();
-      tx.recentBlockhash = blockhash;
-      tx.lastValidBlockHeight = lastValidBlockHeight;
-      tx.feePayer = feePayer.publicKey;
-      tx.add(...instructions);
-      tx.sign(...signers);
-
-      logger.debug({ attempt }, 'Sending signed transaction');
-
-      // Send with preflight checks and retries
-      const rawTransaction = tx.serialize();
+      // Re-broadcasting the same signed transaction is idempotent (identical signature), so a retry
+      // after a confirmation timeout cannot double-execute the instructions.
       const signature = await connection.sendRawTransaction(rawTransaction, {
         skipPreflight: false,
         maxRetries: 2,

@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { updateMetadataAuthorityCommand } from './update-authority.js';
+import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 export function createMetaplexCommands(): Command {
   const metaplex = new Command('metaplex')
@@ -17,6 +18,7 @@ export function createMetaplexCommands(): Command {
         process.exit(1);
       }
       const options = thisCommand.opts();
+      applyExecuteAuthority(thisCommand, options, globalOpts);
       const instr = options.instruction as string;
       if (instr === 'update-authority') {
         if (!options.authority || !options.mint || !options.newAuthority) {
