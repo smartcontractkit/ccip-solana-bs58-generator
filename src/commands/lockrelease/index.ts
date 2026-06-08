@@ -16,6 +16,7 @@ import { provideLiquidityCommand } from './provide-liquidity.js';
 import { withdrawLiquidityCommand } from './withdraw-liquidity.js';
 import { setRebalancerCommand } from './set-rebalancer.js';
 import { setCanAcceptLiquidityCommand } from './set-can-accept-liquidity.js';
+import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 /**
  * Lock/Release Token Pool commands
@@ -145,6 +146,11 @@ export function createLockReleaseCommands(): Command {
 
       // Most instructions also require --authority (except read-only operations)
       const readOnlyInstructions = ['get-state', 'get-chain-config'];
+      if (globalOpts.execute && readOnlyInstructions.includes(options.instruction)) {
+        console.error('❌ --execute is not supported for read-only instructions');
+        process.exit(1);
+      }
+      applyExecuteAuthority(thisCommand, options, globalOpts);
       if (!readOnlyInstructions.includes(options.instruction) && !options.authority) {
         console.error('❌ This instruction requires: --authority');
         console.error(

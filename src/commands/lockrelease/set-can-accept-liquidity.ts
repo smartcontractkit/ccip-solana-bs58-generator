@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { SetCanAcceptLiquidityArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig } from '../../types/program-registry.js';
 import type { CommandContext, SetCanAcceptLiquidityOptions } from '../../types/command.js';
@@ -100,15 +100,14 @@ export async function setCanAcceptLiquidityCommand(
 
     // Build the complete transaction
     console.log('🔄 Building and simulating transaction...');
-    const transaction = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      validatedArgs.authority,
-      'setCanAcceptLiquidity'
-    );
+    const transaction = await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: validatedArgs.authority,
+      instructionName: 'setCanAcceptLiquidity',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    // Display results
-    TransactionDisplay.displayResults(transaction, 'setCanAcceptLiquidity');
 
     cmdLogger.info(
       {

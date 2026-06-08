@@ -1,5 +1,7 @@
 import type { GeneratedTransaction } from '../types/index.js';
 import { logger } from './logger.js';
+import { getTransactionExplorerUrl } from './explorer.js';
+import type { SolanaEnvironment } from './constants.js';
 
 /**
  * Utility for displaying transaction data with beautiful formatting
@@ -119,6 +121,55 @@ export class TransactionDisplay {
     }
 
     logger.info('   • This transaction is valid until the blockhash expires (~2 minutes)');
+    logger.info('');
+  }
+
+  /**
+   * Display a loud banner before signing & sending in --execute mode, so it is never
+   * ambiguous that a real, irreversible transaction is about to be sent and by whom.
+   */
+  static displayExecutionBanner(params: {
+    signer: string;
+    instructionName: string;
+    env?: SolanaEnvironment | undefined;
+    rpcUrl: string;
+  }): void {
+    const envLabel = params.env ?? 'custom RPC';
+    logger.info('');
+    if (params.env === 'mainnet') {
+      logger.warn('🚨🚨🚨 MAINNET EXECUTION — this is REAL and IRREVERSIBLE 🚨🚨🚨');
+    }
+    logger.info(`🖊️  EXECUTE MODE — signing & sending on ${envLabel}`);
+    logger.info(`   Signer:      ${params.signer}`);
+    logger.info(`   Instruction: ${params.instructionName}`);
+    logger.info(`   RPC:         ${params.rpcUrl}`);
+    logger.info('');
+  }
+
+  /**
+   * Display on-chain execution results (no Base58 output)
+   */
+  static displayExecutionResults(
+    signature: string,
+    instructionName: string,
+    env?: SolanaEnvironment
+  ): void {
+    logger.info('');
+    logger.info('🎉 Transaction executed successfully!');
+    logger.info('');
+    logger.info('📋 Execution Details:');
+    logger.info(`   Instruction: ${instructionName}`);
+    logger.info(`   Signature:   ${signature}`);
+    if (env) {
+      // Known cluster → clean explorer link (no RPC URL embedded, so no API-key leakage).
+      logger.info(`   Explorer:    ${getTransactionExplorerUrl(signature, env)}`);
+    } else {
+      // Custom/local RPC — the public explorer can't reliably reach it, and we must not embed the
+      // (possibly secret-bearing) RPC URL. Surface the signature for the user to look up themselves.
+      logger.info(
+        '   Explorer:    custom/local RPC — look up the signature above in your explorer'
+      );
+    }
     logger.info('');
   }
 

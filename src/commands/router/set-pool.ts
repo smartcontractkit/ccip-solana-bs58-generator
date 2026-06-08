@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { RouterSetPoolArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { InstructionBuilder } from '../../programs/router/instructions.js';
 import { getProgramConfig } from '../../types/program-registry.js';
@@ -67,14 +67,14 @@ export async function setPoolCommand(
     );
 
     console.log('🔄 Building and simulating transaction...');
-    const tx = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      authority,
-      'router.set_pool'
-    );
+    await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: authority,
+      instructionName: 'router.set_pool',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    TransactionDisplay.displayResults(tx, 'router.set_pool');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     cmdLogger.error({ error: message }, 'setPool failed');

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { Connection, TransactionInstruction } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { detectTokenProgramId } from '../../utils/token.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
 import { SplUpdateMetadataAuthorityArgsSchema } from '../../types/index.js';
@@ -47,13 +47,14 @@ export async function updateMetadataAuthorityCommand(
 
     const tb = new TransactionBuilder({ rpcUrl });
     logger.info('🔄 Building and simulating transaction...');
-    const tx = await tb.buildTransaction(
-      ixs,
-      parsed.data.authority,
-      'spl.update_metadata_authority'
-    );
+    await finalizeTransaction({
+      txBuilder: tb,
+      instructions: ixs,
+      payer: parsed.data.authority,
+      instructionName: 'spl.update_metadata_authority',
+      command,
+    });
     logger.info('✅ Transaction simulation completed');
-    TransactionDisplay.displayResults(tx, 'spl.update_metadata_authority');
   } catch (error) {
     logger.error('❌ Failed to update metadata authority');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

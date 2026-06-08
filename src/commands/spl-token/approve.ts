@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { ApproveArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import type { CommandContext, ApproveOptions } from '../../types/command.js';
 import { InstructionBuilder } from '../../programs/spl-token/instructions.js';
@@ -117,15 +117,14 @@ export async function approveCommand(
 
     // Build the complete transaction
     console.log('🔄 Building and simulating transaction...');
-    const transaction = await transactionBuilder.buildSingleInstructionTransaction(
-      instruction,
-      validatedArgs.authority,
-      'approve'
-    );
+    const transaction = await finalizeTransaction({
+      txBuilder: transactionBuilder,
+      instructions: [instruction],
+      payer: validatedArgs.authority,
+      instructionName: 'approve',
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    // Display results
-    TransactionDisplay.displayResults(transaction, 'approve');
 
     cmdLogger.info(
       {

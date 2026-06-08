@@ -2,7 +2,7 @@ import type { TransactionOptions } from '../../types/index.js';
 import { TransferOwnershipArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, TransferOwnershipOptions } from '../../types/command.js';
@@ -82,14 +82,14 @@ export async function transferOwnership(
     console.log('   ✅ Instruction built successfully');
 
     console.log('🔄 Building and simulating transaction...');
-    const tx = await txBuilder.buildSingleInstructionTransaction(
-      ix,
-      authority,
-      `${programType}.transfer-ownership`
-    );
+    const tx = await finalizeTransaction({
+      txBuilder,
+      instructions: [ix],
+      payer: authority,
+      instructionName: `${programType}.transfer-ownership`,
+      command,
+    });
     console.log('   ✅ Transaction simulation completed');
-
-    TransactionDisplay.displayResults(tx, `${programType}.transfer-ownership`);
 
     cmdLogger.info(
       {

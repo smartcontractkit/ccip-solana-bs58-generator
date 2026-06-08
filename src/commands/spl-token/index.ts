@@ -5,6 +5,7 @@ import { transferMintAuthorityCommand } from './transfer-mint-authority.js';
 import { updateMetadataAuthorityCommand } from './update-metadata-authority.js';
 import { createMintCommand } from './create-mint.js';
 import { approveCommand } from './approve.js';
+import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 export function createSplTokenCommands(): Command {
   const splToken = new Command('spl-token')
@@ -61,6 +62,7 @@ export function createSplTokenCommands(): Command {
         process.exit(1);
       }
       const options = thisCommand.opts();
+      applyExecuteAuthority(thisCommand, options, globalOpts);
       const instr = options.instruction as string;
       if (instr === 'create-mint') {
         if (!options.authority || options.decimals === undefined) {

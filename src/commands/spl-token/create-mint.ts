@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
-import { TransactionDisplay } from '../../utils/display.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { CreateMintArgsSchema } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import {
@@ -87,10 +87,10 @@ export async function createMintCommand(options: Record<string, string>, command
 
   if (parsed.data.withMetaplex) {
     // Create mint with Metaplex metadata
-    await createMintWithMetaplex(parsed.data, rpcUrl);
+    await createMintWithMetaplex(parsed.data, rpcUrl, command);
   } else {
     // Create plain mint without metadata
-    await createPlainMint(parsed.data, connection, rpcUrl);
+    await createPlainMint(parsed.data, connection, rpcUrl, command);
   }
 }
 
@@ -152,7 +152,11 @@ async function validateCreateMintParameters(params: CreateMintParams): Promise<v
 /**
  * Create a mint with Metaplex metadata using UMI
  */
-async function createMintWithMetaplex(params: CreateMintParams, rpcUrl: string): Promise<void> {
+async function createMintWithMetaplex(
+  params: CreateMintParams,
+  rpcUrl: string,
+  command: Command
+): Promise<void> {
   try {
     logger.info('🎨 Creating mint with Metaplex metadata...');
 
@@ -259,18 +263,17 @@ async function createMintWithMetaplex(params: CreateMintParams, rpcUrl: string):
     const tb = new TransactionBuilder({ rpcUrl });
     logger.info('🔄 Building and simulating transaction...');
 
-    const tx = await tb.buildTransaction(
-      instructions,
-      params.authority,
-      'spl-token.create_mint_with_metaplex'
-    );
-
-    logger.info('✅ Transaction simulation completed');
-
-    // Display metadata info
     logger.info(`📋 Metadata PDA: ${metadataPda}`);
 
-    TransactionDisplay.displayResults(tx, 'spl-token.create_mint_with_metaplex');
+    await finalizeTransaction({
+      txBuilder: tb,
+      instructions,
+      payer: params.authority,
+      instructionName: 'spl-token.create_mint_with_metaplex',
+      command,
+    });
+
+    logger.info('✅ Transaction simulation completed');
   } catch (error) {
     logger.error('❌ Failed to create mint with Metaplex metadata');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -289,7 +292,8 @@ async function createMintWithMetaplex(params: CreateMintParams, rpcUrl: string):
 async function createPlainMint(
   params: CreateMintParams,
   connection: Connection,
-  rpcUrl: string
+  rpcUrl: string,
+  command: Command
 ): Promise<void> {
   try {
     logger.info('🪙 Creating plain mint (no metadata)...');
@@ -366,10 +370,15 @@ async function createPlainMint(
     const tb = new TransactionBuilder({ rpcUrl });
     logger.info('🔄 Building and simulating transaction...');
 
-    const tx = await tb.buildTransaction(instructions, params.authority, 'spl-token.create_mint');
+    await finalizeTransaction({
+      txBuilder: tb,
+      instructions,
+      payer: params.authority,
+      instructionName: 'spl-token.create_mint',
+      command,
+    });
 
     logger.info('✅ Transaction simulation completed');
-    TransactionDisplay.displayResults(tx, 'spl-token.create_mint');
   } catch (error) {
     logger.error('❌ Failed to create plain mint');
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

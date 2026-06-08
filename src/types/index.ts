@@ -767,6 +767,8 @@ export interface GeneratedTransaction {
   metadata: {
     generatedAt: string;
     computeUnits?: number;
+    simulationSuccess?: boolean;
+    simulationError?: string;
   };
 }
 

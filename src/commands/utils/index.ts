@@ -54,6 +54,13 @@ Available Program Types:
   • Use --remote-chain-selector to also derive chain-specific config accounts
 `
     )
+    .hook('preAction', thisCommand => {
+      const globalOpts = thisCommand.parent?.opts() || {};
+      if (globalOpts.execute) {
+        console.error('❌ --execute is not supported for utility commands');
+        process.exit(1);
+      }
+    })
     .action((options, command) => {
       // Route to the appropriate utility handler
       if (options.instruction === 'derive-accounts') {

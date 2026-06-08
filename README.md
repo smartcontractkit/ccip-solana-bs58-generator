@@ -164,6 +164,32 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 | `testnet`   | https://api.testnet.solana.com      |
 | `localhost` | http://localhost:8899               |
 
+#### EOA Execution
+
+By default, the CLI generates unsigned Base58 transaction data for multisig import (e.g. Squads). To sign and send directly with a local keypair, add `--execute`:
+
+```bash
+# Uses default keypair at ~/.config/solana/id.json
+pnpm bs58 --env devnet --execute \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "Your_EOA_PublicKey"
+
+# Custom keypair path
+pnpm bs58 --env devnet --execute --keypair ~/my-wallet.json \
+  spl-token --instruction mint \
+  --mint "Token_Mint" --authority "Your_EOA_PublicKey" ...
+```
+
+**Requirements and limitations:**
+
+- `--authority` must match the loaded keypair's public key (the EOA is the fee payer and signer)
+- `--execute` requires `--env` or `--rpc-url`
+- `--keypair` can only be used with `--execute`
+- Multisig vault addresses cannot be executed locally — omit `--execute` and import Base58 into Squads
+- Read-only commands (`get-state`, `get-chain-config`, `derive-accounts`) do not support `--execute`
+
 ## Programs
 
 ### Burnmint Token Pool

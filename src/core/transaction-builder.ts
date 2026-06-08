@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   TransactionInstruction,
   VersionedTransaction,
   TransactionMessage,
@@ -121,6 +122,10 @@ export class TransactionBuilder {
           metadata: {
             generatedAt: new Date().toISOString(),
             computeUnits,
+            simulationSuccess: simulationResult.success,
+            ...(simulationResult.error !== undefined
+              ? { simulationError: simulationResult.error }
+              : {}),
           },
         };
 
@@ -151,6 +156,49 @@ export class TransactionBuilder {
     instructionName?: string
   ): Promise<GeneratedTransaction> {
     return this.buildTransaction([instruction], payer, instructionName);
+  }
+
+  /**
+   * Simulate a SIGNED transaction with signature verification enabled.
+   *
+   * Used only in --execute mode: it signs a v0 message with the provided keypair and runs
+   * `simulateTransaction({ sigVerify: true })`, so a transaction that still has a required signer the
+   * local keypair did not provide fails fast and clearly instead of later at send time. This triggers
+   * only when an instruction marks a signer that is NOT our keypair — e.g. an SPL multisig whose
+   * threshold needs a co-signer we don't control, or extra signer accounts mistakenly listed in
+   * `--multisig-signers`. A 1-of-N multisig where we pass only our own member key signs fully and
+   * passes. Verifying the signer set is blockhash-independent, so fetching a fresh blockhash here is
+   * fine even though the executor fetches its own at send.
+   */
+  async simulateSignedTransaction(
+    instructions: TransactionInstruction[],
+    payer: PublicKey,
+    signer: Keypair
+  ): Promise<{ success: boolean; error?: string; logs?: string[] }> {
+    const { blockhash } = await this.connection.getLatestBlockhash();
+    const message = new TransactionMessage({
+      payerKey: payer,
+      recentBlockhash: blockhash,
+      instructions,
+    }).compileToV0Message();
+
+    const signedTx = new VersionedTransaction(message);
+    signedTx.sign([signer]);
+
+    const simulation = await this.connection.simulateTransaction(signedTx, {
+      sigVerify: true,
+      commitment: DEFAULT_TRANSACTION_CONFIG.COMMITMENT,
+    });
+
+    if (simulation.value.err) {
+      return {
+        success: false,
+        error: JSON.stringify(simulation.value.err),
+        logs: simulation.value.logs || [],
+      };
+    }
+
+    return { success: true, logs: simulation.value.logs || [] };
   }
 
   /**

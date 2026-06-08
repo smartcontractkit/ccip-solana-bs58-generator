@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { Connection } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { RouterAppendToLookupTableArgsSchema } from '../../types/index.js';
+import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { TransactionDisplay } from '../../utils/display.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { buildAppendToAlt, deriveCcipBaseAddresses } from '../../utils/alt.js';
@@ -113,12 +114,6 @@ export async function appendToLookupTableCommand(
     const txBuilder = new TransactionBuilder({ rpcUrl });
     cmdLogger.info('🔄 Building and simulating transaction...');
 
-    const generated = await txBuilder.buildTransaction(
-      instructions,
-      parsed.data.authority,
-      'router.append_to_lookup_table'
-    );
-
     // Display success info before transaction details
     console.log(`📮 Lookup Table Address: ${parsed.data.lookupTableAddress.toBase58()}`);
     if (hasCcipParams) {
@@ -130,9 +125,15 @@ export async function appendToLookupTableCommand(
       console.log(`📊 Addresses added: ${parsed.data.additionalAddresses.length}`);
     }
     console.log(`📈 Total addresses after append: ${totalAddressesAfterAppend}`);
-    console.log('   ✅ Transaction simulation completed');
 
-    TransactionDisplay.displayResults(generated, 'router.append_to_lookup_table');
+    await finalizeTransaction({
+      txBuilder,
+      instructions,
+      payer: parsed.data.authority,
+      instructionName: 'router.append_to_lookup_table',
+      command,
+    });
+    console.log('   ✅ Transaction simulation completed');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (error instanceof Error && error.stack) {
