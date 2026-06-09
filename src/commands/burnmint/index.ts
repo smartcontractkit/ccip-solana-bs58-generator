@@ -3,6 +3,7 @@ import { acceptOwnershipCommand } from './accept-ownership.js';
 import { getChainConfigCommand } from './get-chain-config.js';
 import { getStateCommand } from './get-state.js';
 import { initializePoolCommand } from './initialize-pool.js';
+import { createTokenAccountCommand } from './create-token-account.js';
 import { setChainRateLimitCommand } from './set-chain-rate-limit.js';
 import { setRateLimitAdminCommand } from './set-rate-limit-admin.js';
 import { transferOwnershipCommand } from './transfer-ownership.js';
@@ -23,7 +24,7 @@ export function createBurnmintCommands(): Command {
     .alias('bm')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list)'
+      'Instruction to execute (initialize-pool, create-token-account, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, set-chain-rate-limit, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list)'
     )
     .option(
       '--program-id <programId>',
@@ -458,6 +459,8 @@ Available Instructions:
       // Route to the appropriate instruction handler
       if (options.instruction === 'initialize-pool') {
         initializePoolCommand(options, command);
+      } else if (options.instruction === 'create-token-account') {
+        createTokenAccountCommand(options, command);
       } else if (options.instruction === 'accept-ownership') {
         acceptOwnershipCommand(options, command);
       } else if (options.instruction === 'transfer-ownership') {
@@ -485,7 +488,7 @@ Available Instructions:
       } else {
         console.error(`❌ Unknown instruction: ${options.instruction}`);
         console.error(
-          'Available instructions: initialize-pool, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
+          'Available instructions: initialize-pool, create-token-account, accept-ownership, transfer-ownership, set-rate-limit-admin, get-state, get-chain-config, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config, configure-allow-list, remove-from-allow-list, set-chain-rate-limit'
         );
         process.exit(1);
       }

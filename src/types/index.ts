@@ -50,6 +50,9 @@ export const BurnmintInitializePoolArgsSchema = BaseInitializePoolArgsSchema;
 // Lockrelease initialize pool (uses base schema)
 export const LockreleaseInitializePoolArgsSchema = BaseInitializePoolArgsSchema;
 
+// create-token-account: same args as initialize-pool (programId, mint, authority)
+export const CreateTokenAccountArgsSchema = BaseInitializePoolArgsSchema;
+
 export const TransferOwnershipArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
@@ -95,6 +98,30 @@ export const SetRateLimitAdminArgsSchema = z.object({
 export const GetStateArgsSchema = z.object({
   programId: z.string().transform(val => new PublicKey(val)),
   mint: z.string().transform(val => new PublicKey(val)),
+  rpcUrl: z
+    .string()
+    .refine(
+      val => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid URL format' }
+    )
+    .optional(),
+});
+
+export const InspectTokenArgsSchema = z.object({
+  programId: z.string().transform(val => new PublicKey(val)), // router program
+  mint: z.string().transform(val => new PublicKey(val)),
+  poolProgramId: z.string().transform(val => new PublicKey(val)),
+  feeQuoterProgramId: z
+    .string()
+    .transform(val => new PublicKey(val))
+    .optional(),
   rpcUrl: z
     .string()
     .refine(
