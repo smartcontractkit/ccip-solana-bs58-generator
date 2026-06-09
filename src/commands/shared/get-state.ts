@@ -6,6 +6,10 @@ import { getProgramConfig, type ProgramName } from '../../types/program-registry
 import type { CommandContext, GetStateOptions } from '../../types/command.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
 import { AccountDerivation as LockreleaseDerivation } from '../../programs/lockrelease-token-pool/accounts.js';
+import {
+  deserializePoolState,
+  type PoolStateAccount as StateAccount,
+} from '../../programs/shared/pool-state.js';
 
 /**
  * Shared get state implementation for reading on-chain state accounts
@@ -94,7 +98,7 @@ export async function getState(
     console.log('');
 
     // Deserialize account data manually
-    const stateAccount = deserializeStateAccount(accountInfo.data);
+    const stateAccount = deserializePoolState(accountInfo.data);
 
     cmdLogger.debug({ stateAccount }, 'State account deserialized successfully');
 
@@ -125,119 +129,6 @@ export async function getState(
     }
     process.exit(1);
   }
-}
-
-/**
- * State account structure from IDL
- */
-interface StateAccount {
-  version: number;
-  config: {
-    tokenProgram: PublicKey;
-    mint: PublicKey;
-    decimals: number;
-    poolSigner: PublicKey;
-    poolTokenAccount: PublicKey;
-    owner: PublicKey;
-    proposedOwner: PublicKey;
-    rateLimitAdmin: PublicKey;
-    routerOnrampAuthority: PublicKey;
-    router: PublicKey;
-    rebalancer?: PublicKey;
-    canAcceptLiquidity?: boolean;
-    listEnabled: boolean;
-    allowList: PublicKey[];
-    rmnRemote: PublicKey;
-  };
-}
-
-/**
- * Manually deserialize State account data
- * Avoids BorshAccountsCoder issues with incomplete IDL types
- *
- * @param data - Raw account data buffer from the blockchain
- * @returns Deserialized state account object
- */
-function deserializeStateAccount(data: Buffer): StateAccount {
-  let offset = 8; // Skip 8-byte Anchor discriminator
-
-  // Read version (u8)
-  const version = data.readUInt8(offset);
-  offset += 1;
-
-  // Read BaseConfig fields
-  const tokenProgram = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const mint = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const decimals = data.readUInt8(offset);
-  offset += 1;
-
-  const poolSigner = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const poolTokenAccount = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const owner = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const proposedOwner = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const rateLimitAdmin = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const routerOnrampAuthority = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const router = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const rebalancer = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  const canAcceptLiquidity = data.readUInt8(offset) === 1;
-  offset += 1;
-
-  const listEnabled = data.readUInt8(offset) === 1;
-  offset += 1;
-
-  // Read Vec<Pubkey> for allowList
-  const allowListLength = data.readUInt32LE(offset);
-  offset += 4;
-
-  const allowList: PublicKey[] = [];
-  for (let i = 0; i < allowListLength; i++) {
-    allowList.push(new PublicKey(data.subarray(offset, offset + 32)));
-    offset += 32;
-  }
-
-  const rmnRemote = new PublicKey(data.subarray(offset, offset + 32));
-  offset += 32;
-
-  return {
-    version,
-    config: {
-      tokenProgram,
-      mint,
-      decimals,
-      poolSigner,
-      poolTokenAccount,
-      owner,
-      proposedOwner,
-      rateLimitAdmin,
-      routerOnrampAuthority,
-      router,
-      rebalancer,
-      canAcceptLiquidity,
-      listEnabled,
-      allowList,
-      rmnRemote,
-    },
-  };
 }
 
 /**
