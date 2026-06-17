@@ -7,13 +7,14 @@ import { executeTransaction } from './transaction-executor.js';
 import { loadSignerKeypair } from './keypair.js';
 import { resolveClusterByGenesisHash } from './explorer.js';
 import type { SolanaEnvironment } from './constants.js';
+import { DEFAULT_TRANSACTION_OUTPUT_FORMAT, parseTransactionOutputFormat } from './constants.js';
 
 function getGlobalOptions(command: CommandContext) {
   return command.parent?.parent?.opts() || command.parent?.opts() || {};
 }
 
 /**
- * Build and either display Base58 transaction data or execute on-chain with a local keypair.
+ * Build and either display encoded transaction data or execute on-chain with a local keypair.
  */
 export async function finalizeTransaction(opts: {
   txBuilder: TransactionBuilder;
@@ -27,8 +28,11 @@ export async function finalizeTransaction(opts: {
 
   const tx = await txBuilder.buildTransaction(instructions, payer, instructionName);
 
+  const outputFormat =
+    parseTransactionOutputFormat(globalOptions.format) ?? DEFAULT_TRANSACTION_OUTPUT_FORMAT;
+
   if (!globalOptions.execute) {
-    TransactionDisplay.displayResults(tx, instructionName);
+    TransactionDisplay.displayResults(tx, instructionName, outputFormat);
     return tx;
   }
 

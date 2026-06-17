@@ -2,6 +2,11 @@ import type { GeneratedTransaction } from '../types/index.js';
 import { logger } from './logger.js';
 import { getTransactionExplorerUrl } from './explorer.js';
 import type { SolanaEnvironment } from './constants.js';
+import {
+  DEFAULT_TRANSACTION_OUTPUT_FORMAT,
+  getEncodedTransactionData,
+  type TransactionOutputFormat,
+} from './constants.js';
 
 /**
  * Utility for displaying transaction data with beautiful formatting
@@ -11,8 +16,16 @@ export class TransactionDisplay {
    * Display transaction results in a user-friendly format
    * @param transaction The generated transaction
    * @param instructionName The instruction name for context
+   * @param format Output encoding for the copy-paste transaction data
    */
-  static displayResults(transaction: GeneratedTransaction, instructionName: string): void {
+  static displayResults(
+    transaction: GeneratedTransaction,
+    instructionName: string,
+    format: TransactionOutputFormat = DEFAULT_TRANSACTION_OUTPUT_FORMAT
+  ): void {
+    const encodedData = getEncodedTransactionData(transaction, format);
+    const formatLabel = format === 'base64' ? 'Base64' : 'Base58';
+
     logger.info('');
     logger.info('🎉 Transaction generated successfully!');
     logger.info('');
@@ -21,41 +34,41 @@ export class TransactionDisplay {
     logger.info('📋 Transaction Details:');
     logger.info(`   Instruction: ${instructionName}`);
     logger.info(`   Size: ${Math.floor(transaction.hex.length / 2)} bytes`);
-    logger.info(`   Base58 length: ${transaction.base58.length} characters`);
+    logger.info(`   ${formatLabel} length: ${encodedData.length} characters`);
     logger.info(
       `   Compute units: ${transaction.metadata.computeUnits?.toLocaleString() || 'Unknown'}`
     );
     logger.info(`   Generated: ${transaction.metadata.generatedAt}`);
     logger.info('');
 
-    // Base58 transaction data - highlighted for easy copy/paste
-    this.displayBase58Transaction(transaction.base58);
+    // Encoded transaction data - highlighted for easy copy/paste
+    this.displayEncodedTransaction(encodedData, formatLabel);
     logger.info('');
 
     // Account information
     this.displayAccountInfo(transaction);
 
     // Usage instructions
-    this.displayUsageInstructions();
+    this.displayUsageInstructions(format);
 
     // Final notes
     this.displayNotes(transaction);
   }
 
   /**
-   * Display Base58 transaction data in a beautiful, copy-friendly format
+   * Display encoded transaction data in a beautiful, copy-friendly format
    * Note: Uses console.log for clean copy-paste experience (no timestamps)
    */
-  private static displayBase58Transaction(base58: string): void {
-    logger.info('🔗 Transaction Data (Base58):');
+  private static displayEncodedTransaction(encodedData: string, formatLabel: string): void {
+    logger.info(`🔗 Transaction Data (${formatLabel}):`);
     logger.info('');
 
-    // Clean, simple approach - just highlight and the raw Base58
+    // Clean, simple approach - just highlight and the raw encoded data
     console.log('🎯 COPY TRANSACTION DATA BELOW:');
     console.log('');
-    console.log(base58);
+    console.log(encodedData);
     console.log('');
-    console.log('─'.repeat(Math.min(80, base58.length)));
+    console.log('─'.repeat(Math.min(80, encodedData.length)));
 
     logger.info('💡 Triple-click the line above to select the entire transaction data');
   }
@@ -93,12 +106,18 @@ export class TransactionDisplay {
   /**
    * Display usage instructions
    */
-  private static displayUsageInstructions(): void {
+  private static displayUsageInstructions(format: TransactionOutputFormat): void {
+    const formatLabel = format === 'base64' ? 'Base64' : 'Base58';
+
     logger.info('💡 Usage Instructions:');
-    logger.info('   1. 📋 Copy the Base58 transaction data from the box above');
-    logger.info('   2. 🔗 Open your Squads multisig interface');
+    logger.info(`   1. 📋 Copy the ${formatLabel} transaction data from the box above`);
+    if (format === 'base58') {
+      logger.info('   2. 🔗 Open your Squads multisig interface');
+    } else {
+      logger.info('   2. 🔗 Open your multisig interface');
+    }
     logger.info('   3. ➕ Create a "Custom Transaction" or "Raw Transaction"');
-    logger.info('   4. 📝 Paste the Base58 data into the transaction field');
+    logger.info(`   4. 📝 Paste the ${formatLabel} data into the transaction field`);
     logger.info('   5. ✅ Review all accounts and parameters carefully');
     logger.info('   6. 👥 Get required signatures from multisig members');
     logger.info('   7. 🚀 Execute the transaction on Solana');

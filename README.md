@@ -144,6 +144,7 @@ pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction tran
 | `--env <environment>` | `--environment` | string  | Solana environment (mainnet, devnet, testnet, localhost) |
 | `--rpc-url <url>`     |                 | string  | Custom Solana RPC endpoint URL                           |
 | `--verbose`           |                 | boolean | Enable debug-level logging                               |
+| `--format <format>`   |                 | string  | Transaction output format (`base58`, `base64`; default: `base58`) |
 | `--version`           | `-v`            |         | Display version information                              |
 | `--help`              | `-h`            |         | Display help information                                 |
 
@@ -154,6 +155,20 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 - **Environment-based** (recommended): Uses predefined RPC endpoints
 - **Custom RPC**: Specify any Solana RPC endpoint
 - **Mutual exclusivity**: Cannot use both options simultaneously
+
+#### Transaction Output Format
+
+By default, generated transactions are encoded as **Base58** for Squads multisig import. To output **Base64** instead:
+
+```bash
+pnpm bs58 --env devnet --format base64 \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+Both formats encode the same serialized transaction bytes. `--format` only affects display output, accepts `base58` or `base64` (case-insensitive), and is ignored when using `--execute`.
 
 **Supported Environments:**
 
@@ -2078,7 +2093,9 @@ pnpm bs58 burnmint-token-pool --rpc-url "https://custom-endpoint.com" --instruct
 
 ### Transaction Data
 
-The CLI outputs structured transaction information:
+The CLI outputs structured transaction information. By default, transaction data is Base58-encoded. With `--format base64`, only the Base64-encoded data is shown instead.
+
+**Default output (`base58`):**
 
 ```
 🎉 Transaction generated successfully!
@@ -2118,6 +2135,10 @@ The CLI outputs structured transaction information:
    • Estimated compute units: 7,562
    • This transaction is valid until the blockhash expires (~2 minutes)
 ```
+
+**Base64 output (`--format base64`):**
+
+Same structure as above, with `Base64 length` in the details section and Base64-encoded data in the copy-paste block.
 
 ### Log Levels
 

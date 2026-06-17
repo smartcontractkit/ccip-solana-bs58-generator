@@ -744,6 +744,7 @@ export interface TransactionOptions {
 export interface GeneratedTransaction {
   instruction: string; // Instruction name
   base58: string; // BS58 encoded transaction
+  base64: string; // Base64 encoded transaction
   hex: string; // Hex encoded transaction
   accounts: {
     pubkey: string;

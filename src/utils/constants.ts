@@ -50,6 +50,35 @@ export const DEFAULT_TRANSACTION_CONFIG = {
 } as const;
 
 /**
+ * Supported transaction output encodings for multisig import
+ */
+export const TRANSACTION_OUTPUT_FORMATS = ['base58', 'base64'] as const;
+
+export type TransactionOutputFormat = (typeof TRANSACTION_OUTPUT_FORMATS)[number];
+
+export const DEFAULT_TRANSACTION_OUTPUT_FORMAT: TransactionOutputFormat = 'base58';
+
+export function parseTransactionOutputFormat(
+  value: string | undefined
+): TransactionOutputFormat | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.toLowerCase();
+  return TRANSACTION_OUTPUT_FORMATS.includes(normalized as TransactionOutputFormat)
+    ? (normalized as TransactionOutputFormat)
+    : null;
+}
+
+export function getEncodedTransactionData(
+  transaction: { base58: string; base64: string },
+  format: TransactionOutputFormat = DEFAULT_TRANSACTION_OUTPUT_FORMAT
+): string {
+  return format === 'base64' ? transaction.base64 : transaction.base58;
+}
+
+/**
  * CLI configuration constants
  */
 export const CLI_CONFIG = {

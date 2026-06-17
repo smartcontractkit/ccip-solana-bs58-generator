@@ -76,6 +76,7 @@ export class TransactionBuilder {
         const serializedTransaction = legacyMessage.serialize();
         const transactionSizeBytes = serializedTransaction.length;
         const base58Encoded = bs58.encode(serializedTransaction);
+        const base64Encoded = Buffer.from(serializedTransaction).toString('base64');
         const hexEncoded = Buffer.from(serializedTransaction).toString('hex');
 
         // Extract account information
@@ -98,6 +99,7 @@ export class TransactionBuilder {
         const result: GeneratedTransaction = {
           instruction: instructionName || 'unknown',
           base58: base58Encoded,
+          base64: base64Encoded,
           hex: hexEncoded,
           accounts: accounts.map((account, index) => ({
             index,
@@ -134,6 +136,7 @@ export class TransactionBuilder {
             instructionName,
             transactionSize: `${transactionSizeBytes} bytes`,
             base58Length: `${base58Encoded.length} characters`,
+            base64Length: `${base64Encoded.length} characters`,
             hexLength: `${hexEncoded.length} characters`,
             accountCount: accounts.length,
             signerCount: signers.length,

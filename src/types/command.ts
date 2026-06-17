@@ -1,4 +1,5 @@
 import type { Keypair } from '@solana/web3.js';
+import type { TransactionOutputFormat } from '../utils/constants.js';
 
 /**
  * Global CLI options available on the root Commander program
@@ -10,6 +11,7 @@ export interface GlobalCommandOptions {
   resolvedRpcUrl?: string;
   execute?: boolean;
   keypair?: string;
+  format?: TransactionOutputFormat;
   /** Cached signer keypair, loaded once per invocation in --execute mode */
   _signerKeypair?: Keypair;
 }
