@@ -144,7 +144,7 @@ pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction tran
 | `--env <environment>` | `--environment` | string  | Solana environment (mainnet, devnet, testnet, localhost) |
 | `--rpc-url <url>`     |                 | string  | Custom Solana RPC endpoint URL                           |
 | `--verbose`           |                 | boolean | Enable debug-level logging                               |
-| `--format <format>`   |                 | string  | Transaction output format (`base58`, `base64`; default: `base58`) |
+| `--format <format>`   |                 | string  | Transaction output format (`base58`, `base64`; default: `base58`, or `CCIP_TX_OUTPUT_FORMAT` env var) |
 | `--version`           | `-v`            |         | Display version information                              |
 | `--help`              | `-h`            |         | Display help information                                 |
 
@@ -158,7 +158,34 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 
 #### Transaction Output Format
 
-By default, generated transactions are encoded as **Base58** for Squads multisig import. To output **Base64** instead:
+By default, generated transactions are encoded as **Base58** for Squads multisig import. To output **Base64** instead, pass `--format base64` or set the env var in your shell:
+
+```bash
+export CCIP_TX_OUTPUT_FORMAT=base64
+
+pnpm bs58 --env devnet \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+Or persist it in a local `.env` file and load it into your shell session:
+
+```bash
+echo 'export CCIP_TX_OUTPUT_FORMAT=base64' > .env
+source .env
+
+pnpm bs58 --env devnet \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+> **Note:** The CLI does not auto-load `.env` files — you must `source .env` (or `export` manually) so the variable is available to the process. Use `export` in the file so child processes inherit it. `.env` is gitignored.
+
+Or per invocation with the flag:
 
 ```bash
 pnpm bs58 --env devnet --format base64 \
@@ -168,7 +195,9 @@ pnpm bs58 --env devnet --format base64 \
   --authority "New_Authority_PublicKey"
 ```
 
-Both formats encode the same serialized transaction bytes. `--format` only affects display output, accepts `base58` or `base64` (case-insensitive), and is ignored when using `--execute`.
+**Precedence:** `--format` flag → `CCIP_TX_OUTPUT_FORMAT` env var → `base58` default.
+
+Both formats encode the same serialized transaction bytes. Format settings only affect display output, accept `base58` or `base64` (case-insensitive), and are ignored when using `--execute`.
 
 **Supported Environments:**
 

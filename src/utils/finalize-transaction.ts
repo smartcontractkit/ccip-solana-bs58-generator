@@ -7,7 +7,7 @@ import { executeTransaction } from './transaction-executor.js';
 import { loadSignerKeypair } from './keypair.js';
 import { resolveClusterByGenesisHash } from './explorer.js';
 import type { SolanaEnvironment } from './constants.js';
-import { DEFAULT_TRANSACTION_OUTPUT_FORMAT, parseTransactionOutputFormat } from './constants.js';
+import { DEFAULT_TRANSACTION_OUTPUT_FORMAT, resolveTransactionOutputFormat } from './constants.js';
 
 function getGlobalOptions(command: CommandContext) {
   return command.parent?.parent?.opts() || command.parent?.opts() || {};
@@ -28,8 +28,10 @@ export async function finalizeTransaction(opts: {
 
   const tx = await txBuilder.buildTransaction(instructions, payer, instructionName);
 
-  const outputFormat =
-    parseTransactionOutputFormat(globalOptions.format) ?? DEFAULT_TRANSACTION_OUTPUT_FORMAT;
+  const formatResolution = resolveTransactionOutputFormat(globalOptions.format);
+  const outputFormat = formatResolution.ok
+    ? formatResolution.format
+    : DEFAULT_TRANSACTION_OUTPUT_FORMAT;
 
   if (!globalOptions.execute) {
     TransactionDisplay.displayResults(tx, instructionName, outputFormat);
