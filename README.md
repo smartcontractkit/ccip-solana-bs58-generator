@@ -21,6 +21,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
   - [Burnmint Token Pool](#burnmint-token-pool)
     - [Instructions](#instructions)
       - [Initialize Pool](#initialize-pool)
+      - [Create Token Account](#create-token-account)
       - [Transfer Ownership](#transfer-ownership)
       - [Accept Ownership](#accept-ownership)
       - [Set Chain Rate Limit](#set-chain-rate-limit)
@@ -36,6 +37,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
   - [Lockrelease Token Pool](#lockrelease-token-pool)
     - [Instructions](#lockrelease-instructions)
       - [Initialize Pool](#lockrelease-initialize-pool)
+      - [Create Token Account](#lockrelease-create-token-account)
       - [Transfer Ownership](#transfer-ownership)
       - [Accept Ownership](#accept-ownership)
       - [Set Rate Limit Admin](#set-rate-limit-admin)
@@ -60,6 +62,7 @@ A command-line interface for generating Base58 transaction data from Solana prog
       - [Transfer Admin Role](#transfer-admin-role)
       - [Create Lookup Table](#create-lookup-table)
       - [Set Pool](#set-pool)
+      - [Inspect Token](#inspect-token)
   - [SPL Token](#spl-token)
     - [Instructions](#spl-token-instructions)
       - [Create Mint](#create-mint)
@@ -169,26 +172,29 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 By default, the CLI generates unsigned Base58 transaction data for multisig import (e.g. Squads). To sign and send directly with a local keypair, add `--execute`:
 
 ```bash
-# Uses default keypair at ~/.config/solana/id.json
+# Uses default keypair at ~/.config/solana/id.json; --authority is auto-derived from the keypair
 pnpm bs58 --env devnet --execute \
   burnmint-token-pool --instruction accept-ownership \
   --program-id "Your_Program_ID" \
-  --mint "Token_Mint_Address" \
-  --authority "Your_EOA_PublicKey"
+  --mint "Token_Mint_Address"
 
 # Custom keypair path
 pnpm bs58 --env devnet --execute --keypair ~/my-wallet.json \
   spl-token --instruction mint \
-  --mint "Token_Mint" --authority "Your_EOA_PublicKey" ...
+  --mint "Token_Mint" --amount 1000000000 --recipient "Owner" ...
 ```
 
 **Requirements and limitations:**
 
-- `--authority` must match the loaded keypair's public key (the EOA is the fee payer and signer)
+- `--authority` is **optional** in `--execute` mode — it defaults to the loaded keypair's public key
+  (the EOA is the fee payer and signer). If you do pass it, it must equal the keypair's public key.
 - `--execute` requires `--env` or `--rpc-url`
-- `--keypair` can only be used with `--execute`
-- Multisig vault addresses cannot be executed locally — omit `--execute` and import Base58 into Squads
-- Read-only commands (`get-state`, `get-chain-config`, `derive-accounts`) do not support `--execute`
+- `--keypair` can only be used with `--execute`; defaults to `~/.config/solana/id.json` (also honors `$SOLANA_KEYPAIR`)
+- Before sending, a `sigVerify` simulation runs; a transaction needing a signer you don't hold (e.g. a
+  multisig member / Pool Signer PDA, or a threshold ≥ 2) is rejected up front.
+- A loud banner prints before sending (with an extra warning on `--env mainnet`). Multisig **vault**
+  addresses can't be executed locally — omit `--execute` and import Base58 into Squads.
+- Read-only commands (`get-state`, `get-chain-config`, `derive-accounts`, `inspect-token`) do not support `--execute`
 
 ## Programs
 
@@ -242,6 +248,38 @@ pnpm bs58 burnmint-token-pool \
 | 4     | Program       | Read-only        | Burn-mint program ID                           |
 | 5     | ProgramData   | Read-only        | Program Data PDA (upgradeable loader)          |
 | 6     | Global Config | Read-only        | Global config PDA (`config`)                   |
+
+##### create-token-account
+
+Create the **pool signer's Associated Token Account** — the pool's token reserve account (owner = the
+pool signer PDA). Required before lock/release liquidity operations and cross-chain transfers. The
+token program (SPL Token vs Token-2022) is auto-detected from the mint, and the instruction is
+idempotent (safe to re-run). Works in both Base58 (Squads) and `--execute` modes.
+
+**📋 Applies To:** Both `burnmint-token-pool` and `lockrelease-token-pool`
+
+**Syntax:**
+
+```bash
+pnpm bs58 burnmint-token-pool --instruction create-token-account [options]
+```
+
+**Options:**
+
+| Option                   | Type      | Required | Description                                            |
+| ------------------------ | --------- | -------- | ------------------------------------------------------ |
+| `--program-id <address>` | PublicKey | Yes      | Token pool program ID                                  |
+| `--mint <address>`       | PublicKey | Yes      | Token mint address                                     |
+| `--authority <address>`  | PublicKey | Yes\*    | Fee payer (\*auto-derived from the keypair in `--execute`) |
+
+**Example (EOA execute, devnet):**
+
+```bash
+pnpm bs58 --env devnet --execute \
+  burnmint-token-pool --instruction create-token-account \
+  --program-id "41FGToCmdaWa1dgZLKFAjvmx6e6AjVTX7SVRibvsMGVB" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo"
+```
 
 ##### transfer-ownership
 
@@ -896,6 +934,19 @@ pnpm bs58 lockrelease-token-pool initialize-pool \
 | 4     | Program       | Read-only        | Lockrelease program ID                           |
 | 5     | ProgramData   | Read-only        | Program Data PDA (upgradeable loader)            |
 | 6     | Global Config | Read-only        | Global config PDA (`config`)                     |
+
+##### lockrelease-create-token-account
+
+Create the pool signer's Associated Token Account (the pool's token reserve). Identical to the
+burnmint [Create Token Account](#create-token-account) — token program auto-detected, idempotent,
+supports `--execute`. For lock/release this reserve must exist before `provide-liquidity`.
+
+```bash
+pnpm bs58 --env devnet --execute \
+  lockrelease-token-pool --instruction create-token-account \
+  --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo"
+```
 
 ##### set-rebalancer
 
@@ -1559,6 +1610,47 @@ pnpm bs58 router \
   --authority "EPUjBP3Xf76K1VKsDSc6GupBWE8uykNksCLJgXZn87CB" \
   --pool-lookup-table "7fYy8hH2jFqJ3c1kRkq2hFvZf8mYb1vZ1g3i2j4k5L6M" \
   --writable-indexes "[3,4,7]"
+```
+
+##### inspect-token
+
+**Read-only** auditor that reports a token's full CCIP configuration in one command — useful to verify a
+deployment's governance/ownership. It reads:
+
+- **Mint**: token program (SPL vs Token-2022), decimals, supply, mint authority (and, if it is an SPL
+  token multisig, the threshold and members), freeze authority.
+- **Pool state**: owner, proposed owner, rate-limit admin, pool signer PDA, pool token account (and
+  whether it exists).
+- **Token Admin Registry**: administrator, pending administrator, lookup table, decoded writable
+  indexes, version, plus a layout self-check.
+- **Address Lookup Table**: contents, with writable entries and CCIP role labels.
+
+It rejects `--execute` and requires no `--authority`.
+
+**Syntax:**
+
+```bash
+pnpm bs58 router --instruction inspect-token [options]
+```
+
+**Options:**
+
+| Option                          | Type      | Required | Description                                      |
+| ------------------------------- | --------- | -------- | ------------------------------------------------ |
+| `--program-id <address>`        | PublicKey | Yes      | Router program ID                                |
+| `--mint <address>`              | PublicKey | Yes      | Token mint address                               |
+| `--pool-program-id <address>`   | PublicKey | Yes      | Token pool program ID (burnmint or lockrelease)  |
+| `--fee-quoter-program-id <addr>`| PublicKey | No       | Enables CCIP role labels on the ALT entries      |
+
+**Example:**
+
+```bash
+pnpm bs58 router \
+  --env mainnet \
+  --instruction inspect-token \
+  --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \
+  --pool-program-id "41FGToCmdaWa1dgZLKFAjvmx6e6AjVTX7SVRibvsMGVB" \
+  --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo"
 ```
 
 ### SPL Token

@@ -5,6 +5,7 @@ import {
   createSetAuthorityInstruction,
   createInitializeMintInstruction,
   createAssociatedTokenAccountInstruction,
+  createAssociatedTokenAccountIdempotentInstruction,
   createApproveInstruction,
   getAssociatedTokenAddressSync,
   getMintLen,
@@ -200,6 +201,25 @@ export class InstructionBuilder {
     mint: PublicKey
   ): TransactionInstruction {
     return createAssociatedTokenAccountInstruction(
+      payer,
+      associatedTokenAddress,
+      owner,
+      mint,
+      this.tokenProgramId
+    );
+  }
+
+  /**
+   * Create an ATA idempotently (no error if it already exists), with a pre-calculated address.
+   * Used for the pool signer's token account, whose owner is an off-curve PDA.
+   */
+  createAssociatedTokenAccountIdempotentWithAddress(
+    payer: PublicKey,
+    associatedTokenAddress: PublicKey,
+    owner: PublicKey,
+    mint: PublicKey
+  ): TransactionInstruction {
+    return createAssociatedTokenAccountIdempotentInstruction(
       payer,
       associatedTokenAddress,
       owner,

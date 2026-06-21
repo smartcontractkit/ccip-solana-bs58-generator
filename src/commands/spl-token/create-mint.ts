@@ -5,11 +5,8 @@ import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { finalizeTransaction } from '../../utils/finalize-transaction.js';
 import { CreateMintArgsSchema } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
-import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+import { findAssociatedTokenAddress } from '../../utils/token.js';
 import { InstructionBuilder as SplInstructionBuilder } from '../../programs/spl-token/instructions.js';
 
 // Type for validated create mint parameters
@@ -41,21 +38,6 @@ import {
   percentAmount,
 } from '@metaplex-foundation/umi';
 import { toWeb3JsInstruction } from '@metaplex-foundation/umi-web3js-adapters';
-
-/**
- * Calculate ATA address without curve validation (for instruction building)
- */
-function findAssociatedTokenAddress(
-  mint: PublicKey,
-  owner: PublicKey,
-  tokenProgramId: PublicKey
-): PublicKey {
-  const [address] = PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  return address;
-}
 
 export async function createMintCommand(options: Record<string, string>, command: Command) {
   const global = command.parent?.opts() || {};

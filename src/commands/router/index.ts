@@ -6,6 +6,7 @@ import { transferAdminRoleCommand } from './transfer-admin-role.js';
 import { setPoolCommand } from './set-pool.js';
 import { createLookupTableCommand } from './create-lookup-table.js';
 import { appendToLookupTableCommand } from './append-to-lookup-table.js';
+import { inspectTokenCommand } from './inspect-token.js';
 import { applyExecuteAuthority } from '../../utils/keypair.js';
 
 /**
@@ -17,7 +18,7 @@ export function createRouterCommands(): Command {
     .alias('r')
     .requiredOption(
       '--instruction <instruction>',
-      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table, append-to-lookup-table)'
+      'Instruction to execute (owner-propose-administrator, owner-override-pending-administrator, accept-admin-role, transfer-admin-role, set-pool, create-lookup-table, append-to-lookup-table, inspect-token)'
     )
     .option('--program-id <programId>', 'Router program ID (required for most instructions)')
     .option(
@@ -61,10 +62,26 @@ export function createRouterCommands(): Command {
       }
 
       const options = thisCommand.opts();
+      const instr = options.instruction as string;
+
+      // Read-only auditor: no --authority, --execute not supported
+      if (instr === 'inspect-token') {
+        if (globalOpts.execute) {
+          console.error('❌ --execute is not supported for read-only instructions');
+          process.exit(1);
+        }
+        if (!options.programId || !options.mint || !options.poolProgramId) {
+          console.error(
+            '❌ inspect-token requires: --program-id (router), --mint, --pool-program-id'
+          );
+          process.exit(1);
+        }
+        return;
+      }
+
       applyExecuteAuthority(thisCommand, options, globalOpts);
 
       // common - append-to-lookup-table doesn't need program-id
-      const instr = options.instruction as string;
       if (instr !== 'append-to-lookup-table' && (!options.programId || !options.authority)) {
         console.error('❌ All instructions require: --program-id and --authority');
         process.exit(1);
@@ -138,6 +155,8 @@ export function createRouterCommands(): Command {
         createLookupTableCommand(options, command);
       } else if (i === 'append-to-lookup-table') {
         appendToLookupTableCommand(options, command);
+      } else if (i === 'inspect-token') {
+        inspectTokenCommand(options, command);
       }
     });
 

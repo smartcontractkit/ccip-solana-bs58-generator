@@ -33,6 +33,17 @@ export interface InitializePoolOptions {
   authority: string;
 }
 
+/** Options for create-token-account (same shape as initialize-pool). */
+export type CreateTokenAccountOptions = InitializePoolOptions;
+
+/** Options for the read-only inspect-token auditor. */
+export interface InspectTokenOptions {
+  programId: string; // router program
+  mint: string;
+  poolProgramId: string;
+  feeQuoterProgramId?: string;
+}
+
 /**
  * Standard options for accept ownership commands
  */
