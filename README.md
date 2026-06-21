@@ -202,7 +202,7 @@ pnpm bs58 --env devnet --format base64 \
 
 **Precedence:** `--format` flag → `CCIP_TX_OUTPUT_FORMAT` env var → `base58` default.
 
-Both formats encode the same serialized transaction bytes. Format settings only affect display output, accept `base58` or `base64` (case-insensitive), and are ignored when using `--execute`.
+Both formats encode the same serialized transaction bytes. Format settings only affect display output, accept `base58` or `base64` (case-insensitive). When using `--execute`, the transaction is signed and submitted directly to the blockchain. No transaction payload is emitted, so the output format setting has no effect.
 
 **Supported Environments:**
 
