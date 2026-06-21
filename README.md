@@ -158,7 +158,12 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 
 #### Transaction Output Format
 
-By default, generated transactions are encoded as **Base58** for Squads multisig import. To output **Base64** instead, pass `--format base64` or set the env var in your shell:
+The CLI generates a serialized Solana transaction and can display it in either Base58 or Base64 encoding.
+
+- `base58` (default): Recommended for Solana-native workflows such as Squads multisig transaction import.
+- `base64`: Recommended for API-based integrations and custody platforms such as Fireblocks.
+
+Both formats represent the exact same serialized transaction bytes. The selected format only changes how the transaction is encoded for transport or display.
 
 ```bash
 export CCIP_TX_OUTPUT_FORMAT=base64
