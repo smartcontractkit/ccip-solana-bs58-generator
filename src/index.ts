@@ -5,7 +5,10 @@ import { logger } from './utils/logger.js';
 import {
   CLI_CONFIG,
   DEFAULT_KEYPAIR_PATH,
+  resolveTransactionOutputFormat,
   SOLANA_ENVIRONMENTS,
+  TRANSACTION_OUTPUT_FORMATS,
+  TX_OUTPUT_FORMAT_ENV_VAR,
   type SolanaEnvironment,
 } from './utils/constants.js';
 
@@ -31,11 +34,15 @@ async function main(): Promise<void> {
     .option('--rpc-url <url>', 'Custom Solana RPC URL (overrides --env if provided)')
     .option(
       '--execute',
-      'Sign and send the transaction with a local keypair instead of outputting Base58'
+      'Sign and send the transaction with a local keypair instead of outputting encoded transaction data'
     )
     .option(
       '--keypair <path>',
       `Path to keypair file (default: ${DEFAULT_KEYPAIR_PATH} when --execute is set)`
+    )
+    .option(
+      '--format <format>',
+      `Transaction output format (${TRANSACTION_OUTPUT_FORMATS.join('|')}; default: base58, or ${TX_OUTPUT_FORMAT_ENV_VAR} env var)`
     )
     .hook('preAction', thisCommand => {
       const opts = thisCommand.opts();
@@ -71,6 +78,19 @@ async function main(): Promise<void> {
         console.error(`Available environments: ${Object.keys(SOLANA_ENVIRONMENTS).join(', ')}`);
         process.exit(1);
       }
+
+      // Resolve transaction output format: --format > CCIP_TX_OUTPUT_FORMAT env > base58
+      const formatResolution = resolveTransactionOutputFormat(opts.format);
+      if (!formatResolution.ok) {
+        if (formatResolution.source === 'cli') {
+          console.error(`❌ Invalid format: ${formatResolution.value}`);
+        } else {
+          console.error(`❌ Invalid ${TX_OUTPUT_FORMAT_ENV_VAR}: ${formatResolution.value}`);
+        }
+        console.error(`Available formats: ${TRANSACTION_OUTPUT_FORMATS.join(', ')}`);
+        process.exit(1);
+      }
+      opts.format = formatResolution.format;
 
       // Store resolved RPC URL for easy access by subcommands
       if (hasRpcUrl) {
@@ -122,7 +142,9 @@ async function main(): Promise<void> {
     console.log('');
     console.log('💡 Tips:');
     console.log('  • Use --verbose for detailed logging');
-    console.log('  • Transaction data is Base58-encoded for Squads multisig');
+    console.log(
+      `  • Transaction data is Base58 by default (use --format or export ${TX_OUTPUT_FORMAT_ENV_VAR}=base64)`
+    );
     console.log('  • Use --execute to sign and send with your local keypair');
     console.log('  • --keypair defaults to ~/.config/solana/id.json when --execute is set');
     console.log('  • Always test on Devnet first!');

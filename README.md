@@ -147,6 +147,7 @@ pnpm bs58 burnmint-token-pool --program-id "..." --env devnet --instruction tran
 | `--env <environment>` | `--environment` | string  | Solana environment (mainnet, devnet, testnet, localhost) |
 | `--rpc-url <url>`     |                 | string  | Custom Solana RPC endpoint URL                           |
 | `--verbose`           |                 | boolean | Enable debug-level logging                               |
+| `--format <format>`   |                 | string  | Transaction output format (`base58`, `base64`; default: `base58`, or `CCIP_TX_OUTPUT_FORMAT` env var) |
 | `--version`           | `-v`            |         | Display version information                              |
 | `--help`              | `-h`            |         | Display help information                                 |
 
@@ -157,6 +158,54 @@ The CLI requires network configuration through either `--env` or `--rpc-url`:
 - **Environment-based** (recommended): Uses predefined RPC endpoints
 - **Custom RPC**: Specify any Solana RPC endpoint
 - **Mutual exclusivity**: Cannot use both options simultaneously
+
+#### Transaction Output Format
+
+The CLI generates a serialized Solana transaction and can display it in either Base58 or Base64 encoding.
+
+- `base58` (default): Recommended for Solana-native workflows such as Squads multisig transaction import.
+- `base64`: Recommended for API-based integrations and custody platforms such as Fireblocks.
+
+Both formats represent the exact same serialized transaction bytes. The selected format only changes how the transaction is encoded for transport or display.
+
+```bash
+export CCIP_TX_OUTPUT_FORMAT=base64
+
+pnpm bs58 --env devnet \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+Or persist it in a local `.env` file and load it into your shell session:
+
+```bash
+echo 'export CCIP_TX_OUTPUT_FORMAT=base64' > .env
+source .env
+
+pnpm bs58 --env devnet \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+> **Note:** The CLI does not auto-load `.env` files — you must `source .env` (or `export` manually) so the variable is available to the process. Use `export` in the file so child processes inherit it. `.env` is gitignored.
+
+Or per invocation with the flag:
+
+```bash
+pnpm bs58 --env devnet --format base64 \
+  burnmint-token-pool --instruction accept-ownership \
+  --program-id "Your_Program_ID" \
+  --mint "Token_Mint_Address" \
+  --authority "New_Authority_PublicKey"
+```
+
+**Precedence:** `--format` flag → `CCIP_TX_OUTPUT_FORMAT` env var → `base58` default.
+
+Both formats encode the same serialized transaction bytes. Format settings only affect display output, accept `base58` or `base64` (case-insensitive). When using `--execute`, the transaction is signed and submitted directly to the blockchain. No transaction payload is emitted, so the output format setting has no effect.
 
 **Supported Environments:**
 
@@ -2170,7 +2219,9 @@ pnpm bs58 burnmint-token-pool --rpc-url "https://custom-endpoint.com" --instruct
 
 ### Transaction Data
 
-The CLI outputs structured transaction information:
+The CLI outputs structured transaction information. By default, transaction data is Base58-encoded. With `--format base64`, only the Base64-encoded data is shown instead.
+
+**Default output (`base58`):**
 
 ```
 🎉 Transaction generated successfully!
@@ -2210,6 +2261,10 @@ The CLI outputs structured transaction information:
    • Estimated compute units: 7,562
    • This transaction is valid until the blockhash expires (~2 minutes)
 ```
+
+**Base64 output (`--format base64`):**
+
+Same structure as above, with `Base64 length` in the details section and Base64-encoded data in the copy-paste block.
 
 ### Log Levels
 

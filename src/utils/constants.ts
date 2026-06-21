@@ -50,6 +50,68 @@ export const DEFAULT_TRANSACTION_CONFIG = {
 } as const;
 
 /**
+ * Supported transaction output encodings for multisig import
+ */
+export const TRANSACTION_OUTPUT_FORMATS = ['base58', 'base64'] as const;
+
+export type TransactionOutputFormat = (typeof TRANSACTION_OUTPUT_FORMATS)[number];
+
+export const DEFAULT_TRANSACTION_OUTPUT_FORMAT: TransactionOutputFormat = 'base58';
+
+/** Shell env var for default transaction output format (e.g. `export CCIP_TX_OUTPUT_FORMAT=base64`) */
+export const TX_OUTPUT_FORMAT_ENV_VAR = 'CCIP_TX_OUTPUT_FORMAT';
+
+export function parseTransactionOutputFormat(
+  value: string | undefined
+): TransactionOutputFormat | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.toLowerCase();
+  return TRANSACTION_OUTPUT_FORMATS.includes(normalized as TransactionOutputFormat)
+    ? (normalized as TransactionOutputFormat)
+    : null;
+}
+
+export type TransactionOutputFormatResolution =
+  | { ok: true; format: TransactionOutputFormat }
+  | { ok: false; source: 'cli' | 'env'; value: string };
+
+/**
+ * Resolve output format with precedence: CLI `--format` > `CCIP_TX_OUTPUT_FORMAT` env > base58 default.
+ */
+export function resolveTransactionOutputFormat(
+  cliFormat?: string
+): TransactionOutputFormatResolution {
+  if (cliFormat !== undefined && cliFormat !== '') {
+    const parsed = parseTransactionOutputFormat(cliFormat);
+    if (!parsed) {
+      return { ok: false, source: 'cli', value: cliFormat };
+    }
+    return { ok: true, format: parsed };
+  }
+
+  const envValue = process.env[TX_OUTPUT_FORMAT_ENV_VAR];
+  if (envValue !== undefined && envValue !== '') {
+    const parsed = parseTransactionOutputFormat(envValue);
+    if (!parsed) {
+      return { ok: false, source: 'env', value: envValue };
+    }
+    return { ok: true, format: parsed };
+  }
+
+  return { ok: true, format: DEFAULT_TRANSACTION_OUTPUT_FORMAT };
+}
+
+export function getEncodedTransactionData(
+  transaction: { base58: string; base64: string },
+  format: TransactionOutputFormat = DEFAULT_TRANSACTION_OUTPUT_FORMAT
+): string {
+  return format === 'base64' ? transaction.base64 : transaction.base58;
+}
+
+/**
  * CLI configuration constants
  */
 export const CLI_CONFIG = {
