@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Connection } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import { validateArgs } from '../../utils/validation.js';
 import { RouterAppendToLookupTableArgsSchema } from '../../types/index.js';
 import { finalizeTransaction } from '../../utils/finalize-transaction.js';
@@ -37,7 +37,7 @@ export async function appendToLookupTableCommand(
     const rpcUrl = parsed.data.rpcUrl ?? globalOptions.resolvedRpcUrl!;
     cmdLogger.info('🔄 Generating append_to_lookup_table transaction...');
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
 
     // Determine if we're using CCIP auto-derivation or manual addresses
     const hasCcipParams =

@@ -1,0 +1,183 @@
+{
+  "burnmint-token-pool/initialize-pool": {
+    "description": "Create the pool State PDA for a mint, making this program the token's burn/mint pool. The caller becomes the pool owner.",
+    "preconditions": "The caller must be the mint authority at the time of the call, and the pool program must be deployed with its global config initialized."
+  },
+  "burnmint-token-pool/create-token-account": {
+    "description": "Create the pool's token account: the associated token account owned by the pool signer PDA, where the program holds tokens. Idempotent."
+  },
+  "burnmint-token-pool/accept-ownership": {
+    "description": "Accept a pending ownership transfer of the pool. Must be signed by the proposed owner.",
+    "failure_modes": "Anyone other than the proposed owner is rejected with Unauthorized (6002); the outgoing owner cannot self-accept."
+  },
+  "burnmint-token-pool/transfer-ownership": {
+    "description": "Propose a new pool owner. Two-step: the proposed owner must then call accept-ownership.",
+    "failure_modes": "Before acceptance the proposal can be redirected by proposing someone else, but not cleared (the zero address is rejected with InvalidInputs 6003). After acceptance there is no cancel or reclaim instruction."
+  },
+  "burnmint-token-pool/set-rate-limit-admin": {
+    "description": "Set the account allowed to change rate limits in addition to the pool owner. Keeps an emergency throttle available without handing over ownership."
+  },
+  "burnmint-token-pool/get-state": {
+    "description": "Read and display the pool's State PDA: owner, proposed owner, rate limit admin, router, pool token account, allow list and (lock/release) rebalancer and liquidity flag.",
+    "read_only": true
+  },
+  "burnmint-token-pool/get-chain-config": {
+    "description": "Read and display one remote chain's configuration: remote token address and decimals, remote pool addresses, and both rate limit buckets.",
+    "read_only": true
+  },
+  "burnmint-token-pool/configure-allow-list": {
+    "description": "Enable or disable the allow list and add sender addresses to it. The list gates OUTBOUND transfers only.",
+    "failure_modes": "Adding an address already present reverts AllowlistKeyAlreadyExisted (6010). Enabled with an empty list blocks every sender (InvalidSender 6006) rather than allowing all. See docs/gotchas."
+  },
+  "burnmint-token-pool/remove-from-allow-list": {
+    "description": "Remove sender addresses from the allow list. Does not disable the list.",
+    "failure_modes": "Removing an address that is not present reverts AllowlistKeyDidNotExist (6011). Removing the last entry leaves the list enabled and empty, which blocks all senders."
+  },
+  "burnmint-token-pool/init-chain-remote-config": {
+    "when_to_use": "First-time configuration of a remote chain on the pool. Remote pool addresses MUST be empty at init; append them afterwards with append-remote-pool-addresses.",
+    "failure_modes": "Passing a non-empty --pool-addresses at init is rejected. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty).",
+    "description": "Create the chain config account for one remote chain: its token address, that token's decimals, and an initially empty remote pool list."
+  },
+  "burnmint-token-pool/edit-chain-remote-config": {
+    "failure_modes": "This is a whole-struct overwrite, not a merge: omitting --pool-addresses silently clears the registered remote pools (the flag defaults to an empty list). Pass the full desired set. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty).",
+    "description": "Replace the whole chain config for one remote chain: remote token, decimals and the full remote pool list."
+  },
+  "burnmint-token-pool/delete-chain-config": {
+    "failure_modes": "Destructive and closes the chain-config account, refunding its rent to the authority. The lane stops working until the chain is configured again from scratch.",
+    "description": "Close the chain config account for one remote chain, refunding its rent to the authority."
+  },
+  "lockrelease-token-pool/initialize-pool": {
+    "description": "Create the pool State PDA for a mint, making this program the token's lock/release pool. The caller becomes the pool owner.",
+    "preconditions": "The caller must be the mint authority at the time of the call, and the pool program must be deployed with its global config initialized."
+  },
+  "lockrelease-token-pool/create-token-account": {
+    "description": "Create the pool's token account: the associated token account owned by the pool signer PDA, which holds the locked tokens. Idempotent."
+  },
+  "lockrelease-token-pool/accept-ownership": {
+    "description": "Accept a pending ownership transfer of the pool. Must be signed by the proposed owner.",
+    "failure_modes": "Anyone other than the proposed owner is rejected with Unauthorized (6002); the outgoing owner cannot self-accept."
+  },
+  "lockrelease-token-pool/transfer-ownership": {
+    "description": "Propose a new pool owner. Two-step: the proposed owner must then call accept-ownership.",
+    "failure_modes": "Before acceptance the proposal can be redirected by proposing someone else, but not cleared (the zero address is rejected with InvalidInputs 6003). After acceptance there is no cancel or reclaim instruction."
+  },
+  "lockrelease-token-pool/set-rate-limit-admin": {
+    "description": "Set the account allowed to change rate limits in addition to the pool owner. Keeps an emergency throttle available without handing over ownership."
+  },
+  "lockrelease-token-pool/get-state": {
+    "description": "Read and display the pool's State PDA: owner, proposed owner, rate limit admin, router, pool token account, allow list, rebalancer and the can-accept-liquidity flag.",
+    "read_only": true
+  },
+  "lockrelease-token-pool/get-chain-config": {
+    "description": "Read and display one remote chain's configuration: remote token address and decimals, remote pool addresses, and both rate limit buckets.",
+    "read_only": true
+  },
+  "lockrelease-token-pool/configure-allow-list": {
+    "description": "Enable or disable the allow list and add sender addresses to it. The list gates OUTBOUND transfers only.",
+    "failure_modes": "Adding an address already present reverts AllowlistKeyAlreadyExisted (6010). Enabled with an empty list blocks every sender (InvalidSender 6006) rather than allowing all. See docs/gotchas."
+  },
+  "lockrelease-token-pool/remove-from-allow-list": {
+    "description": "Remove sender addresses from the allow list. Does not disable the list.",
+    "failure_modes": "Removing an address that is not present reverts AllowlistKeyDidNotExist (6011). Removing the last entry leaves the list enabled and empty, which blocks all senders."
+  },
+  "lockrelease-token-pool/init-chain-remote-config": {
+    "when_to_use": "First-time configuration of a remote chain on the pool. Remote pool addresses MUST be empty at init; append them afterwards with append-remote-pool-addresses.",
+    "failure_modes": "Passing a non-empty --pool-addresses at init is rejected. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty).",
+    "description": "Create the chain config account for one remote chain: its token address, that token's decimals, and an initially empty remote pool list."
+  },
+  "lockrelease-token-pool/edit-chain-remote-config": {
+    "failure_modes": "This is a whole-struct overwrite, not a merge: omitting --pool-addresses silently clears the registered remote pools (the flag defaults to an empty list). Pass the full desired set. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty).",
+    "description": "Replace the whole chain config for one remote chain: remote token, decimals and the full remote pool list."
+  },
+  "lockrelease-token-pool/delete-chain-config": {
+    "failure_modes": "Destructive and closes the chain-config account, refunding its rent to the authority. The lane stops working until the chain is configured again from scratch.",
+    "description": "Close the chain config account for one remote chain, refunding its rent to the authority."
+  },
+  "lockrelease-token-pool/set-rebalancer": {
+    "description": "Set the account allowed to provide and withdraw pool liquidity. Required before any liquidity operation.",
+    "failure_modes": "With no rebalancer set, provide-liquidity fails Unauthorized (6002)."
+  },
+  "lockrelease-token-pool/set-can-accept-liquidity": {
+    "description": "Enable or disable liquidity operations on the pool.",
+    "failure_modes": "When false, BOTH provide-liquidity and withdraw-liquidity fail LiquidityNotAccepted (6020) - it is not a deposit-only gate."
+  },
+  "lockrelease-token-pool/provide-liquidity": {
+    "description": "Deposit tokens from the rebalancer into the pool's token account, backing release on inbound transfers.",
+    "preconditions": "Three gates, in order: a rebalancer must be set, can-accept-liquidity must be true, and the rebalancer's token account must have approved the POOL SIGNER PDA as delegate (the program moves tokens by CPI with that PDA as authority). That approval is NOT one-time setup: the transfer spends it and SPL clears the delegate at zero, and a ccipSend approves the router's fee-billing signer on the same account, replacing it. Approve immediately before each provide-liquidity, or pass --auto-approve to put both in one transaction.",
+    "failure_modes": "Missing rebalancer -> Unauthorized 6002. Liquidity disabled -> LiquidityNotAccepted 6020. Missing, spent or replaced delegate approval -> SPL Token OwnerMismatch (custom program error 0x4) raised inside the CPI, naming neither the delegate nor the amount; the CLI checks the delegation first and prints the account state instead."
+  },
+  "lockrelease-token-pool/withdraw-liquidity": {
+    "description": "Withdraw tokens from the pool's token account back to the rebalancer.",
+    "preconditions": "Requires the rebalancer role and can-accept-liquidity true, but NOT a delegate approval: the pool signer PDA already owns the source account."
+  },
+  "router/owner-propose-administrator": {
+    "description": "Create the token's admin registry entry and nominate its first administrator (the CCIP-side admin for the token).",
+    "preconditions": "Must be signed by the token's current mint authority, so run it BEFORE handing the mint authority to an SPL multisig."
+  },
+  "router/owner-override-pending-administrator": {
+    "description": "Overwrite the pending administrator nomination on a registry entry that has not been accepted yet.",
+    "failure_modes": "Once an administrator has accepted the role the entry is owned and this fails InvalidTokenAdminRegistryProposedAdmin (7022); recover instead with transfer-admin-role followed by accept-admin-role."
+  },
+  "router/accept-admin-role": {
+    "description": "Accept a pending administrator nomination for the token, completing registration.",
+    "failure_modes": "Anyone other than the nominee is rejected with Unauthorized (7000)."
+  },
+  "router/transfer-admin-role": {
+    "description": "Nominate a new administrator for an already-owned registry entry. Two-step: the nominee must then call accept-admin-role."
+  },
+  "router/set-pool": {
+    "description": "Point the token's registry entry at its pool by registering the address lookup table, activating the token for cross-chain transfers.",
+    "preconditions": "The lookup table must already contain the canonical account set. Writable indexes are normally [3, 4, 7] (pool state, pool token account, mint)."
+  },
+  "router/create-lookup-table": {
+    "description": "Create the address lookup table for a token and populate it with the canonical CCIP accounts. Signs and sends with a local keypair (it cannot be executed through a multisig)."
+  },
+  "router/append-to-lookup-table": {
+    "description": "Append further addresses to an existing lookup table, for example the SPL multisig used as mint authority."
+  },
+  "spl-token/create-multisig": {
+    "description": "Create an SPL token multisig, typically to hold the mint authority with the pool signer PDA as a member.",
+    "preconditions": "--mint is required to detect the correct token program and --seed to derive the account address.",
+    "failure_modes": "SPL multisigs are IMMUTABLE: members and threshold cannot be changed afterwards. The token program never checks threshold <= signers, so such a multisig would initialize and be permanently unusable; this CLI refuses it. Max 11 signers. See docs/gotchas #mint-authority-multisig."
+  },
+  "spl-token/mint": {
+    "description": "Mint tokens to a recipient. Supports minting through an SPL multisig authority with --multisig and --multisig-signers.",
+    "failure_modes": "Does not create the recipient's associated token account; create it first. A member that is a PDA (such as a Squads vault) cannot sign this way - see docs/gotchas #vault-mint-needs-squads-tx."
+  },
+  "spl-token/transfer-mint-authority": {
+    "description": "Move the mint authority to a new account, normally an SPL multisig containing the pool signer PDA.",
+    "failure_modes": "Run the CCIP registry steps first: owner-propose-administrator requires the caller to still be the mint authority."
+  },
+  "spl-token/update-metadata-authority": {
+    "description": "Update the metadata update authority of a Token-2022 mint that carries the native TokenMetadata extension.",
+    "failure_modes": "Only applies to metadata embedded in the mint (create-mint --metadata token-2022). Mints whose metadata lives in a Metaplex PDA must use the metaplex update-authority instruction instead. Omitting --new-authority REMOVES the authority irreversibly."
+  },
+  "utils/derive-accounts": {
+    "description": "Derive and display the PDAs and account addresses for a program and mint without sending anything. Useful for obtaining the pool signer PDA before creating the SPL multisig.",
+    "read_only": true
+  },
+  "spl-token/create-mint": {
+    "description": "Create an SPL mint under a seed-derived address, optionally with metadata and an initial supply minted to a recipient.",
+    "preconditions": "Pick the metadata backend with --metadata: 'metaplex' writes a separate Metaplex PDA (either token program), 'token-2022' embeds it in the mint via the TokenMetadata extension and requires --token-program token-2022. --with-metaplex true is an alias for 'metaplex'. The embedded backend is creation-only: Token-2022 extensions are initialized before InitializeMint, so an existing mint can never gain the TokenMetadata extension, whereas Metaplex metadata can be attached later.",
+    "failure_modes": "The backend decides which instruction can later change the metadata authority; see docs/gotchas #metadata-backend-decides-the-instruction. Freeze authority is set to the mint authority. The mint address is random per run (auto-generated seed)."
+  },
+  "burnmint-token-pool/set-chain-rate-limit": {
+    "description": "Set the inbound and outbound token-bucket rate limits for one remote chain.",
+    "preconditions": "Capacity and rate are in the LOCAL token's smallest units: multiply by 10^decimals of the mint on this chain, not the remote one. The chain must already be configured with init-chain-remote-config."
+  },
+  "lockrelease-token-pool/set-chain-rate-limit": {
+    "description": "Set the inbound and outbound token-bucket rate limits for one remote chain.",
+    "preconditions": "Capacity and rate are in the LOCAL token's smallest units: multiply by 10^decimals of the mint on this chain, not the remote one. The chain must already be configured with init-chain-remote-config."
+  },
+  "burnmint-token-pool/append-remote-pool-addresses": {
+    "description": "Add remote pool addresses to an existing chain config, leaving the rest of it untouched."
+  },
+  "lockrelease-token-pool/append-remote-pool-addresses": {
+    "description": "Add remote pool addresses to an existing chain config, leaving the rest of it untouched."
+  },
+  "router/inspect-token": {
+    "description": "Read-only audit of one token: the mint (authority, freeze authority, SPL multisig members, Token-2022 extensions), the pool state and its token account, the pool program global config, the CCIP token admin registry, and the address lookup table.",
+    "when_to_use": "Verify a deployment, or hand one over. One command covers the roles that are easy to forget: who can still extend the lookup table the router reads on every send, whether the pool token account carries a delegate, and whether the mint has Token-2022 extensions that change what a transfer does. It does not report the pool program's upgrade authority.",
+    "read_only": true
+  }
+}

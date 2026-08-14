@@ -1,4 +1,5 @@
 import type { TransactionOptions } from '../../types/index.js';
+import { createConnection } from './../../utils/connection.js';
 import { ApproveArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
@@ -7,7 +8,6 @@ import { TransactionBuilder } from '../../core/transaction-builder.js';
 import type { CommandContext, ApproveOptions } from '../../types/command.js';
 import { InstructionBuilder } from '../../programs/spl-token/instructions.js';
 import { detectTokenProgramId } from '../../utils/token.js';
-import { Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 /**
@@ -68,7 +68,7 @@ export async function approveCommand(
 
     // Detect token program on-chain
     console.log('🔍 Detecting token program...');
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const tokenProgram = await detectTokenProgramId(connection, validatedArgs.mint);
     console.log(`   ✅ Detected token program: ${tokenProgram.toString()}`);
 

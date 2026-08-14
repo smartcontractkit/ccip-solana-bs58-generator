@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createConnection } from './../../utils/connection.js';
 import { TransactionInstruction, PublicKey } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -10,7 +11,6 @@ import { logger } from '../../utils/logger.js';
 import { publicKey as umiPk, signerIdentity, createNoopSigner } from '@metaplex-foundation/umi';
 import { findMetadataPda, fetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
 import { detectTokenProgramId } from '../../utils/token.js';
-import { Connection } from '@solana/web3.js';
 
 export async function updateMetadataAuthorityCommand(
   options: Record<string, string>,
@@ -65,7 +65,7 @@ async function validateMetaplexMetadata(
     logger.info('🔍 Validating Metaplex metadata...');
 
     // Detect and log token program for user friendliness
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const tokenProgramId = await detectTokenProgramId(connection, mint);
     logger.info(`📋 Mint: ${mint.toBase58()}`);
     logger.info(`📋 Token Program: ${tokenProgramId.toBase58()}`);

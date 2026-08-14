@@ -1,7 +1,9 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import { GetChainConfigArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
+import { emitJson, stateEnvelope, toJsonSafe } from '../../utils/json-output.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, GetChainConfigOptions } from '../../types/command.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
@@ -85,7 +87,7 @@ export async function getChainConfig(
     console.log(`   Chain Config PDA: ${chainConfigPda.toString()}`);
 
     // Fetch account data from blockchain
-    const connection = new Connection(rpcUrl as string);
+    const connection = createConnection(rpcUrl as string);
     const accountInfo = await connection.getAccountInfo(chainConfigPda);
 
     if (!accountInfo) {
@@ -142,16 +144,32 @@ export async function getChainConfig(
       'Chain config account deserialized successfully'
     );
 
-    // Display formatted output
-    displayChainConfig(
-      chainConfig,
-      programType,
-      programId,
-      chainConfigPda,
-      remoteChainSelector,
-      localDecimals,
-      mint
-    );
+    if (globalOptions.json) {
+      emitJson(
+        stateEnvelope({
+          kind: 'chain-config',
+          globalOptions,
+          data: {
+            programType,
+            programId: programId.toString(),
+            chainConfigPda: chainConfigPda.toString(),
+            remoteChainSelector: remoteChainSelector.toString(),
+            localDecimals,
+            chainConfig: toJsonSafe(chainConfig),
+          },
+        })
+      );
+    } else {
+      displayChainConfig(
+        chainConfig,
+        programType,
+        programId,
+        chainConfigPda,
+        remoteChainSelector,
+        localDecimals,
+        mint
+      );
+    }
 
     cmdLogger.info('getChainConfig command completed successfully');
   } catch (error) {

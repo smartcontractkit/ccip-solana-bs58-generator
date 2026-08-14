@@ -1,1 +1,12 @@
 npx lint-staged
+
+# Regenerate the command catalog from the commander source and stage it when it is stale, so a
+# command or flag change cannot land next to pages that still describe the old CLI. Then check that
+# links resolve, repeated facts agree, and the package still ships a working bin with its docs.
+if ! node script/docs/gen-catalog.mjs --check >/dev/null 2>&1; then
+  node script/docs/gen-catalog.mjs
+  git add docs/commands
+fi
+node script/docs/check-docs.mjs
+node script/docs/check-facts.mjs
+node script/docs/check-packaged.mjs

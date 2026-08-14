@@ -1,4 +1,5 @@
 import type { TransactionOptions } from '../../types/index.js';
+import { createConnection } from './../../utils/connection.js';
 import { ProvideLiquidityArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
@@ -8,8 +9,13 @@ import { getProgramConfig } from '../../types/program-registry.js';
 import type { CommandContext, ProvideLiquidityOptions } from '../../types/command.js';
 import { InstructionBuilder } from '../../programs/lockrelease-token-pool/instructions.js';
 import { detectTokenProgramId } from '../../utils/token.js';
-import { Connection } from '@solana/web3.js';
-import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { type TransactionInstruction } from '@solana/web3.js';
+import {
+  createApproveInstruction,
+  getAccount,
+  getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
+import { AccountDerivation } from '../../programs/lockrelease-token-pool/accounts.js';
 
 /**
  * Provide liquidity command for lockrelease token pool
@@ -44,6 +50,7 @@ export async function provideLiquidityCommand(
       mint: options.mint,
       authority: options.authority,
       amount: options.amount,
+      autoApprove: options.autoApprove === true,
       rpcUrl: globalOptions.resolvedRpcUrl!,
     };
 
@@ -76,7 +83,7 @@ export async function provideLiquidityCommand(
 
     // Detect token program on-chain
     console.log('🔍 Detecting token program...');
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const tokenProgram = await detectTokenProgramId(connection, validatedArgs.mint);
     console.log(`   ✅ Detected token program: ${tokenProgram.toString()}`);
 
@@ -121,11 +128,58 @@ export async function provideLiquidityCommand(
     );
     console.log('   ✅ Instruction built successfully');
 
+    // provide_liquidity passes the pool signer PDA as the transfer authority, and that PDA does not
+    // own the rebalancer's ATA, so it moves the tokens as a delegate. The transfer spends the
+    // allowance and SPL clears the delegate at zero, so this is not one-time setup; a `ccipSend`
+    // also approves the router's fee-billing signer on the same ATA, replacing it. Either way the
+    // failure is a bare `owner does not match` (SPL 0x4) raised inside the CPI.
+    const [poolSigner] = AccountDerivation.derivePoolSignerPda(
+      validatedArgs.programId,
+      validatedArgs.mint
+    );
+    const instructions: TransactionInstruction[] = [];
+
+    if (validatedArgs.autoApprove) {
+      // Approve and provide in one transaction, so nothing can spend or replace the delegation in
+      // between.
+      console.log('🔑 --auto-approve: prepending an Approve for the pool signer PDA');
+      instructions.push(
+        createApproveInstruction(
+          userTokenAccount,
+          poolSigner,
+          validatedArgs.authority,
+          validatedArgs.amount,
+          [],
+          tokenProgram
+        )
+      );
+    } else {
+      // Read the delegation the transfer will rely on and report it here; the CPI's 0x4 names
+      // neither the delegate nor the amount.
+      const account = await getAccount(connection, userTokenAccount, undefined, tokenProgram);
+      const delegated = account.delegate?.equals(poolSigner) ? account.delegatedAmount : 0n;
+      if (delegated < validatedArgs.amount) {
+        console.error('❌ The rebalancer ATA does not delegate enough to the pool signer PDA');
+        console.error(`   ATA:             ${userTokenAccount.toString()}`);
+        console.error(`   Pool signer PDA: ${poolSigner.toString()}`);
+        console.error(`   Delegate:        ${account.delegate?.toString() ?? 'none'}`);
+        console.error(`   Delegated:       ${delegated}  (need ${validatedArgs.amount})`);
+        console.error('💡 Approve immediately before providing, or pass --auto-approve:');
+        console.error(
+          `   spl-token --instruction approve --mint ${validatedArgs.mint.toString()} ` +
+            `--authority ${validatedArgs.authority.toString()} --delegate ${poolSigner.toString()} ` +
+            `--amount ${validatedArgs.amount}`
+        );
+        process.exit(1);
+      }
+    }
+    instructions.push(instruction);
+
     // Build the complete transaction
     console.log('🔄 Building and simulating transaction...');
     const transaction = await finalizeTransaction({
       txBuilder: transactionBuilder,
-      instructions: [instruction],
+      instructions,
       payer: validatedArgs.authority,
       instructionName: 'provideLiquidity',
       command,

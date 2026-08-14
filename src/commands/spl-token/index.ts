@@ -31,6 +31,10 @@ export function createSplTokenCommands(): Command {
     .option('--threshold <m>', 'Threshold (for create-multisig)')
     .option('--seed <string>', 'Seed for createAccountWithSeed (required for create-multisig)')
     .option('--new-mint-authority <pubkey>', 'New mint authority (for transfer-mint-authority)')
+    .option(
+      '--new-authority <pubkey>',
+      'New metadata update authority (for update-metadata-authority). OMITTING THIS REMOVES the authority permanently - it cannot be restored'
+    )
 
     .option(
       '--metadata-account <pubkey>',
@@ -43,6 +47,10 @@ export function createSplTokenCommands(): Command {
       'Token program: spl-token or token-2022 (default: spl-token)'
     )
     .option('--with-metaplex <boolean>', 'Create with Metaplex metadata (true/false)')
+    .option(
+      '--metadata <backend>',
+      'Metadata backend for create-mint: none, metaplex (separate PDA, any token program) or token-2022 (embedded in the mint, requires --token-program token-2022). Overrides --with-metaplex'
+    )
     .option('--name <string>', 'Token name (required if with-metaplex=true, max 32 chars)')
     .option('--symbol <string>', 'Token symbol (required if with-metaplex=true, max 10 chars)')
     .option('--uri <string>', 'Metadata URI (required if with-metaplex=true)')

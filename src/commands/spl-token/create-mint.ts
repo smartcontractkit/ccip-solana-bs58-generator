@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createConnection } from './../../utils/connection.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
@@ -15,6 +16,7 @@ type CreateMintParams = {
   decimals: number;
   tokenProgram: 'spl-token' | 'token-2022';
   withMetaplex: boolean;
+  metadata?: 'none' | 'metaplex' | 'token-2022' | undefined;
   name?: string | undefined;
   symbol?: string | undefined;
   uri?: string | undefined;
@@ -50,6 +52,7 @@ export async function createMintCommand(options: Record<string, string>, command
     uri: options.uri,
     tokenProgram: options.tokenProgram,
     withMetaplex: options.withMetaplex === 'true',
+    metadata: options.metadata,
     initialSupply: options.initialSupply,
     recipient: options.recipient,
     rpcUrl: global.resolvedRpcUrl,
@@ -62,18 +65,30 @@ export async function createMintCommand(options: Record<string, string>, command
 
   const rpcUrl = parsed.data.rpcUrl ?? (global.resolvedRpcUrl as string);
 
-  const connection = new Connection(rpcUrl);
+  const connection = createConnection(rpcUrl);
 
   // Validate parameters
   await validateCreateMintParameters(parsed.data);
 
-  if (parsed.data.withMetaplex) {
-    // Create mint with Metaplex metadata
+  // `--metadata` is the explicit form; `--with-metaplex true` remains as its alias.
+  if (resolveMetadataBackend(parsed.data) === 'metaplex') {
+    // Metadata in a separate Metaplex PDA
     await createMintWithMetaplex(parsed.data, rpcUrl, command);
   } else {
-    // Create plain mint without metadata
+    // Plain mint, or Token-2022 with metadata embedded in the mint account
     await createPlainMint(parsed.data, connection, rpcUrl, command);
   }
+}
+
+/**
+ * Which metadata backend to use: the explicit --metadata flag wins, then --with-metaplex.
+ */
+export function resolveMetadataBackend(params: {
+  metadata?: 'none' | 'metaplex' | 'token-2022' | undefined;
+  withMetaplex: boolean;
+}): 'none' | 'metaplex' | 'token-2022' {
+  if (params.metadata) return params.metadata;
+  return params.withMetaplex ? 'metaplex' : 'none';
 }
 
 /**
@@ -94,21 +109,32 @@ async function validateCreateMintParameters(params: CreateMintParams): Promise<v
   }
   logger.info(`📋 Decimals: ${params.decimals}`);
 
-  // Validate Metaplex parameters if enabled
-  if (params.withMetaplex) {
+  // Validate metadata parameters for whichever backend was selected
+  const backend = resolveMetadataBackend(params);
+  if (backend === 'token-2022' && params.tokenProgram !== 'token-2022') {
+    console.error(
+      '❌ --metadata token-2022 embeds metadata in the mint via the TokenMetadata extension, which requires --token-program token-2022'
+    );
+    console.error('💡 For an spl-token (legacy) mint use --metadata metaplex');
+    process.exit(1);
+  }
+  if (backend !== 'none') {
+    const label = backend === 'metaplex' ? 'Metaplex' : 'Token-2022 embedded';
     if (!params.name || params.name.length > 32) {
-      console.error('❌ Name is required and must be ≤32 characters when using Metaplex');
+      console.error(`❌ Name is required and must be ≤32 characters when using ${label} metadata`);
       process.exit(1);
     }
     if (!params.symbol || params.symbol.length > 10) {
-      console.error('❌ Symbol is required and must be ≤10 characters when using Metaplex');
+      console.error(
+        `❌ Symbol is required and must be ≤10 characters when using ${label} metadata`
+      );
       process.exit(1);
     }
     if (!params.uri) {
-      console.error('❌ URI is required when using Metaplex metadata');
+      console.error(`❌ URI is required when using ${label} metadata`);
       process.exit(1);
     }
-    logger.info(`📋 Metaplex metadata enabled`);
+    logger.info(`📋 ${label} metadata enabled`);
     logger.info(`   Name: "${params.name}"`);
     logger.info(`   Symbol: "${params.symbol}"`);
     logger.info(`   URI: ${params.uri}`);
@@ -163,7 +189,7 @@ async function createMintWithMetaplex(
     logger.info(`📋 Using token program: ${tokenProgramId.toBase58()}`);
 
     // Step 1: Create the mint account using SPL Token instructions (deterministic)
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const builder = new SplInstructionBuilder(tokenProgramId);
 
     const createMintInstructions = await builder.createMintWithSeed(
@@ -278,7 +304,11 @@ async function createPlainMint(
   command: Command
 ): Promise<void> {
   try {
-    logger.info('🪙 Creating plain mint (no metadata)...');
+    logger.info(
+      resolveMetadataBackend(params) === 'token-2022'
+        ? '🪙 Creating Token-2022 mint with embedded metadata...'
+        : '🪙 Creating plain mint (no metadata)...'
+    );
 
     const tokenProgramId =
       params.tokenProgram === 'token-2022' ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
@@ -300,7 +330,15 @@ async function createPlainMint(
       seed,
       params.authority, // freeze authority = mint authority
       params.decimals,
-      connection
+      connection,
+      resolveMetadataBackend(params) === 'token-2022'
+        ? {
+            name: params.name!,
+            symbol: params.symbol!,
+            uri: params.uri!,
+            updateAuthority: params.authority,
+          }
+        : undefined
     );
     instructions.push(...createMintInstructions);
 

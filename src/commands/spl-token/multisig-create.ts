@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { Connection, TransactionInstruction } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
+import { TransactionInstruction } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { finalizeTransaction } from '../../utils/finalize-transaction.js';
@@ -14,7 +15,7 @@ export async function createSplMultisigCommand(options: Record<string, string>, 
     const global = command.parent?.opts() || {};
     const rpcUrl = global.resolvedRpcUrl as string;
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const parsed = validateArgs(SplCreateMultisigArgsSchema, {
       authority: options.authority,
       signers: options.signers,

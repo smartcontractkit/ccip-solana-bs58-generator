@@ -160,7 +160,11 @@ export async function buildCreateAndExtendAlt(args: BuildAltArgs): Promise<Build
     poolProgramId
   );
 
-  const recentSlot = await connection.getSlot();
+  // 'finalized' on purpose: the ALT program checks recent_slot against SlotHashes on the bank that
+  // EXECUTES the transaction, and rejects a slot that bank has not reached. The confirmed slot can
+  // be ahead of it, so behind the cluster is the safe direction. SlotHashes only holds 512 slots
+  // either way, so a create-lookup-table transaction left sitting in Squads has to be rebuilt.
+  const recentSlot = await connection.getSlot('finalized');
   const createTuple = AddressLookupTableProgram.createLookupTable({
     authority,
     payer: payer ?? authority,

@@ -1,4 +1,4 @@
-import { Connection } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import type { TransactionOptions } from '../../types/index.js';
 import { CreateTokenAccountArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
@@ -43,7 +43,7 @@ export async function createTokenAccount(
     const rpc = rpcUrl ?? (globalOptions.resolvedRpcUrl as string);
 
     // Detect SPL Token vs Token-2022 from the mint
-    const connection = new Connection(rpc);
+    const connection = createConnection(rpc);
     const tokenProgramId = await detectTokenProgramId(connection, mint);
 
     // Owner of the ATA is the pool signer PDA (program-specific)

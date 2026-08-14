@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { Connection, TransactionInstruction } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
+import { TransactionInstruction } from '@solana/web3.js';
 import { validateArgs } from '../../utils/validation.js';
 import { TransactionBuilder } from '../../core/transaction-builder.js';
 import { finalizeTransaction } from '../../utils/finalize-transaction.js';
@@ -28,7 +29,7 @@ export async function updateMetadataAuthorityCommand(
     }
     const rpcUrl = parsed.data.rpcUrl ?? (global.resolvedRpcUrl as string);
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const programId = await detectTokenProgramId(connection, parsed.data.mint);
     if (!programId.equals(TOKEN_2022_PROGRAM_ID)) {
       console.error('❌ update-metadata-authority is only supported for Token-2022 mints');

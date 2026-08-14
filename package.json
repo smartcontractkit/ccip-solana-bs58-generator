@@ -1,10 +1,20 @@
 {
   "name": "@chainlink/ccip-solana-bs58-generator",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "private": true,
+  "packageManager": "pnpm@11.2.2",
   "description": "CLI tool for generating BS58 transaction data from Solana burnmint_token_pool IDL",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "cct-solana-tx": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "AGENTS.md",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -15,9 +25,17 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --check \"src/**/*.ts\"",
     "format:fix": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist",
-    "prepare": "husky"
+    "docs:catalog": "node script/docs/gen-catalog.mjs",
+    "docs:catalog:check": "node script/docs/gen-catalog.mjs --check",
+    "docs:check": "node script/docs/check-docs.mjs",
+    "docs:facts": "node script/docs/check-facts.mjs",
+    "docs:gate": "npm run docs:catalog:check && npm run docs:check && npm run docs:facts && npm run docs:packaged",
+    "docs:packaged": "node script/docs/check-packaged.mjs",
+    "prepare": "npm run build && (husky || true)"
   },
   "keywords": [
     "solana",
@@ -64,7 +82,8 @@
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "tsx": "^4.20.3",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

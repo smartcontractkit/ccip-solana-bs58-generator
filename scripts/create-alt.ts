@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CCIP ALT Creator - Companion tool for ccip-bs58 CLI
+ * CCIP ALT Creator - Companion tool for the cct-solana-tx CLI
  *
  * Purpose: Create and populate Address Lookup Tables with multisig authority.
  * Use Case: Atomic ALT creation for Squads multisigs using EOA payer.
@@ -18,6 +18,8 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { getRpcUrl, type SolanaEnvironment } from '../src/utils/constants.js';
+import { BIN_NAME } from '../src/utils/package-info.js';
+import { createConnection } from '../src/utils/connection.js';
 import { validateArgs } from '../src/utils/validation.js';
 import { CreateAltArgsSchema } from '../src/types/index.js';
 import { createChildLogger, logger } from '../src/utils/logger.js';
@@ -67,8 +69,7 @@ program
       cmdLogger.debug({ keypairPath }, 'Loading keypair');
       const payer = loadKeypair(keypairPath);
 
-      // Create connection
-      const connection = new Connection(args.rpcUrl);
+      const connection = createConnection(args.rpcUrl);
 
       if (!options.json) {
         console.log('🔄 Creating Address Lookup Table (no addresses appended)...');
@@ -240,7 +241,7 @@ function outputHumanReadable(summary: ExecutionSummary): void {
   console.log('');
   console.log('📋 To manage this ALT via Squads later, use:');
   console.log('');
-  console.log(`   pnpm bs58 router --env ${summary.env} \\`);
+  console.log(`   ${BIN_NAME} router --env ${summary.env} \\`);
   console.log('     --instruction append-to-lookup-table \\');
   console.log(`     --lookup-table-address ${summary.altAddress} \\`);
   console.log(`     --authority ${summary.authority} \\`);

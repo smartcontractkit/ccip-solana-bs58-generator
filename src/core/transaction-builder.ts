@@ -14,6 +14,40 @@ import { DEFAULT_TRANSACTION_CONFIG } from '../utils/constants.js';
 /**
  * Generic transaction builder that can work with any Solana instructions
  */
+/** Anchor's AccountNotInitialized. */
+const ANCHOR_ACCOUNT_NOT_INITIALIZED = 3012;
+export const ACCOUNT_LAG_RETRIES = 3;
+export const ACCOUNT_LAG_RETRY_DELAY_MS = 400;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * True when a failed simulation looks like the RPC node lagging behind a just-created account
+ * rather than a genuinely missing one: Anchor raises AccountNotInitialized (3012) when it cannot
+ * deserialize an account the instruction requires.
+ *
+ * Retrying is only safe because a wrong PDA derivation produces the same error and still fails
+ * after the retries are exhausted - the retry delays that report, it does not hide it.
+ */
+export function isAccountNotInitialized(value: { err?: unknown; logs?: string[] | null }): boolean {
+  if (!value.err) return false;
+  const err = JSON.stringify(value.err);
+  if (err.includes(`"Custom":${ANCHOR_ACCOUNT_NOT_INITIALIZED}`)) return true;
+  return (value.logs ?? []).some(l => l.includes('AccountNotInitialized'));
+}
+
+/**
+ * The same condition seen from the send path, where it arrives as a thrown SendTransactionError
+ * whose message carries the preflight logs.
+ */
+export function isAccountNotInitializedError(message: string): boolean {
+  return (
+    message.includes('AccountNotInitialized') ||
+    message.includes(`Error Number: ${ANCHOR_ACCOUNT_NOT_INITIALIZED}`) ||
+    message.includes('custom program error: 0xbc4')
+  );
+}
+
 export class TransactionBuilder {
   private connection: Connection;
   private options: { rpcUrl: string };
@@ -79,8 +113,17 @@ export class TransactionBuilder {
         const base64Encoded = Buffer.from(serializedTransaction).toString('base64');
         const hexEncoded = Buffer.from(serializedTransaction).toString('hex');
 
-        // Extract account information
-        const accounts = allInstructions[0]?.keys || [];
+        // Report the accounts of the COMPILED MESSAGE, not of the first instruction.
+        //
+        // Some commands build several instructions (`create-multisig` is [create, init]), so
+        // `instructions[0].keys` described a fraction of the transaction: 2 of create-multisig's 6
+        // accounts, dropping the pool signer PDA that makes the mint authority safe. A reviewer
+        // approving in Squads was checking the wrong list.
+        const accounts = legacyMessage.accountKeys.map((pubkey, index) => ({
+          pubkey,
+          isSigner: legacyMessage.isAccountSigner(index),
+          isWritable: legacyMessage.isAccountWritable(index),
+        }));
         const signers = accounts.filter(acc => acc.isSigner).map(acc => acc.pubkey);
         const writableAccounts = accounts.filter(acc => acc.isWritable).map(acc => acc.pubkey);
         const readOnlyAccounts = accounts
@@ -108,8 +151,18 @@ export class TransactionBuilder {
             isWritable: account.isWritable,
           })),
           details: {
+            // First instruction only, kept for compatibility; `instructions` below has all of them.
             programId: allInstructions[0]?.programId.toString() || '',
             instructionData: allInstructions[0]?.data.toString('hex') || '',
+            instructions: allInstructions.map(ix => ({
+              programId: ix.programId.toString(),
+              data: ix.data.toString('hex'),
+              accounts: ix.keys.map(k => ({
+                pubkey: k.pubkey.toString(),
+                isSigner: k.isSigner,
+                isWritable: k.isWritable,
+              })),
+            })),
             signers: signers.map(signer => signer.toString()),
             writableAccounts: writableAccounts.map(acc => acc.toString()),
             readOnlyAccounts: readOnlyAccounts.map(acc => acc.toString()),
@@ -215,9 +268,27 @@ export class TransactionBuilder {
   }> {
     try {
       logger.debug('Simulating transaction');
-      const simulation = await this.connection.simulateTransaction(transaction, {
+      let simulation = await this.connection.simulateTransaction(transaction, {
         commitment: DEFAULT_TRANSACTION_CONFIG.COMMITMENT,
       });
+
+      // A load-balanced RPC can route this simulation to a node that has not yet replayed the slot
+      // in which a just-created account appeared, so the program sees no account and Anchor raises
+      // AccountNotInitialized. The account does exist; retry before reporting it as missing.
+      for (
+        let attempt = 1;
+        attempt <= ACCOUNT_LAG_RETRIES && isAccountNotInitialized(simulation.value);
+        attempt++
+      ) {
+        logger.warn(
+          { attempt, of: ACCOUNT_LAG_RETRIES },
+          'Simulation reported an uninitialized account; the RPC node may be behind, retrying'
+        );
+        await sleep(ACCOUNT_LAG_RETRY_DELAY_MS * attempt);
+        simulation = await this.connection.simulateTransaction(transaction, {
+          commitment: DEFAULT_TRANSACTION_CONFIG.COMMITMENT,
+        });
+      }
 
       if (simulation.value.err) {
         logger.warn(

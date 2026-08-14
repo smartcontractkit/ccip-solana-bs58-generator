@@ -10,8 +10,18 @@ import {
   getAssociatedTokenAddressSync,
   getMintLen,
   AuthorityType,
+  ExtensionType,
+  createInitializeMetadataPointerInstruction,
+  TOKEN_2022_PROGRAM_ID,
+  TYPE_SIZE,
+  LENGTH_SIZE,
 } from '@solana/spl-token';
-import { createUpdateAuthorityInstruction } from '@solana/spl-token-metadata';
+import {
+  createUpdateAuthorityInstruction,
+  createInitializeInstruction,
+  pack,
+} from '@solana/spl-token-metadata';
+import type { TokenMetadata } from '@solana/spl-token-metadata';
 import { createHash } from 'crypto';
 
 /**
@@ -141,8 +151,27 @@ export class InstructionBuilder {
     seed: string,
     freezeAuthority: PublicKey | null,
     decimals: number,
-    connection: Connection
+    connection: Connection,
+    embeddedMetadata?: { name: string; symbol: string; uri: string; updateAuthority: PublicKey }
   ): Promise<TransactionInstruction[]> {
+    // Token-2022 metadata lives INSIDE the mint account, so the account is sized for the
+    // MetadataPointer extension but funded for the packed TokenMetadata that gets written after
+    // InitializeMint. See docs/gotchas #metadata-backend-decides-the-instruction.
+    if (embeddedMetadata) {
+      if (!this.tokenProgramId.equals(TOKEN_2022_PROGRAM_ID)) {
+        throw new Error('Embedded (Token-2022) metadata requires the Token-2022 program');
+      }
+      return this.createT22MintWithMetadata(
+        mint,
+        mintAuthority,
+        seed,
+        freezeAuthority,
+        decimals,
+        connection,
+        embeddedMetadata
+      );
+    }
+
     const space = getMintLen([]);
     const lamports = await connection.getMinimumBalanceForRentExemption(space);
 
@@ -165,6 +194,72 @@ export class InstructionBuilder {
     );
 
     return [createAccountIx, initializeMintIx];
+  }
+
+  /**
+   * Token-2022 mint carrying the native TokenMetadata extension.
+   *
+   * Instruction order is load-bearing and is asserted by the unit tests:
+   *   createAccount -> InitializeMetadataPointer -> InitializeMint -> InitializeTokenMetadata
+   * The pointer must be initialized BEFORE the mint, and the metadata AFTER it.
+   */
+  private async createT22MintWithMetadata(
+    mint: PublicKey,
+    mintAuthority: PublicKey,
+    seed: string,
+    freezeAuthority: PublicKey | null,
+    decimals: number,
+    connection: Connection,
+    md: { name: string; symbol: string; uri: string; updateAuthority: PublicKey }
+  ): Promise<TransactionInstruction[]> {
+    // The account is allocated at the pointer-extension size; the TokenMetadata blob is appended
+    // by the token program afterwards, so rent must cover both up front.
+    const space = getMintLen([ExtensionType.MetadataPointer]);
+    const metadata: TokenMetadata = {
+      mint,
+      name: md.name,
+      symbol: md.symbol,
+      uri: md.uri,
+      additionalMetadata: [],
+      updateAuthority: md.updateAuthority,
+    };
+    const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metadata).length;
+    const lamports = await connection.getMinimumBalanceForRentExemption(space + metadataLen);
+
+    return [
+      SystemProgram.createAccountWithSeed({
+        fromPubkey: mintAuthority,
+        newAccountPubkey: mint,
+        basePubkey: mintAuthority,
+        seed,
+        space,
+        lamports,
+        programId: this.tokenProgramId,
+      }),
+      createInitializeMetadataPointerInstruction(
+        mint,
+        md.updateAuthority,
+        mint, // metadata is stored in the mint account itself
+        this.tokenProgramId
+      ),
+      createInitializeMintInstruction(
+        mint,
+        decimals,
+        mintAuthority,
+        freezeAuthority,
+        this.tokenProgramId
+      ),
+      createInitializeInstruction({
+        programId: this.tokenProgramId,
+        metadata: mint,
+        updateAuthority: md.updateAuthority,
+        mint,
+        mintAuthority,
+        name: md.name,
+        symbol: md.symbol,
+        uri: md.uri,
+      }),
+    ];
   }
 
   /**

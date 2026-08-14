@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { getAccount } from '@solana/spl-token';
 import { detectTokenProgramId, findAssociatedTokenAddress } from '../../utils/token.js';
 import { SplMintArgsSchema } from '../../types/index.js';
@@ -27,7 +28,7 @@ export async function mintCommand(options: Record<string, string>, command: Comm
     }
     const rpcUrl = parsed.data.rpcUrl ?? (global.resolvedRpcUrl as string);
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const authority = parsed.data.authority;
     const mint = parsed.data.mint;
     const recipient = parsed.data.recipient;

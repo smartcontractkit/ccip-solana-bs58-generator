@@ -1,6 +1,8 @@
 import { PublicKey, Connection } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { logger, createChildLogger } from '../../utils/logger.js';
+import { emitJson, stateEnvelope, toJsonSafe } from '../../utils/json-output.js';
 import { validateArgs } from '../../utils/validation.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
 import { AccountDerivation as LockreleaseDerivation } from '../../programs/lockrelease-token-pool/accounts.js';
@@ -99,7 +101,7 @@ export async function deriveAccountsCommand(
     const { programType, programId, mint, poolProgramId, remoteChainSelector, rpcUrl } =
       validatedArgs;
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const accounts: DerivedAccount[] = [];
 
     console.log(`🔍 Deriving ${programType} accounts...`);
@@ -119,8 +121,17 @@ export async function deriveAccountsCommand(
         break;
     }
 
-    // Simple table output - consistent with other commands
-    displayAccountsTable(accounts, programType);
+    if ((globalOptions as { json?: boolean }).json) {
+      emitJson(
+        stateEnvelope({
+          kind: 'derived-accounts',
+          globalOptions,
+          data: { programType, accounts: toJsonSafe(accounts) },
+        })
+      );
+    } else {
+      displayAccountsTable(accounts, programType);
+    }
 
     commandLogger.info('✅ Account derivation completed successfully');
   } catch (error) {
@@ -328,12 +339,16 @@ async function deriveSplTokenAccounts(
     description: 'Token mint account',
   });
 
-  // Note: ATAs are user-specific, so we don't derive them here without a specific owner
+  // An ATA needs an owner nobody passed, so there is no address. Leave the field empty rather than
+  // prose: `address` is a base58 key in every other row, and `new PublicKey(a.address)` would throw
+  // on this one alone.
   accounts.push({
     name: 'ATA Pattern',
-    address: 'Use: getAssociatedTokenAddressSync(mint, owner, allowOwnerOffCurve, tokenProgram)',
+    address: '',
     seeds: '[owner, token_program, mint]',
-    description: 'Associated Token Account derivation pattern',
+    description:
+      'Associated Token Account derivation pattern - derive per owner with ' +
+      'getAssociatedTokenAddressSync(mint, owner, allowOwnerOffCurve, tokenProgram)',
   });
 }
 

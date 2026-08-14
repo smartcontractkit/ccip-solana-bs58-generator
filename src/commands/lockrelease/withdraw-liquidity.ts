@@ -1,4 +1,5 @@
 import type { TransactionOptions } from '../../types/index.js';
+import { createConnection } from './../../utils/connection.js';
 import { WithdrawLiquidityArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
@@ -8,7 +9,6 @@ import { getProgramConfig } from '../../types/program-registry.js';
 import type { CommandContext, WithdrawLiquidityOptions } from '../../types/command.js';
 import { InstructionBuilder } from '../../programs/lockrelease-token-pool/instructions.js';
 import { detectTokenProgramId } from '../../utils/token.js';
-import { Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 /**
@@ -76,7 +76,7 @@ export async function withdrawLiquidityCommand(
 
     // Detect token program on-chain
     console.log('🔍 Detecting token program...');
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const tokenProgram = await detectTokenProgramId(connection, validatedArgs.mint);
     console.log(`   ✅ Detected token program: ${tokenProgram.toString()}`);
 

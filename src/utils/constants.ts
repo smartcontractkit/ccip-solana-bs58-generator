@@ -1,5 +1,6 @@
 import os from 'os';
 import { PublicKey } from '@solana/web3.js';
+import { BIN_NAME, PACKAGE_VERSION } from './package-info.js';
 /**
  * Solana environments and their RPC endpoints
  */
@@ -115,9 +116,9 @@ export function getEncodedTransactionData(
  * CLI configuration constants
  */
 export const CLI_CONFIG = {
-  NAME: 'ccip-bs58',
+  NAME: BIN_NAME,
   DESCRIPTION: 'CLI for generating BS58 transaction data from Solana burnmint_token_pool IDL',
-  VERSION: '1.0.0',
+  VERSION: PACKAGE_VERSION,
 } as const;
 
 /**

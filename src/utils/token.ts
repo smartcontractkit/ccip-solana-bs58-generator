@@ -6,6 +6,8 @@ import {
   MULTISIG_SIZE,
   getMint,
   getMultisig,
+  getExtensionTypes,
+  ExtensionType,
 } from '@solana/spl-token';
 import { logger } from './logger.js';
 
@@ -55,6 +57,13 @@ export interface MintSummary {
   freezeAuthority: PublicKey | null;
   decimals: number;
   supply: bigint;
+  /**
+   * Token-2022 extension names; empty for an SPL Token mint.
+   *
+   * A transfer hook, a transfer fee, or a permanent delegate each change what a transfer does, so
+   * the token program ID alone does not say how the pool's tokens move.
+   */
+  extensions: string[];
 }
 
 /**
@@ -63,12 +72,18 @@ export interface MintSummary {
 export async function readMint(connection: Connection, mint: PublicKey): Promise<MintSummary> {
   const tokenProgramId = await detectTokenProgramId(connection, mint);
   const info = await getMint(connection, mint, undefined, tokenProgramId);
+  // getMint already fetched the whole account and the extension TLV sits in its trailing bytes, so
+  // naming the extensions costs no extra request.
+  const extensions = info.tlvData.length
+    ? getExtensionTypes(info.tlvData).map(t => ExtensionType[t] ?? `unknown(${t})`)
+    : [];
   return {
     tokenProgramId,
     mintAuthority: info.mintAuthority,
     freezeAuthority: info.freezeAuthority,
     decimals: info.decimals,
     supply: info.supply,
+    extensions,
   };
 }
 
