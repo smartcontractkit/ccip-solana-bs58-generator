@@ -7,7 +7,9 @@ import {
   type Connection,
 } from '@solana/web3.js';
 import { executeTransaction, loadKeypair } from '../src/utils/transaction-executor.js';
-import { writeFileSync, unlinkSync } from 'node:fs';
+import { writeFileSync, rmSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const BLOCKHASH = '11111111111111111111111111111111';
 
@@ -133,24 +135,26 @@ describe('executeTransaction guards', () => {
 describe('loadKeypair', () => {
   it('loads a valid keypair JSON array', () => {
     const kp = Keypair.generate();
-    const path = `/tmp/test-kp-${Date.now()}.json`;
+    const dir = mkdtempSync(join(tmpdir(), 'test-kp-'));
+    const path = join(dir, 'keypair.json');
     writeFileSync(path, JSON.stringify(Array.from(kp.secretKey)));
     try {
       const loaded = loadKeypair(path);
       expect(loaded.publicKey.equals(kp.publicKey)).toBe(true);
     } finally {
-      unlinkSync(path);
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 
   it('rejects a non-array JSON file with a message mentioning the path', () => {
-    const path = `/tmp/test-kp-bad-${Date.now()}.json`;
+    const dir = mkdtempSync(join(tmpdir(), 'test-kp-bad-'));
+    const path = join(dir, 'bad-keypair.json');
     writeFileSync(path, JSON.stringify({ not: 'an array' }));
     try {
       expect(() => loadKeypair(path)).toThrow(/must contain a JSON array/);
       expect(() => loadKeypair(path)).toThrow(path);
     } finally {
-      unlinkSync(path);
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
