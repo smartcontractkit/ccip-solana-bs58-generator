@@ -5,6 +5,7 @@ import { createLockReleaseCommands } from './lockrelease/index.js';
 import { createSplTokenCommands } from './spl-token/index.js';
 import { createMetaplexCommands } from './metaplex/index.js';
 import { createUtilsCommands } from './utils/index.js';
+import { createDocsCommand } from './docs.js';
 
 /**
  * Register all program commands
@@ -16,4 +17,5 @@ export function registerCommands(program: Command): void {
   program.addCommand(createSplTokenCommands());
   program.addCommand(createMetaplexCommands());
   program.addCommand(createUtilsCommands());
+  program.addCommand(createDocsCommand());
 }

@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { BIN_NAME } from '../../utils/package-info.js';
 import { deriveAccountsCommand } from './derive-accounts.js';
 
 /**
@@ -25,19 +26,19 @@ export function createUtilsCommands(): Command {
       `
 Examples:
   # Derive all burnmint token pool accounts
-  pnpm bs58 utils --instruction derive-accounts \\
+  ${BIN_NAME} utils --instruction derive-accounts \\
     --program-type burnmint-token-pool \\
     --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\
     --mint "EbrEbzXXUGurxRq55xtie1r4e8rHH99jUAwUaEygrKND"
 
   # Derive all lockrelease token pool accounts
-  pnpm bs58 utils --instruction derive-accounts \\
+  ${BIN_NAME} utils --instruction derive-accounts \\
     --program-type lockrelease-token-pool \\
     --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \\
     --mint "EbrEbzXXUGurxRq55xtie1r4e8rHH99jUAwUaEygrKND"
 
   # Derive router accounts  
-  pnpm bs58 utils --instruction derive-accounts \\
+  ${BIN_NAME} utils --instruction derive-accounts \\
     --program-type router \\
     --program-id "Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C" \\
     --mint "EbrEbzXXUGurxRq55xtie1r4e8rHH99jUAwUaEygrKND"

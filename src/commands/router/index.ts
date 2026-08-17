@@ -50,8 +50,8 @@ export function createRouterCommands(): Command {
     .option('--new-admin <pubkey>', 'New admin (required for transfer-admin-role)')
     .option('--pool-lookup-table <pubkey>', 'Pool Address Lookup Table (required for set-pool)')
     .option(
-      '--writable-indexes <hex>',
-      'Writable indexes bitmap as hex string, e.g., 0x80... (required for set-pool)'
+      '--writable-indexes <json>',
+      "JSON array of ALT indexes that must be writable, e.g. '[3,4,7]' (required for set-pool). The program converts them to a bitmap on chain"
     )
     .hook('preAction', thisCommand => {
       const globalOpts = thisCommand.parent?.opts() || {};

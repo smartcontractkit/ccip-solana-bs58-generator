@@ -1,7 +1,9 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import { GetStateArgsSchema } from '../../types/index.js';
 import { validateArgs } from '../../utils/validation.js';
 import { createChildLogger, logger } from '../../utils/logger.js';
+import { emitJson, keyOrNull, stateEnvelope, toJsonSafe } from '../../utils/json-output.js';
 import { getProgramConfig, type ProgramName } from '../../types/program-registry.js';
 import type { CommandContext, GetStateOptions } from '../../types/command.js';
 import { AccountDerivation as BurnmintDerivation } from '../../programs/burnmint-token-pool/accounts.js';
@@ -75,7 +77,7 @@ export async function getState(
     console.log(`   State PDA: ${statePda.toString()}`);
 
     // Fetch account data from blockchain
-    const connection = new Connection(rpcUrl as string);
+    const connection = createConnection(rpcUrl as string);
     const accountInfo = await connection.getAccountInfo(statePda);
 
     if (!accountInfo) {
@@ -102,8 +104,29 @@ export async function getState(
 
     cmdLogger.debug({ stateAccount }, 'State account deserialized successfully');
 
-    // Display formatted output
-    displayStateAccount(stateAccount, programType, programId, statePda);
+    if (globalOptions.json) {
+      const state = toJsonSafe(stateAccount) as { config?: Record<string, unknown> };
+      // On chain "unset" is the all-zero key; keyOrNull normalises it to null, as elsewhere.
+      if (state.config) {
+        state.config.proposedOwner = keyOrNull(state.config.proposedOwner);
+        state.config.rebalancer = keyOrNull(state.config.rebalancer);
+      }
+      emitJson(
+        stateEnvelope({
+          kind: 'pool-state',
+          globalOptions,
+          data: {
+            programType,
+            programId: programId.toString(),
+            mint: mint.toString(),
+            statePda: statePda.toString(),
+            state,
+          },
+        })
+      );
+    } else {
+      displayStateAccount(stateAccount, programType, programId, statePda);
+    }
 
     cmdLogger.info('getState command completed successfully');
   } catch (error) {

@@ -1,5 +1,9 @@
+#!/usr/bin/env node
 import { Command } from 'commander';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { registerCommands } from './commands/index.js';
+import { installJsonExitHook, redirectChatterToStderr } from './utils/json-output.js';
 
 import { logger } from './utils/logger.js';
 import {
@@ -44,8 +48,18 @@ async function main(): Promise<void> {
       '--format <format>',
       `Transaction output format (${TRANSACTION_OUTPUT_FORMATS.join('|')}; default: base58, or ${TX_OUTPUT_FORMAT_ENV_VAR} env var)`
     )
+    .option(
+      '--json',
+      'Emit one machine-readable JSON object on stdout and send all other output to stderr'
+    )
     .hook('preAction', thisCommand => {
       const opts = thisCommand.opts();
+
+      // Do this before anything prints. From here on stdout belongs to emitJson alone.
+      if (opts.json) {
+        redirectChatterToStderr();
+        installJsonExitHook();
+      }
 
       // Configure logging level
       if (opts.verbose) {
@@ -122,19 +136,24 @@ async function main(): Promise<void> {
   // Add help examples
   program.on('--help', () => {
     console.log('');
+    console.log('⚠️  Chainlink example/template — unaudited. Test on devnet first.');
+    console.log('');
     console.log('🚀 Getting Started:');
     console.log('  1. View available commands:');
-    console.log('     $ pnpm bs58 --help');
+    console.log(`     $ ${CLI_CONFIG.NAME} --help`);
     console.log('');
-    console.log('  2. Generate a transaction (Devnet example):');
-    console.log('     $ pnpm bs58 --env devnet \\');
+    console.log('  2. Read the docs that shipped with this build:');
+    console.log(`     $ ${CLI_CONFIG.NAME} docs --path`);
+    console.log('');
+    console.log('  3. Generate a transaction (Devnet example):');
+    console.log(`     $ ${CLI_CONFIG.NAME} --env devnet \\`);
     console.log('       burnmint-token-pool --instruction accept-ownership \\');
     console.log('       --program-id "Your_Program_ID" \\');
     console.log('       --mint "Token_Mint_Address" \\');
     console.log('       --authority "New_Authority_PublicKey"');
     console.log('');
-    console.log('  3. Execute directly with a local keypair (Devnet example):');
-    console.log('     $ pnpm bs58 --env devnet --execute \\');
+    console.log('  4. Execute directly with a local keypair (Devnet example):');
+    console.log(`     $ ${CLI_CONFIG.NAME} --env devnet --execute \\`);
     console.log('       burnmint-token-pool --instruction accept-ownership \\');
     console.log('       --program-id "Your_Program_ID" \\');
     console.log('       --mint "Token_Mint_Address" \\');
@@ -178,8 +197,26 @@ process.on('uncaughtException', error => {
   process.exit(1);
 });
 
+/**
+ * True when this module is the process entry point.
+ *
+ * Compares real paths, not raw argv. A global install exposes the CLI as a symlink
+ * (`<prefix>/bin/cct-solana-tx` -> `<prefix>/lib/node_modules/<pkg>/dist/index.js`), so comparing
+ * `import.meta.url` to `process.argv[1]` never matches: the binary exits without running anything,
+ * no output, no error, exit 0.
+ */
+function isEntryPoint(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(invoked);
+  } catch {
+    return false;
+  }
+}
+
 // Run main function if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isEntryPoint()) {
   main().catch(error => {
     logger.error(
       {

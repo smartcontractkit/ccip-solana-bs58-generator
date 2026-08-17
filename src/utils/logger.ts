@@ -25,6 +25,9 @@ export function createLogger(config: LoggerConfig = {}): pino.Logger {
         singleLine: false,
         levelFirst: true,
         messageFormat: '{msg}',
+        // Logs are diagnostics, not results. Off stdout, so `--json` pipes into jq and a normal
+        // run does not mix ANSI colour codes into whatever captures it.
+        destination: 2,
       },
     };
   }

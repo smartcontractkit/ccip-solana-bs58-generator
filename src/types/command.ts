@@ -12,6 +12,8 @@ export interface GlobalCommandOptions {
   execute?: boolean;
   keypair?: string;
   format?: TransactionOutputFormat;
+  /** Emit one JSON object on stdout and push every other write to stderr */
+  json?: boolean;
   /** Cached signer keypair, loaded once per invocation in --execute mode */
   _signerKeypair?: Keypair;
 }
@@ -173,6 +175,8 @@ export interface ProvideLiquidityOptions {
   mint: string;
   authority: string;
   amount: string;
+  /** Prepend the SPL Approve in the same transaction instead of relying on an earlier one. */
+  autoApprove?: boolean;
 }
 
 /**

@@ -317,6 +317,8 @@ export const ProvideLiquidityArgsSchema = z.object({
     if (num <= 0) throw new Error('Amount must be positive');
     return num;
   }),
+  /** Prepend the SPL Approve so the delegation cannot be consumed or replaced before the transfer. */
+  autoApprove: z.boolean().optional().default(false),
   rpcUrl: z
     .string()
     .refine(
@@ -779,8 +781,16 @@ export interface GeneratedTransaction {
     isWritable: boolean;
   }[];
   details: {
+    /** First instruction's program. See `instructions` when the transaction carries several. */
     programId: string;
+    /** First instruction's data, hex. See `instructions` for the rest. */
     instructionData: string;
+    /** Every instruction in the transaction, in order. */
+    instructions: {
+      programId: string;
+      data: string;
+      accounts: { pubkey: string; isSigner: boolean; isWritable: boolean }[];
+    }[];
     signers: string[];
     writableAccounts: string[];
     readOnlyAccounts: string[];
@@ -852,39 +862,54 @@ export const SplMintArgsSchema = z.object({
     .optional(),
 });
 
-export const SplCreateMultisigArgsSchema = z.object({
-  authority: z.string().transform(val => new PublicKey(val)),
-  seed: z.string(),
-  mint: z.string().transform(val => new PublicKey(val)),
-  signers: z.string().transform(val => {
-    try {
-      const parsed = JSON.parse(val);
-      if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
-      return parsed.map((a: unknown) => new PublicKey(String(a)));
-    } catch (e) {
-      throw new Error(`Invalid JSON for signers: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }),
-  threshold: z.string().transform(val => {
-    const n = parseInt(val, 10);
-    if (!Number.isInteger(n) || n <= 0) throw new Error('Threshold must be a positive integer');
-    return n;
-  }),
-  rpcUrl: z
-    .string()
-    .refine(
-      val => {
-        try {
-          new URL(val);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { message: 'Invalid URL format' }
-    )
-    .optional(),
-});
+export const SplCreateMultisigArgsSchema = z
+  .object({
+    authority: z.string().transform(val => new PublicKey(val)),
+    seed: z.string(),
+    mint: z.string().transform(val => new PublicKey(val)),
+    signers: z.string().transform(val => {
+      try {
+        const parsed = JSON.parse(val);
+        if (!Array.isArray(parsed)) throw new Error('Must be a JSON array');
+        return parsed.map((a: unknown) => new PublicKey(String(a)));
+      } catch (e) {
+        throw new Error(`Invalid JSON for signers: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }),
+    threshold: z.string().transform(val => {
+      const n = parseInt(val, 10);
+      if (!Number.isInteger(n) || n <= 0) throw new Error('Threshold must be a positive integer');
+      return n;
+    }),
+    rpcUrl: z
+      .string()
+      .refine(
+        val => {
+          try {
+            new URL(val);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { message: 'Invalid URL format' }
+      )
+      .optional(),
+  })
+  // The token program validates n and m independently and never checks m <= n, so a multisig with
+  // threshold > signers initializes successfully and is then permanently unusable: validate_owner
+  // requires at least `threshold` signatures and only `signers.length` accounts can ever sign.
+  // SPL multisigs are immutable, so this cannot be corrected afterwards.
+  .refine(d => d.threshold <= d.signers.length, {
+    message:
+      'Threshold cannot exceed the number of signers: the multisig would be permanently unusable and SPL multisigs cannot be changed after creation',
+    path: ['threshold'],
+  })
+  // MAX_SIGNERS in the token program.
+  .refine(d => d.signers.length >= 1 && d.signers.length <= 11, {
+    message: 'An SPL multisig must have between 1 and 11 signers',
+    path: ['signers'],
+  });
 
 export const SplTransferMintAuthorityArgsSchema = z.object({
   authority: z.string().transform(val => new PublicKey(val)),
@@ -1018,6 +1043,9 @@ export const CreateMintArgsSchema = z.object({
   decimals: z.number().int().min(0).max(255),
   tokenProgram: z.enum(['spl-token', 'token-2022']).default('spl-token'),
   withMetaplex: z.boolean().default(false),
+  // Where the metadata lives. 'metaplex' writes a separate Metaplex PDA (any token program);
+  // 'token-2022' embeds it in the mint via the TokenMetadata extension (Token-2022 only).
+  metadata: z.enum(['none', 'metaplex', 'token-2022']).optional(),
   name: z.string().max(32).optional(),
   symbol: z.string().max(10).optional(),
   uri: z

@@ -1,0 +1,1933 @@
+{
+  "generatedBy": "script/docs/gen-catalog.mjs",
+  "note": "Generated from src/commands and src/index.ts. Do not edit by hand; run `pnpm docs:catalog`.",
+  "cli": "cct-solana-tx <program|alias> --instruction <name> --env <env>|--rpc-url <url> [flags]",
+  "globalFlags": [
+    {
+      "flag": "--verbose",
+      "arg": null,
+      "description": "enable verbose logging"
+    },
+    {
+      "flag": "--env",
+      "arg": "env",
+      "description": "Solana environment (mainnet|devnet|testnet|localhost)"
+    },
+    {
+      "flag": "--rpc-url",
+      "arg": "url",
+      "description": "Custom Solana RPC URL (overrides --env if provided)"
+    },
+    {
+      "flag": "--execute",
+      "arg": null,
+      "description": "Sign and send the transaction with a local keypair instead of outputting encoded transaction data"
+    },
+    {
+      "flag": "--keypair",
+      "arg": "path",
+      "description": "Path to keypair file (default: ~/.config/solana/id.json when --execute is set)"
+    },
+    {
+      "flag": "--format",
+      "arg": "format",
+      "description": "Transaction output format (base58|base64; default: base58, or CCIP_TX_OUTPUT_FORMAT env var)"
+    },
+    {
+      "flag": "--json",
+      "arg": null,
+      "description": "Emit one machine-readable JSON object on stdout and send all other output to stderr"
+    }
+  ],
+  "counts": {
+    "programs": 6,
+    "instructions": 48
+  },
+  "programs": [
+    {
+      "program": "burnmint-token-pool",
+      "alias": "bm",
+      "source": "src/commands/burnmint/index.ts",
+      "instructions": [
+        {
+          "instruction": "initialize-pool",
+          "description": "Create the pool State PDA for a mint, making this program the token's burn/mint pool. The caller becomes the pool owner.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/initialize-pool.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            }
+          ],
+          "preconditions": "The caller must be the mint authority at the time of the call, and the pool program must be deployed with its global config initialized."
+        },
+        {
+          "instruction": "create-token-account",
+          "description": "Create the pool's token account: the associated token account owned by the pool signer PDA, where the program holds tokens. Idempotent.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/create-token-account.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            }
+          ]
+        },
+        {
+          "instruction": "accept-ownership",
+          "description": "Accept a pending ownership transfer of the pool. Must be signed by the proposed owner.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/accept-ownership.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            }
+          ],
+          "failure_modes": "Anyone other than the proposed owner is rejected with Unauthorized (6002); the outgoing owner cannot self-accept."
+        },
+        {
+          "instruction": "transfer-ownership",
+          "description": "Propose a new pool owner. Two-step: the proposed owner must then call accept-ownership.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/transfer-ownership.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--proposed-owner",
+              "arg": "proposedOwner",
+              "required": true,
+              "description": "Proposed new owner public key (required for transfer-ownership)"
+            }
+          ],
+          "failure_modes": "Before acceptance the proposal can be redirected by proposing someone else, but not cleared (the zero address is rejected with InvalidInputs 6003). After acceptance there is no cancel or reclaim instruction."
+        },
+        {
+          "instruction": "set-rate-limit-admin",
+          "description": "Set the account allowed to change rate limits in addition to the pool owner. Keeps an emergency throttle available without handing over ownership.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/set-rate-limit-admin.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--new-rate-limit-admin",
+              "arg": "newRateLimitAdmin",
+              "required": true,
+              "description": "New rate limit admin public key (required for set-rate-limit-admin)"
+            }
+          ]
+        },
+        {
+          "instruction": "get-state",
+          "description": "Read and display the pool's State PDA: owner, proposed owner, rate limit admin, router, pool token account, allow list and (lock/release) rebalancer and liquidity flag.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/burnmint/get-state.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            }
+          ]
+        },
+        {
+          "instruction": "get-chain-config",
+          "description": "Read and display one remote chain's configuration: remote token address and decimals, remote pool addresses, and both rate limit buckets.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/burnmint/get-chain-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ]
+        },
+        {
+          "instruction": "init-chain-remote-config",
+          "description": "Create the chain config account for one remote chain: its token address, that token's decimals, and an initially empty remote pool list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/init-chain-remote-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--pool-addresses",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)"
+            },
+            {
+              "flag": "--token-address",
+              "arg": "address",
+              "required": true,
+              "description": "Remote token address (destination chain) as hex string (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--decimals",
+              "arg": "decimals",
+              "required": true,
+              "description": "Remote token decimals 0-255 (destination chain, required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "when_to_use": "First-time configuration of a remote chain on the pool. Remote pool addresses MUST be empty at init; append them afterwards with append-remote-pool-addresses.",
+          "failure_modes": "Passing a non-empty --pool-addresses at init is rejected. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty)."
+        },
+        {
+          "instruction": "edit-chain-remote-config",
+          "description": "Replace the whole chain config for one remote chain: remote token, decimals and the full remote pool list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/edit-chain-remote-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--pool-addresses",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)"
+            },
+            {
+              "flag": "--token-address",
+              "arg": "address",
+              "required": true,
+              "description": "Remote token address (destination chain) as hex string (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--decimals",
+              "arg": "decimals",
+              "required": true,
+              "description": "Remote token decimals 0-255 (destination chain, required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "failure_modes": "This is a whole-struct overwrite, not a merge: omitting --pool-addresses silently clears the registered remote pools (the flag defaults to an empty list). Pass the full desired set. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty)."
+        },
+        {
+          "instruction": "set-chain-rate-limit",
+          "description": "Set the inbound and outbound token-bucket rate limits for one remote chain.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/set-chain-rate-limit.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            },
+            {
+              "flag": "--inbound-enabled",
+              "arg": "enabled",
+              "required": true,
+              "description": "Enable inbound rate limiting (true/false, ONLY for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--inbound-capacity",
+              "arg": "capacity",
+              "required": true,
+              "description": "Inbound rate limit capacity in smallest token units (ONLY for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--inbound-rate",
+              "arg": "rate",
+              "required": true,
+              "description": "Inbound rate limit refill rate per second in smallest units (ONLY for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-enabled",
+              "arg": "enabled",
+              "required": true,
+              "description": "Enable outbound rate limiting (true/false, ONLY for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-capacity",
+              "arg": "capacity",
+              "required": true,
+              "description": "Outbound rate limit capacity in smallest token units (ONLY for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-rate",
+              "arg": "rate",
+              "required": true,
+              "description": "Outbound rate limit refill rate per second in smallest units (ONLY for set-chain-rate-limit)"
+            }
+          ],
+          "preconditions": "Capacity and rate are in the LOCAL token's smallest units: multiply by 10^decimals of the mint on this chain, not the remote one. The chain must already be configured with init-chain-remote-config."
+        },
+        {
+          "instruction": "append-remote-pool-addresses",
+          "description": "Add remote pool addresses to an existing chain config, leaving the rest of it untouched.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/append-remote-pool-addresses.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--addresses",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to append (required for append-remote-pool-addresses)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ]
+        },
+        {
+          "instruction": "delete-chain-config",
+          "description": "Close the chain config account for one remote chain, refunding its rent to the authority.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/delete-chain-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "failure_modes": "Destructive and closes the chain-config account, refunding its rent to the authority. The lane stops working until the chain is configured again from scratch."
+        },
+        {
+          "instruction": "configure-allow-list",
+          "description": "Enable or disable the allow list and add sender addresses to it. The list gates OUTBOUND transfers only.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/configure-allow-list.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--add",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to add to allow list (required for configure-allow-list)"
+            },
+            {
+              "flag": "--enabled",
+              "arg": "boolean",
+              "required": true,
+              "description": "Enable or disable allow list (true/false, required for configure-allow-list)"
+            }
+          ],
+          "failure_modes": "Adding an address already present reverts AllowlistKeyAlreadyExisted (6010). Enabled with an empty list blocks every sender (InvalidSender 6006) rather than allowing all. See docs/gotchas."
+        },
+        {
+          "instruction": "remove-from-allow-list",
+          "description": "Remove sender addresses from the allow list. Does not disable the list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/burnmint/remove-from-allow-list.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Burnmint token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--remove",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to remove from allow list (required for remove-from-allow-list)"
+            }
+          ],
+          "failure_modes": "Removing an address that is not present reverts AllowlistKeyDidNotExist (6011). Removing the last entry leaves the list enabled and empty, which blocks all senders."
+        }
+      ]
+    },
+    {
+      "program": "lockrelease-token-pool",
+      "alias": "lr",
+      "source": "src/commands/lockrelease/index.ts",
+      "instructions": [
+        {
+          "instruction": "initialize-pool",
+          "description": "Create the pool State PDA for a mint, making this program the token's lock/release pool. The caller becomes the pool owner.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/initialize-pool.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            }
+          ],
+          "preconditions": "The caller must be the mint authority at the time of the call, and the pool program must be deployed with its global config initialized."
+        },
+        {
+          "instruction": "create-token-account",
+          "description": "Create the pool's token account: the associated token account owned by the pool signer PDA, which holds the locked tokens. Idempotent.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/create-token-account.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            }
+          ]
+        },
+        {
+          "instruction": "accept-ownership",
+          "description": "Accept a pending ownership transfer of the pool. Must be signed by the proposed owner.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/accept-ownership.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            }
+          ],
+          "failure_modes": "Anyone other than the proposed owner is rejected with Unauthorized (6002); the outgoing owner cannot self-accept."
+        },
+        {
+          "instruction": "transfer-ownership",
+          "description": "Propose a new pool owner. Two-step: the proposed owner must then call accept-ownership.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/transfer-ownership.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--proposed-owner",
+              "arg": "proposedOwner",
+              "required": true,
+              "description": "Proposed new owner public key (required for transfer-ownership)"
+            }
+          ],
+          "failure_modes": "Before acceptance the proposal can be redirected by proposing someone else, but not cleared (the zero address is rejected with InvalidInputs 6003). After acceptance there is no cancel or reclaim instruction."
+        },
+        {
+          "instruction": "set-rate-limit-admin",
+          "description": "Set the account allowed to change rate limits in addition to the pool owner. Keeps an emergency throttle available without handing over ownership.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/set-rate-limit-admin.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--new-rate-limit-admin",
+              "arg": "newRateLimitAdmin",
+              "required": true,
+              "description": "New rate limit admin public key (required for set-rate-limit-admin)"
+            }
+          ]
+        },
+        {
+          "instruction": "get-state",
+          "description": "Read and display the pool's State PDA: owner, proposed owner, rate limit admin, router, pool token account, allow list, rebalancer and the can-accept-liquidity flag.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/lockrelease/get-state.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            }
+          ]
+        },
+        {
+          "instruction": "get-chain-config",
+          "description": "Read and display one remote chain's configuration: remote token address and decimals, remote pool addresses, and both rate limit buckets.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/lockrelease/get-chain-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ]
+        },
+        {
+          "instruction": "init-chain-remote-config",
+          "description": "Create the chain config account for one remote chain: its token address, that token's decimals, and an initially empty remote pool list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/init-chain-remote-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--pool-addresses",
+              "arg": "json",
+              "required": false,
+              "description": "JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)"
+            },
+            {
+              "flag": "--token-address",
+              "arg": "address",
+              "required": true,
+              "description": "Remote token address (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--decimals",
+              "arg": "decimals",
+              "required": true,
+              "description": "Token decimals (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "when_to_use": "First-time configuration of a remote chain on the pool. Remote pool addresses MUST be empty at init; append them afterwards with append-remote-pool-addresses.",
+          "failure_modes": "Passing a non-empty --pool-addresses at init is rejected. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty)."
+        },
+        {
+          "instruction": "edit-chain-remote-config",
+          "description": "Replace the whole chain config for one remote chain: remote token, decimals and the full remote pool list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/edit-chain-remote-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--pool-addresses",
+              "arg": "json",
+              "required": false,
+              "description": "JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)"
+            },
+            {
+              "flag": "--token-address",
+              "arg": "address",
+              "required": true,
+              "description": "Remote token address (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--decimals",
+              "arg": "decimals",
+              "required": true,
+              "description": "Token decimals (required for init/edit-chain-remote-config)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "failure_modes": "This is a whole-struct overwrite, not a merge: omitting --pool-addresses silently clears the registered remote pools (the flag defaults to an empty list). Pass the full desired set. See [gotchas](../../gotchas/index.md#init-pool-addresses-empty)."
+        },
+        {
+          "instruction": "set-chain-rate-limit",
+          "description": "Set the inbound and outbound token-bucket rate limits for one remote chain.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/set-chain-rate-limit.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            },
+            {
+              "flag": "--inbound-enabled",
+              "arg": "enabled",
+              "required": true,
+              "description": "Enable inbound rate limiting (true/false) (required for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--inbound-capacity",
+              "arg": "capacity",
+              "required": true,
+              "description": "Inbound rate limit capacity (required for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--inbound-rate",
+              "arg": "rate",
+              "required": true,
+              "description": "Inbound rate limit refill rate per second (required for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-enabled",
+              "arg": "enabled",
+              "required": true,
+              "description": "Enable outbound rate limiting (true/false) (required for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-capacity",
+              "arg": "capacity",
+              "required": true,
+              "description": "Outbound rate limit capacity (required for set-chain-rate-limit)"
+            },
+            {
+              "flag": "--outbound-rate",
+              "arg": "rate",
+              "required": true,
+              "description": "Outbound rate limit refill rate per second (required for set-chain-rate-limit)"
+            }
+          ],
+          "preconditions": "Capacity and rate are in the LOCAL token's smallest units: multiply by 10^decimals of the mint on this chain, not the remote one. The chain must already be configured with init-chain-remote-config."
+        },
+        {
+          "instruction": "append-remote-pool-addresses",
+          "description": "Add remote pool addresses to an existing chain config, leaving the rest of it untouched.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/append-remote-pool-addresses.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            },
+            {
+              "flag": "--addresses",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to append (required for append-remote-pool-addresses)"
+            }
+          ]
+        },
+        {
+          "instruction": "delete-chain-config",
+          "description": "Close the chain config account for one remote chain, refunding its rent to the authority.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/delete-chain-config.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": true,
+              "description": "Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)"
+            }
+          ],
+          "failure_modes": "Destructive and closes the chain-config account, refunding its rent to the authority. The lane stops working until the chain is configured again from scratch."
+        },
+        {
+          "instruction": "configure-allow-list",
+          "description": "Enable or disable the allow list and add sender addresses to it. The list gates OUTBOUND transfers only.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/configure-allow-list.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--add",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to add to allow list (required for configure-allow-list)"
+            },
+            {
+              "flag": "--enabled",
+              "arg": "enabled",
+              "required": true,
+              "description": "Enable allow list (true/false) (required for configure-allow-list)"
+            }
+          ],
+          "failure_modes": "Adding an address already present reverts AllowlistKeyAlreadyExisted (6010). Enabled with an empty list blocks every sender (InvalidSender 6006) rather than allowing all. See docs/gotchas."
+        },
+        {
+          "instruction": "remove-from-allow-list",
+          "description": "Remove sender addresses from the allow list. Does not disable the list.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/remove-from-allow-list.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--remove",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of addresses to remove from allow list (required for remove-from-allow-list)"
+            }
+          ],
+          "failure_modes": "Removing an address that is not present reverts AllowlistKeyDidNotExist (6011). Removing the last entry leaves the list enabled and empty, which blocks all senders."
+        },
+        {
+          "instruction": "provide-liquidity",
+          "description": "Deposit tokens from the rebalancer into the pool's token account, backing release on inbound transfers.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/provide-liquidity.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--amount",
+              "arg": "amount",
+              "required": true,
+              "description": "Amount to provide/withdraw (in smallest token units) (required for provide/withdraw-liquidity)"
+            },
+            {
+              "flag": "--auto-approve",
+              "arg": null,
+              "required": false,
+              "description": "provide-liquidity only: prepend the SPL Approve for the pool signer PDA, so the delegation cannot be spent or replaced before the transfer"
+            }
+          ],
+          "preconditions": "Three gates, in order: a rebalancer must be set, can-accept-liquidity must be true, and the rebalancer's token account must have approved the POOL SIGNER PDA as delegate (the program moves tokens by CPI with that PDA as authority). That approval is NOT one-time setup: the transfer spends it and SPL clears the delegate at zero, and a ccipSend approves the router's fee-billing signer on the same account, replacing it. Approve immediately before each provide-liquidity, or pass --auto-approve to put both in one transaction.",
+          "failure_modes": "Missing rebalancer -> Unauthorized 6002. Liquidity disabled -> LiquidityNotAccepted 6020. Missing, spent or replaced delegate approval -> SPL Token OwnerMismatch (custom program error 0x4) raised inside the CPI, naming neither the delegate nor the amount; the CLI checks the delegation first and prints the account state instead."
+        },
+        {
+          "instruction": "withdraw-liquidity",
+          "description": "Withdraw tokens from the pool's token account back to the rebalancer.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/withdraw-liquidity.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--amount",
+              "arg": "amount",
+              "required": true,
+              "description": "Amount to provide/withdraw (in smallest token units) (required for provide/withdraw-liquidity)"
+            }
+          ],
+          "preconditions": "Requires the rebalancer role and can-accept-liquidity true, but NOT a delegate approval: the pool signer PDA already owns the source account."
+        },
+        {
+          "instruction": "set-rebalancer",
+          "description": "Set the account allowed to provide and withdraw pool liquidity. Required before any liquidity operation.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/set-rebalancer.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--rebalancer",
+              "arg": "rebalancer",
+              "required": true,
+              "description": "Rebalancer address (required for set-rebalancer)"
+            }
+          ],
+          "failure_modes": "With no rebalancer set, provide-liquidity fails Unauthorized (6002)."
+        },
+        {
+          "instruction": "set-can-accept-liquidity",
+          "description": "Enable or disable liquidity operations on the pool.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/lockrelease/set-can-accept-liquidity.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Lockrelease token pool program ID (required for all instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for all instructions)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority address (required for all instructions)"
+            },
+            {
+              "flag": "--allow",
+              "arg": "allow",
+              "required": true,
+              "description": "Allow liquidity operations (true/false) (required for set-can-accept-liquidity)"
+            }
+          ],
+          "failure_modes": "When false, BOTH provide-liquidity and withdraw-liquidity fail LiquidityNotAccepted (6020) - it is not a deposit-only gate."
+        }
+      ]
+    },
+    {
+      "program": "metaplex",
+      "alias": "mpl",
+      "source": "src/commands/metaplex/index.ts",
+      "instructions": [
+        {
+          "instruction": "update-authority",
+          "description": "Validate that Metaplex metadata exists and verify current update authority",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/metaplex/update-authority.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Current update authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address"
+            },
+            {
+              "flag": "--new-authority",
+              "arg": "pubkey",
+              "required": true,
+              "description": "New update authority public key"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "program": "router",
+      "alias": "r",
+      "source": "src/commands/router/index.ts",
+      "instructions": [
+        {
+          "instruction": "owner-propose-administrator",
+          "description": "Create the token's admin registry entry and nominate its first administrator (the CCIP-side admin for the token).",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/owner-propose-administrator.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--token-admin-registry-admin",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token Admin Registry administrator to propose/override (required for owner-propose-administrator, owner-override-pending-administrator)"
+            }
+          ],
+          "preconditions": "Must be signed by the token's current mint authority, so run it BEFORE handing the mint authority to an SPL multisig."
+        },
+        {
+          "instruction": "owner-override-pending-administrator",
+          "description": "Overwrite the pending administrator nomination on a registry entry that has not been accepted yet.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/owner-override-pending-administrator.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--token-admin-registry-admin",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token Admin Registry administrator to propose/override (required for owner-propose-administrator, owner-override-pending-administrator)"
+            }
+          ],
+          "failure_modes": "Once an administrator has accepted the role the entry is owned and this fails InvalidTokenAdminRegistryProposedAdmin (7022); recover instead with transfer-admin-role followed by accept-admin-role."
+        },
+        {
+          "instruction": "accept-admin-role",
+          "description": "Accept a pending administrator nomination for the token, completing registration.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/accept-admin-role.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            }
+          ],
+          "failure_modes": "Anyone other than the nominee is rejected with Unauthorized (7000)."
+        },
+        {
+          "instruction": "transfer-admin-role",
+          "description": "Nominate a new administrator for an already-owned registry entry. Two-step: the nominee must then call accept-admin-role.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/transfer-admin-role.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--new-admin",
+              "arg": "pubkey",
+              "required": true,
+              "description": "New admin (required for transfer-admin-role)"
+            }
+          ]
+        },
+        {
+          "instruction": "set-pool",
+          "description": "Point the token's registry entry at its pool by registering the address lookup table, activating the token for cross-chain transfers.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/set-pool.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--pool-lookup-table",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Pool Address Lookup Table (required for set-pool)"
+            },
+            {
+              "flag": "--writable-indexes",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of ALT indexes that must be writable, e.g. '[3,4,7]' (required for set-pool). The program converts them to a bitmap on chain"
+            }
+          ],
+          "preconditions": "The lookup table must already contain the canonical account set. Writable indexes are normally [3, 4, 7] (pool state, pool token account, mint)."
+        },
+        {
+          "instruction": "create-lookup-table",
+          "description": "Create the address lookup table for a token and populate it with the canonical CCIP accounts. Signs and sends with a local keypair (it cannot be executed through a multisig).",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/create-lookup-table.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--fee-quoter-program-id",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Fee Quoter program ID (required for create-lookup-table, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--pool-program-id",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Pool program ID (required for create-lookup-table, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--additional-addresses",
+              "arg": "json",
+              "required": false,
+              "description": "JSON array of Base58 pubkeys to append (optional for create-lookup-table and append-to-lookup-table)"
+            }
+          ]
+        },
+        {
+          "instruction": "append-to-lookup-table",
+          "description": "Append further addresses to an existing lookup table, for example the SPL multisig used as mint authority.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/router/append-to-lookup-table.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--fee-quoter-program-id",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Fee Quoter program ID (required for create-lookup-table, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--pool-program-id",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Pool program ID (required for create-lookup-table, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--additional-addresses",
+              "arg": "json",
+              "required": false,
+              "description": "JSON array of Base58 pubkeys to append (optional for create-lookup-table and append-to-lookup-table)"
+            },
+            {
+              "flag": "--lookup-table-address",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Existing ALT address (required for append-to-lookup-table)"
+            }
+          ]
+        },
+        {
+          "instruction": "inspect-token",
+          "description": "Read-only audit of one token: the mint (authority, freeze authority, SPL multisig members, Token-2022 extensions), the pool state and its token account, the pool program global config, the CCIP token admin registry, and the address lookup table.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/router/inspect-token.ts",
+          "flags": [
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": true,
+              "description": "Router program ID (required for most instructions)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": true,
+              "description": "Token mint address (required for registry instructions, optional for append-to-lookup-table)"
+            },
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Authority public key (required for all instructions)"
+            },
+            {
+              "flag": "--pool-program-id",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Pool program ID (required for create-lookup-table, optional for append-to-lookup-table)"
+            }
+          ],
+          "when_to_use": "Verify a deployment, or hand one over. One command covers the roles that are easy to forget: who can still extend the lookup table the router reads on every send, whether the pool token account carries a delegate, and whether the mint has Token-2022 extensions that change what a transfer does. It does not report the pool program's upgrade authority."
+        }
+      ]
+    },
+    {
+      "program": "spl-token",
+      "alias": "spl",
+      "source": "src/commands/spl-token/index.ts",
+      "instructions": [
+        {
+          "instruction": "create-mint",
+          "description": "Create an SPL mint under a seed-derived address, optionally with metadata and an initial supply minted to a recipient.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/create-mint.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--recipient",
+              "arg": "pubkey",
+              "required": false,
+              "description": "Recipient address (for mint instruction or create-mint initial supply)"
+            },
+            {
+              "flag": "--decimals",
+              "arg": "number",
+              "required": true,
+              "description": "Token decimals (0-255, required for create-mint)"
+            },
+            {
+              "flag": "--token-program",
+              "arg": "program",
+              "required": false,
+              "description": "Token program: spl-token or token-2022 (default: spl-token)"
+            },
+            {
+              "flag": "--with-metaplex",
+              "arg": "boolean",
+              "required": false,
+              "description": "Create with Metaplex metadata (true/false)"
+            },
+            {
+              "flag": "--metadata",
+              "arg": "backend",
+              "required": false,
+              "description": "Metadata backend for create-mint: none, metaplex (separate PDA, any token program) or token-2022 (embedded in the mint, requires --token-program token-2022). Overrides --with-metaplex"
+            },
+            {
+              "flag": "--name",
+              "arg": "string",
+              "required": false,
+              "description": "Token name (required if with-metaplex=true, max 32 chars)"
+            },
+            {
+              "flag": "--symbol",
+              "arg": "string",
+              "required": false,
+              "description": "Token symbol (required if with-metaplex=true, max 10 chars)"
+            },
+            {
+              "flag": "--uri",
+              "arg": "string",
+              "required": false,
+              "description": "Metadata URI (required if with-metaplex=true)"
+            },
+            {
+              "flag": "--initial-supply",
+              "arg": "number",
+              "required": false,
+              "description": "Initial supply in smallest units (optional)"
+            }
+          ],
+          "preconditions": "Pick the metadata backend with --metadata: 'metaplex' writes a separate Metaplex PDA (either token program), 'token-2022' embeds it in the mint via the TokenMetadata extension and requires --token-program token-2022. --with-metaplex true is an alias for 'metaplex'. The embedded backend is creation-only: Token-2022 extensions are initialized before InitializeMint, so an existing mint can never gain the TokenMetadata extension, whereas Metaplex metadata can be attached later.",
+          "failure_modes": "The backend decides which instruction can later change the metadata authority; see docs/gotchas #metadata-backend-decides-the-instruction. Freeze authority is set to the mint authority. The mint address is random per run (auto-generated seed)."
+        },
+        {
+          "instruction": "create-multisig",
+          "description": "Create an SPL token multisig, typically to hold the mint authority with the pool signer PDA as a member.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/multisig-create.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address (required for mint; also used to detect token program for create-multisig)"
+            },
+            {
+              "flag": "--signers",
+              "arg": "json",
+              "required": true,
+              "description": "JSON array of signer pubkeys (for create-multisig)"
+            },
+            {
+              "flag": "--threshold",
+              "arg": "m",
+              "required": true,
+              "description": "Threshold (for create-multisig)"
+            },
+            {
+              "flag": "--seed",
+              "arg": "string",
+              "required": true,
+              "description": "Seed for createAccountWithSeed (required for create-multisig)"
+            }
+          ],
+          "preconditions": "--mint is required to detect the correct token program and --seed to derive the account address.",
+          "failure_modes": "SPL multisigs are IMMUTABLE: members and threshold cannot be changed afterwards. The token program never checks threshold <= signers, so such a multisig would initialize and be permanently unusable; this CLI refuses it. Max 11 signers. See docs/gotchas #mint-authority-multisig."
+        },
+        {
+          "instruction": "mint",
+          "description": "Mint tokens to a recipient. Supports minting through an SPL multisig authority with --multisig and --multisig-signers.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/mint.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address (required for mint; also used to detect token program for create-multisig)"
+            },
+            {
+              "flag": "--recipient",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Recipient address (for mint instruction or create-mint initial supply)"
+            },
+            {
+              "flag": "--amount",
+              "arg": "u64",
+              "required": true,
+              "description": "Amount in smallest unit (for mint)"
+            },
+            {
+              "flag": "--multisig",
+              "arg": "pubkey",
+              "required": false,
+              "description": "SPL multisig address (optional, for mint)"
+            },
+            {
+              "flag": "--multisig-signers",
+              "arg": "json",
+              "required": false,
+              "description": "JSON array of signer pubkeys (optional, for mint)"
+            },
+            {
+              "flag": "--metadata-account",
+              "arg": "pubkey",
+              "required": false,
+              "description": "Explicit metadata account (Token-2022), defaults to mint"
+            },
+            {
+              "flag": "--metadata",
+              "arg": "backend",
+              "required": false,
+              "description": "Metadata backend for create-mint: none, metaplex (separate PDA, any token program) or token-2022 (embedded in the mint, requires --token-program token-2022). Overrides --with-metaplex"
+            },
+            {
+              "flag": "--token-account",
+              "arg": "pubkey",
+              "required": false,
+              "description": "Token account to approve from (optional, auto-derives from authority + mint if not provided)"
+            }
+          ],
+          "failure_modes": "Does not create the recipient's associated token account; create it first. A member that is a PDA (such as a Squads vault) cannot sign this way - see docs/gotchas #vault-mint-needs-squads-tx."
+        },
+        {
+          "instruction": "transfer-mint-authority",
+          "description": "Move the mint authority to a new account, normally an SPL multisig containing the pool signer PDA.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/transfer-mint-authority.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address (required for mint; also used to detect token program for create-multisig)"
+            },
+            {
+              "flag": "--new-mint-authority",
+              "arg": "pubkey",
+              "required": true,
+              "description": "New mint authority (for transfer-mint-authority)"
+            }
+          ],
+          "failure_modes": "Run the CCIP registry steps first: owner-propose-administrator requires the caller to still be the mint authority."
+        },
+        {
+          "instruction": "update-metadata-authority",
+          "description": "Update the metadata update authority of a Token-2022 mint that carries the native TokenMetadata extension.",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/update-metadata-authority.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address (required for mint; also used to detect token program for create-multisig)"
+            },
+            {
+              "flag": "--new-authority",
+              "arg": "pubkey",
+              "required": false,
+              "description": "New metadata update authority (for update-metadata-authority). OMITTING THIS REMOVES the authority permanently - it cannot be restored"
+            }
+          ],
+          "failure_modes": "Only applies to metadata embedded in the mint (create-mint --metadata token-2022). Mints whose metadata lives in a Metaplex PDA must use the metaplex update-authority instruction instead. Omitting --new-authority REMOVES the authority irreversibly."
+        },
+        {
+          "instruction": "approve",
+          "description": "Approve delegate command for SPL Token",
+          "read_only": false,
+          "execute_capable": true,
+          "handler": "src/commands/spl-token/approve.ts",
+          "flags": [
+            {
+              "flag": "--authority",
+              "arg": "authority",
+              "required": true,
+              "description": "Payer/authority public key"
+            },
+            {
+              "flag": "--mint",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Token mint address (required for mint; also used to detect token program for create-multisig)"
+            },
+            {
+              "flag": "--amount",
+              "arg": "u64",
+              "required": true,
+              "description": "Amount in smallest unit (for mint)"
+            },
+            {
+              "flag": "--token-account",
+              "arg": "pubkey",
+              "required": false,
+              "description": "Token account to approve from (optional, auto-derives from authority + mint if not provided)"
+            },
+            {
+              "flag": "--delegate",
+              "arg": "pubkey",
+              "required": true,
+              "description": "Delegate address to approve (required for approve)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "program": "utils",
+      "alias": "u",
+      "source": "src/commands/utils/index.ts",
+      "instructions": [
+        {
+          "instruction": "derive-accounts",
+          "description": "Derive and display the PDAs and account addresses for a program and mint without sending anything. Useful for obtaining the pool signer PDA before creating the SPL multisig.",
+          "read_only": true,
+          "execute_capable": false,
+          "handler": "src/commands/utils/derive-accounts.ts",
+          "flags": [
+            {
+              "flag": "--program-type",
+              "arg": "type",
+              "required": false,
+              "description": "Program type (burnmint-token-pool, lockrelease-token-pool, router, spl-token)"
+            },
+            {
+              "flag": "--program-id",
+              "arg": "programId",
+              "required": false,
+              "description": "Program ID (required for most derivations)"
+            },
+            {
+              "flag": "--mint",
+              "arg": "mint",
+              "required": false,
+              "description": "Token mint address (required for token-specific derivations)"
+            },
+            {
+              "flag": "--pool-program-id",
+              "arg": "pubkey",
+              "required": false,
+              "description": "Pool program ID (for router derivations)"
+            },
+            {
+              "flag": "--remote-chain-selector",
+              "arg": "selector",
+              "required": false,
+              "description": "Remote chain selector (for chain config derivations)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

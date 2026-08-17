@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Connection } from '@solana/web3.js';
+import { createConnection } from './../../utils/connection.js';
 import { validateArgs } from '../../utils/validation.js';
 import { RouterCreateLookupTableArgsSchema } from '../../types/index.js';
 import { finalizeTransaction } from '../../utils/finalize-transaction.js';
@@ -31,7 +31,7 @@ export async function createLookupTableCommand(options: Record<string, string>, 
 
     console.log('🔄 Generating create_lookup_table transaction...');
 
-    const connection = new Connection(rpcUrl);
+    const connection = createConnection(rpcUrl);
     const { instructions, lookupTableAddress } = await buildCreateAndExtendAlt({
       connection,
       authority: parsed.data.authority,

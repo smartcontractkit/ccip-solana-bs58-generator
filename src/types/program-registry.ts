@@ -1,7 +1,10 @@
 import type { Idl } from './index.js';
-import burnmintIdl from '../programs/burnmint-token-pool/idl.json' assert { type: 'json' };
-import lockreleaseIdl from '../programs/lockrelease-token-pool/idl.json' assert { type: 'json' };
-import routerIdl from '../programs/router/idl.json' assert { type: 'json' };
+// `with`, not the withdrawn `assert`: Node >= 22 dropped `assert` and throws a SyntaxError while
+// loading this file. `tsx` still accepts the old spelling, so `pnpm bs58` stays green and only the
+// compiled dist/ breaks - which is what the installed `cct-solana-tx` binary runs.
+import burnmintIdl from '../programs/burnmint-token-pool/idl.json' with { type: 'json' };
+import lockreleaseIdl from '../programs/lockrelease-token-pool/idl.json' with { type: 'json' };
+import routerIdl from '../programs/router/idl.json' with { type: 'json' };
 
 /**
  * Program configuration interface

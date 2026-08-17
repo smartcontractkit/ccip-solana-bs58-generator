@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { BIN_NAME } from '../../utils/package-info.js';
 import { initializePoolCommand } from './initialize-pool.js';
 import { createTokenAccountCommand } from './create-token-account.js';
 import { acceptOwnershipCommand } from './accept-ownership.js';
@@ -52,7 +53,7 @@ export function createLockReleaseCommands(): Command {
     // initChainRemoteConfig / editChainRemoteConfig specific options
     .option(
       '--pool-addresses <json>',
-      'JSON array of pool addresses (optional; init must be empty; if omitted on edit, existing addresses will be cleared)',
+      'JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)',
       '[]'
     )
     .option(
@@ -62,7 +63,7 @@ export function createLockReleaseCommands(): Command {
     .option('--decimals <decimals>', 'Token decimals (required for init/edit-chain-remote-config)')
     .option(
       '--remote-chain-selector <selector>',
-      'Remote chain selector (required for chain config operations)'
+      'Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)'
     )
 
     // appendRemotePoolAddresses specific options
@@ -118,6 +119,10 @@ export function createLockReleaseCommands(): Command {
       '--amount <amount>',
       'Amount to provide/withdraw (in smallest token units) (required for provide/withdraw-liquidity)'
     )
+    .option(
+      '--auto-approve',
+      'provide-liquidity only: prepend the SPL Approve for the pool signer PDA, so the delegation cannot be spent or replaced before the transfer'
+    )
 
     // setRebalancer specific options
     .option('--rebalancer <rebalancer>', 'Rebalancer address (required for set-rebalancer)')
@@ -165,14 +170,14 @@ export function createLockReleaseCommands(): Command {
       `
 Examples:
   # Initialize pool
-  pnpm bs58 lockrelease-token-pool --env devnet \\
+  ${BIN_NAME} lockrelease-token-pool --env devnet \\
     --instruction initialize-pool \\
     --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \\
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\
     --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY"
 
   # Set rebalancer
-  pnpm bs58 lockrelease-token-pool --env devnet \\
+  ${BIN_NAME} lockrelease-token-pool --env devnet \\
     --instruction set-rebalancer \\
     --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \\
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\
@@ -180,7 +185,7 @@ Examples:
     --rebalancer "RebalancerAddress123456789..."
 
   # Provide liquidity
-  pnpm bs58 lockrelease-token-pool --env devnet \\
+  ${BIN_NAME} lockrelease-token-pool --env devnet \\
     --instruction provide-liquidity \\
     --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \\
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\
@@ -188,7 +193,7 @@ Examples:
     --amount "1000000000"
 
   # Withdraw liquidity
-  pnpm bs58 lockrelease-token-pool --env devnet \\
+  ${BIN_NAME} lockrelease-token-pool --env devnet \\
     --instruction withdraw-liquidity \\
     --program-id "8eqh8wppT9c5rw4ERqNCffvU6cNFJWff9WmkcYtmGiqC" \\
     --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\

@@ -1,11 +1,13 @@
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { createConnection } from './connection.js';
 import { TransactionBuilder } from '../core/transaction-builder.js';
 import type { CommandContext } from '../types/command.js';
 import type { GeneratedTransaction } from '../types/index.js';
 import { TransactionDisplay } from './display.js';
 import { executeTransaction } from './transaction-executor.js';
 import { loadSignerKeypair } from './keypair.js';
-import { resolveClusterByGenesisHash } from './explorer.js';
+import { getTransactionExplorerUrl, resolveClusterByGenesisHash } from './explorer.js';
+import { emitJson, transactionEnvelope } from './json-output.js';
 import type { SolanaEnvironment } from './constants.js';
 import { DEFAULT_TRANSACTION_OUTPUT_FORMAT, resolveTransactionOutputFormat } from './constants.js';
 
@@ -33,8 +35,22 @@ export async function finalizeTransaction(opts: {
     ? formatResolution.format
     : DEFAULT_TRANSACTION_OUTPUT_FORMAT;
 
+  const jsonMode = globalOptions.json === true;
+
   if (!globalOptions.execute) {
-    TransactionDisplay.displayResults(tx, instructionName, outputFormat);
+    if (jsonMode) {
+      emitJson(
+        transactionEnvelope({
+          tx,
+          instructionName,
+          format: outputFormat,
+          globalOptions,
+          execution: null,
+        })
+      );
+    } else {
+      TransactionDisplay.displayResults(tx, instructionName, outputFormat);
+    }
     return tx;
   }
 
@@ -67,7 +83,7 @@ export async function finalizeTransaction(opts: {
   }
 
   const rpcUrl = globalOptions.resolvedRpcUrl!;
-  const connection = new Connection(rpcUrl);
+  const connection = createConnection(rpcUrl);
 
   // Resolve the cluster authoritatively from the chain's genesis hash when --env was not given, so
   // both the mainnet warning and the explorer link are correct even with --rpc-url. Never throw here.
@@ -80,15 +96,35 @@ export async function finalizeTransaction(opts: {
     }
   }
 
-  TransactionDisplay.displayExecutionBanner({
-    signer: keypair.publicKey.toBase58(),
-    instructionName,
-    env,
-    rpcUrl,
-  });
+  if (!jsonMode) {
+    TransactionDisplay.displayExecutionBanner({
+      signer: keypair.publicKey.toBase58(),
+      instructionName,
+      env,
+      rpcUrl,
+    });
+  }
 
   const signature = await executeTransaction(connection, instructions, [keypair]);
 
-  TransactionDisplay.displayExecutionResults(signature, instructionName, env);
+  if (jsonMode) {
+    // Same envelope as encode mode, with the execution block filled in - so a caller storing the
+    // artifact keeps the encoded transaction alongside the signature that landed it on-chain.
+    emitJson(
+      transactionEnvelope({
+        tx,
+        instructionName,
+        format: outputFormat,
+        globalOptions,
+        execution: {
+          signature,
+          signer: keypair.publicKey.toBase58(),
+          explorerUrl: env ? getTransactionExplorerUrl(signature, env) : null,
+        },
+      })
+    );
+  } else {
+    TransactionDisplay.displayExecutionResults(signature, instructionName, env);
+  }
   return tx;
 }

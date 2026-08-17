@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { BIN_NAME } from '../../utils/package-info.js';
 import { acceptOwnershipCommand } from './accept-ownership.js';
 import { getChainConfigCommand } from './get-chain-config.js';
 import { getStateCommand } from './get-state.js';
@@ -45,7 +46,7 @@ export function createBurnmintCommands(): Command {
     // initChainRemoteConfig / editChainRemoteConfig specific options
     .option(
       '--pool-addresses <json>',
-      'JSON array of pool addresses (optional; init must be empty; if omitted on edit, existing addresses will be cleared)',
+      'JSON array of pool addresses for init-chain-remote-config and edit-chain-remote-config (init must be empty; if omitted on edit, existing addresses will be cleared)',
       '[]'
     )
     .option(
@@ -78,7 +79,7 @@ export function createBurnmintCommands(): Command {
     // setChainRateLimit specific options
     .option(
       '--remote-chain-selector <selector>',
-      'Remote chain selector (required for set-chain-rate-limit)'
+      'Remote chain selector (required for set-chain-rate-limit, init-chain-remote-config, edit-chain-remote-config, append-remote-pool-addresses, delete-chain-config and get-chain-config)'
     )
     .option(
       '--inbound-enabled <enabled>',
@@ -144,7 +145,7 @@ export function createBurnmintCommands(): Command {
           console.error('❌ transfer-ownership instruction requires: --proposed-owner');
           console.error('');
           console.error('Example:');
-          console.error('  $ pnpm bs58 burnmint-token-pool --instruction transfer-ownership \\');
+          console.error(`  $ ${BIN_NAME} burnmint-token-pool --instruction transfer-ownership \\`);
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
@@ -156,7 +157,9 @@ export function createBurnmintCommands(): Command {
           console.error('❌ set-rate-limit-admin instruction requires: --new-rate-limit-admin');
           console.error('');
           console.error('Example:');
-          console.error('  $ pnpm bs58 burnmint-token-pool --instruction set-rate-limit-admin \\');
+          console.error(
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction set-rate-limit-admin \\`
+          );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
@@ -179,13 +182,14 @@ export function createBurnmintCommands(): Command {
           console.error('');
           console.error('Example:');
           console.error(
-            '  $ pnpm bs58 burnmint-token-pool --instruction init-chain-remote-config \\'
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction init-chain-remote-config \\`
           );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
           console.error('    --remote-chain-selector "1234567890" \\');
-          console.error('    --pool-addresses \'["0x1234abcd...", "0x5678efgh..."]\' \\');
+          // init requires an EMPTY pool address list; append remote pools afterwards
+          console.error("    --pool-addresses '[]' \\");
           console.error('    --token-address "0x9876dcba..." \\');
           console.error('    --decimals "18"');
           process.exit(1);
@@ -206,7 +210,7 @@ export function createBurnmintCommands(): Command {
           console.error('');
           console.error('Example:');
           console.error(
-            '  $ pnpm bs58 burnmint-token-pool --instruction edit-chain-remote-config \\'
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction edit-chain-remote-config \\`
           );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
@@ -228,7 +232,7 @@ export function createBurnmintCommands(): Command {
           console.error('');
           console.error('Example:');
           console.error(
-            '  $ pnpm bs58 burnmint-token-pool --instruction append-remote-pool-addresses \\'
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction append-remote-pool-addresses \\`
           );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
@@ -242,7 +246,9 @@ export function createBurnmintCommands(): Command {
           console.error('❌ delete-chain-config instruction requires: --remote-chain-selector');
           console.error('');
           console.error('Example:');
-          console.error('  $ pnpm bs58 burnmint-token-pool --instruction delete-chain-config \\\\');
+          console.error(
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction delete-chain-config \\\\`
+          );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\\\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\\\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\\\');
@@ -260,7 +266,7 @@ export function createBurnmintCommands(): Command {
           console.error('');
           console.error('Example:');
           console.error(
-            '  $ pnpm bs58 burnmint-token-pool --instruction configure-allow-list \\\\'
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction configure-allow-list \\\\`
           );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\\\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\\\');
@@ -277,7 +283,7 @@ export function createBurnmintCommands(): Command {
           console.error('');
           console.error('Example:');
           console.error(
-            '  $ pnpm bs58 burnmint-token-pool --instruction remove-from-allow-list \\\\'
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction remove-from-allow-list \\\\`
           );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\\\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\\\');
@@ -305,7 +311,9 @@ export function createBurnmintCommands(): Command {
           );
           console.error('');
           console.error('Example:');
-          console.error('  $ pnpm bs58 burnmint-token-pool --instruction set-chain-rate-limit \\');
+          console.error(
+            `  $ ${BIN_NAME} burnmint-token-pool --instruction set-chain-rate-limit \\`
+          );
           console.error('    --program-id "3BrkN1XcyeafuMZxomLZBUVdasEtpdMmpWfsEQmzN7vo" \\');
           console.error('    --mint "EL4xtGMgYoYtM4FcFnehiQJZFM2AsfqdFikgZK2y9GCo" \\');
           console.error('    --authority "59eNrRrxrZMdqJxS7J3WGaV4MLLog2er14kePiWVjXtY" \\');
@@ -325,14 +333,14 @@ export function createBurnmintCommands(): Command {
       `
 Examples:
   # Accept ownership using environment (recommended)
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction accept-ownership \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
     --authority "NewAuthorityPublicKey123456789..."
 
   # Transfer ownership to a new owner
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction transfer-ownership \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -340,7 +348,7 @@ Examples:
     --proposed-owner "NewOwnerPublicKey123456789..."
 
   # Initialize remote chain configuration
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction init-chain-remote-config \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -350,7 +358,7 @@ Examples:
     --decimals "18"
 
   # Edit existing remote chain configuration
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction edit-chain-remote-config \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -361,7 +369,7 @@ Examples:
     --decimals "18"
 
   # Append addresses to existing remote pool configuration
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction append-remote-pool-addresses \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -370,7 +378,7 @@ Examples:
     --addresses '["0xnew1234...", "0xnew5678..."]'
 
   # Delete chain configuration
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction delete-chain-config \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -378,7 +386,7 @@ Examples:
     --remote-chain-selector "1234567890"
 
   # Configure allow list for addresses
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction configure-allow-list \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -387,7 +395,7 @@ Examples:
     --enabled "true"
 
   # Remove addresses from allow list
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction remove-from-allow-list \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -395,7 +403,7 @@ Examples:
     --remove '["11111111111111111111111111111112", "33333333333333333333333333333334"]'
 
   # Set chain rate limit for remote chain
-  $ pnpm bs58 --env devnet burnmint-token-pool \\
+  $ ${BIN_NAME} --env devnet burnmint-token-pool \\
     --instruction set-chain-rate-limit \\
     --program-id "BurnMintProgramID123456789..." \\
     --mint "TokenMintAddress123456789..." \\
@@ -409,14 +417,14 @@ Examples:
     --outbound-rate "0"
 
   # Using custom RPC URL (advanced)
-  $ pnpm bs58 --rpc-url "https://custom-rpc.com" \\
+  $ ${BIN_NAME} --rpc-url "https://custom-rpc.com" \\
     burnmint-token-pool --instruction accept-ownership \\
     --program-id "Your_Program_ID" \\
     --mint "Your_Token_Mint" \\
     --authority "Your_Authority"
 
   # With verbose logging for debugging
-  $ pnpm bs58 --verbose --env testnet \\
+  $ ${BIN_NAME} --verbose --env testnet \\
     burnmint-token-pool --instruction accept-ownership \\
     --program-id "..." --mint "..." --authority "..."
 
