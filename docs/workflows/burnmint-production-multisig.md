@@ -43,7 +43,7 @@ steps:
     outcome: "Token-bucket rate limits active for the Sepolia lane (optional step)"
   - id: create-lookup-table
     command: "cct-solana-tx router --instruction create-lookup-table --env devnet --program-id <ROUTER_PROGRAM> --authority <SQUAD_VAULT> --mint <SOL_TOKEN_MINT> --pool-program-id <POOL_PROGRAM> --fee-quoter-program-id <FEE_QUOTER_PROGRAM> --additional-addresses '[\"<SOL_MULTISIG_ADDRESS>\"]'"
-    outcome: "CCIP ALT created with the 10 required accounts + the SPL multisig (execute in Squads within ~60-90s, or fall back to pnpm create-alt + append-to-lookup-table)"
+    outcome: "CCIP ALT created with the 10 required accounts + the SPL multisig (execute in Squads within the ~3.5 min slot window, or fall back to pnpm create-alt + append-to-lookup-table)"
   - id: set-pool
     command: "cct-solana-tx router --instruction set-pool --env devnet --program-id <ROUTER_PROGRAM> --authority <SQUAD_VAULT> --mint <SOL_TOKEN_MINT> --pool-lookup-table <ALT_ADDRESS> --writable-indexes '[3,4,7]'"
     outcome: "Pool registered with the router; token is CCIP-enabled on Solana"
@@ -89,7 +89,8 @@ Enforced on chain:
   (`ccip-router` `token_context.rs`, `address = mint.mint_authority.unwrap()`), and an SPL multisig
   cannot execute CCIP instructions - so moving the mint authority first blocks registration.
 - `create-lookup-table` derives the ALT address from a **recent slot**, so it must be imported and
-  executed in Squads within roughly 60-90 seconds. Otherwise use `pnpm create-alt` (EOA-signed,
+  executed in Squads while `recentSlot` is still in `SlotHashes` (512 slots, ~3.5 minutes) - treat
+  it as immediate. Otherwise use `pnpm create-alt` (EOA-signed,
   immediate, empty) followed by `append-to-lookup-table`.
 - Minting *as the vault* through the SPL multisig is not expressible through this CLI - it needs a
   Squads vault transaction wrapping the SPL `MintTo`

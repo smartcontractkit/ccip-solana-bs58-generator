@@ -49,4 +49,5 @@ This repo is Terminal 1 of the Chainlink CCT flow. See the [workflows index](wor
 - [Gotchas](gotchas/index.md) — facts that bite, each under a stable anchor other pages link to.
 - Why it is built this way: [the legacy message](decisions/legacy-message.md) ·
   [hand-written encoding](decisions/manual-encoding.md) ·
-  [the simulation gate](decisions/simulation-gate.md).
+  [the simulation gate](decisions/simulation-gate.md) ·
+  [no durable nonce](decisions/no-durable-nonce.md).

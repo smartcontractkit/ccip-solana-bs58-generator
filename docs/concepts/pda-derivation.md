@@ -141,7 +141,10 @@ address is left-padded to 32. See the `RemoteAddress` layout in
   (cap 256).
 - Standalone create: `scripts/create-alt.ts` derives the ALT PDA from `[authority, recentSlot_LE]`
   against `AddressLookupTableProgram.programId` (instruction discriminator `0`, 13-byte data).
-  Slot-dependent, and the transaction's blockhash expires first, so it must execute within roughly 60-90 seconds - hence EOA execution.
+  Slot-dependent: the ALT program checks `recentSlot` against the `SlotHashes` sysvar, which only
+  holds 512 slots (~3.5 minutes), so the transaction must execute inside that window - hence EOA
+  execution. This is a slot constraint, not blockhash expiry; on the Squads path the blockhash is
+  discarded at import (see `src/utils/alt.ts`).
 
 ## Debugging: `utils derive-accounts`
 

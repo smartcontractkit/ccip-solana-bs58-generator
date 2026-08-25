@@ -61,8 +61,10 @@ export async function createLookupTableCommand(options: Record<string, string>, 
       console.log('   ✅ Transaction simulation completed');
       console.log('');
       console.log('⚠️  ALT CREATION TIMING CONSTRAINT');
-      console.log('   This transaction must be imported AND executed within 60-90 seconds');
-      console.log('   due to slot-dependent address derivation.');
+      console.log('   This transaction must be imported AND executed within ~3.5 minutes');
+      console.log(
+        '   (512 slots) due to slot-dependent address derivation. Treat it as immediate.'
+      );
       console.log('');
       console.log('💡 RECOMMENDED: Use the companion tool for immediate execution:');
       console.log(

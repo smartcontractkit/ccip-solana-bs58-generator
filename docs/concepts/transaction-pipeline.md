@@ -87,8 +87,9 @@ timestamp, so it copy-pastes cleanly):
 - **Account Information** — 1-based position, pubkey, and a type tag from `getAccountTypeDisplay()`:
   `(signer, writable)` / `(signer)` / `(writable)` / `(read-only)`.
 - **Usage Instructions** — how to import into Squads.
-- **Important Notes** — transaction simulated and validated before generation; blockhash valid
-  ~2 minutes; compute units are an estimate (printed only when non-zero).
+- **Important Notes** — transaction simulated and validated before generation; the blockhash is
+  discarded when the multisig imports the message, so the transaction does not expire while it
+  waits for signatures; compute units are an estimate (printed only when non-zero).
 
 Other helpers: `displaySuccess`, `displayError(error, suggestions[])`,
 `displayWarning(warning, details[])`, plus the execute-mode banner and results (see

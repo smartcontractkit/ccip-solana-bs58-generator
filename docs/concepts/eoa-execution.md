@@ -81,7 +81,7 @@ should go through Squads (encode mode).
 ## ALT commands
 
 `router create-lookup-table --execute` works: a programmatic send completes in seconds, well
-inside the slot window for the slot-derived ALT address; the 60-90 second timing warning is shown
+inside the slot window for the slot-derived ALT address; the slot-window timing warning is shown
 only in encode mode. `pnpm create-alt` remains for the case where an EOA bootstraps a
 Squads-owned ALT (see [pda-derivation](../concepts/pda-derivation.md) for the derivation).
 
