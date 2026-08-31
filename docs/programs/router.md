@@ -51,8 +51,9 @@ ALTs compress per-tx account lists (32-byte address → 1-byte index). Two ways 
   ALT address is derived from `[authority, recentSlot_LE]`, so it is slot-dependent and must be
   created on the spot. Use this to create an **empty** ALT owned by the Squads vault.
 - **`router --instruction create-lookup-table`** — generates an encoded create+extend tx for
-  Squads. Warning: the ALT address is slot-derived, so the tx must be imported AND executed within
-  roughly 60-90 s or the derived address no longer matches. For multisig flows, prefer the
+  Squads. Warning: the ALT address is slot-derived, so the tx must be imported AND executed while
+  `recentSlot` is still in the `SlotHashes` sysvar - 512 slots, ~3.5 minutes. Treat it as
+  immediate. For multisig flows, prefer the
   two-step approach: `pnpm create-alt` (empty, now) → `append-to-lookup-table` via Squads.
 - **`router --instruction append-to-lookup-table`** — extends an existing ALT. Two modes:
   (a) CCIP auto-derivation (pass `--program-id --fee-quoter-program-id --pool-program-id --mint`;

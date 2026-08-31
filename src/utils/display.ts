@@ -139,7 +139,8 @@ export class TransactionDisplay {
       );
     }
 
-    logger.info('   • This transaction is valid until the blockhash expires (~2 minutes)');
+    logger.info('   • The blockhash above is discarded when the multisig imports this message,');
+    logger.info('     so the transaction does not expire while it waits for signatures');
     logger.info('');
   }
 

@@ -49,7 +49,7 @@ steps:
     outcome: "Rate limits active for the Sepolia lane (optional step)"
   - id: create-lookup-table
     command: "cct-solana-tx router --instruction create-lookup-table --env devnet --program-id <ROUTER_PROGRAM> --authority <SQUAD_VAULT> --mint <SOL_TOKEN_MINT> --pool-program-id <POOL_PROGRAM> --fee-quoter-program-id <FEE_QUOTER_PROGRAM>"
-    outcome: "CCIP ALT created with the 10 base accounts (no SPL multisig needed; execute in Squads within ~60-90s)"
+    outcome: "CCIP ALT created with the 10 base accounts (no SPL multisig needed; execute in Squads within the ~3.5 min slot window)"
   - id: set-pool
     command: "cct-solana-tx router --instruction set-pool --env devnet --program-id <ROUTER_PROGRAM> --authority <SQUAD_VAULT> --mint <SOL_TOKEN_MINT> --pool-lookup-table <ALT_ADDRESS> --writable-indexes '[3,4,7]'"
     outcome: "Pool registered with the router; token is CCIP-enabled on Solana"

@@ -14,6 +14,12 @@ import {
 } from '../src/utils/json-output.js';
 import type { GeneratedTransaction } from '../src/types/index.js';
 import type { CommandContext, GlobalCommandOptions } from '../src/types/command.js';
+import { createRequire } from 'node:module';
+
+// Read the version rather than hardcoding it: a hardcoded literal fails on every release bump.
+const { version: PKG_VERSION } = createRequire(import.meta.url)('../package.json') as {
+  version: string;
+};
 
 const PK = new PublicKey('2SGSoyjD1QLEpL8SsA2Zhc51jRCQPiZ6GjJWZGkvC3V3');
 
@@ -55,7 +61,7 @@ describe('transactionEnvelope', () => {
       execution: null,
     });
     expect(env.ok).toBe(true);
-    expect(env.cliVersion).toBe('0.5.0');
+    expect(env.cliVersion).toBe(PKG_VERSION);
     expect(env.kind).toBe('transaction');
     expect(env.network).toEqual({ env: 'devnet', rpcUrl: 'https://api.devnet.solana.com' });
   });

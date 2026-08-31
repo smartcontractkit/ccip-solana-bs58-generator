@@ -34,6 +34,36 @@ The Squads v4 *program* does support address lookup tables (verified on devnet);
 default is about what the web UI's import field can decode and display for review. See
 [the decision](../decisions/legacy-message.md).
 
+## No durable nonce needed
+
+The generated message carries a real blockhash, but Squads discards it on import: the stored
+`VaultTransaction.message` struct has no blockhash field. Nothing this CLI emits is ever signed, so
+no signature is waiting on a blockhash. Import, each approval and the execution are separate
+transactions, each with its own fresh blockhash.
+
+A proposal has no wall-clock expiry - `ProposalStatus` has no `Expired` variant and `time_lock` is a
+minimum delay, not a deadline. An `advanceNonceAccount` added to the generated instruction list
+would not act as a nonce; it would execute as an ordinary System Program call and advance the nonce
+for real. See [the decision](../decisions/no-durable-nonce.md).
+
+## Config change invalidates pending proposals
+
+A Squads config change invalidates pending proposals; elapsed time does not. `AddMember`,
+`RemoveMember`, `ChangeThreshold`, `SetTimeLock` and `SetConfigAuthority` all set
+`stale_transaction_index` to the current `transaction_index`, freezing every proposal at or below
+it: no further votes (`StaleProposal`, 0x1777), and no new proposal can be created against the same
+transaction account, so those must be rebuilt and re-imported at a new index. `SetRentCollector` and
+spending-limit changes do not invalidate anything.
+
+A **vault** transaction that already reached its approval threshold still executes, against the
+threshold in force when it was approved rather than the new one. An already-approved **config**
+transaction does not - it fails with `StaleProposal`, so two approved config changes can never both
+be executed.
+
+Squads does not rewrite `Proposal.status` on-chain, so a frozen proposal still displays as `Active`
+or `Approved`. The only reliable check is the proposal's index against
+`Multisig.stale_transaction_index`.
+
 ## Authority is the vault
 
 `--authority` is the Squads vault address, not the multisig account. The vault PDA is what signs
